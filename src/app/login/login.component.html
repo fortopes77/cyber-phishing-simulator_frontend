@@ -1,0 +1,61 @@
+<div class="login-container">
+  <div class="login-box">
+    <h1>Cyber Phishing Simulator</h1>
+    <p class="subtitle">Secure Login</p>
+
+    <form (ngSubmit)="onLogin()">
+      <!-- Error Message -->
+      <div *ngIf="errorMessage" class="error-message">
+        {{ errorMessage }}
+      </div>
+
+      <!-- Username/Email Input -->
+      <div class="form-group">
+        <label for="credential">Username or Email</label>
+        <input
+          id="credential"
+          type="text"
+          [(ngModel)]="credential"
+          name="credential"
+          placeholder="Enter username or email"
+          [disabled]="isLoading"
+          required
+        />
+      </div>
+
+      <!-- Password Input -->
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input
+          id="password"
+          type="password"
+          [(ngModel)]="password"
+          name="password"
+          placeholder="Enter password"
+          [disabled]="isLoading"
+          required
+        />
+      </div>
+
+      <!-- Login Button -->
+      <button type="submit" class="btn-login" [disabled]="isLoading">
+        {{ isLoading ? "Logging in..." : "Login" }}
+      </button>
+    </form>
+
+    <!-- Demo Credentials Info -->
+    <div class="demo-credentials">
+      <h3>Demo Credentials:</h3>
+      <div class="credential-item">
+        <p><strong>Admin:</strong></p>
+        <p>Username/Email: {{ mockCredentials.admin.credential }}</p>
+        <p>Password: {{ mockCredentials.admin.password }}</p>
+      </div>
+      <div class="credential-item">
+        <p><strong>User:</strong></p>
+        <p>Username/Email: {{ mockCredentials.user.credential }}</p>
+        <p>Password: {{ mockCredentials.user.password }}</p>
+      </div>
+    </div>
+  </div>
+</div>

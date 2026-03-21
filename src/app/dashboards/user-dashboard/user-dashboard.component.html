@@ -1,0 +1,49 @@
+<div class="dashboard-container">
+  <div class="dashboard-header">
+    <h1>User Dashboard</h1>
+    <p *ngIf="currentUser" class="user-info">
+      Welcome, <strong>{{ currentUser.username }}</strong> ({{
+        currentUser.role
+      }})
+    </p>
+  </div>
+
+  <div class="dashboard-content">
+    <div class="card">
+      <h2>Your Profile</h2>
+      <p *ngIf="currentUser">
+        <strong>Username:</strong> {{ currentUser.username }}<br />
+        <strong>Email:</strong> {{ currentUser.email }}<br />
+        <strong>Role:</strong> {{ currentUser.role | uppercase }}
+      </p>
+    </div>
+
+    <div class="card">
+      <h2>Available Features</h2>
+      <ul>
+        <li>View Training Materials</li>
+        <li>Take Phishing Simulations</li>
+        <li>View Your Results</li>
+        <li>Complete Learning Modules</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>Recent Activity</h2>
+      <p>No recent activity to display.</p>
+    </div>
+
+    <div class="card info-card">
+      <h2>ℹ️ Information</h2>
+      <p>
+        You are logged in as a
+        <strong>{{ currentUser?.role | uppercase }}</strong> user. Your access
+        is limited to user-level features.
+      </p>
+      <p *ngIf="currentUser?.role === 'admin'" class="admin-note">
+        💡 You have admin privileges and can access the Admin Dashboard from the
+        menu.
+      </p>
+    </div>
+  </div>
+</div>
