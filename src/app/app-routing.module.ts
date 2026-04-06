@@ -11,26 +11,32 @@ const routes: Routes = [
 
   // Protected routes
   {
-    path: 'admin-dashboard',
-    component: AdminDashboardComponent,
+    path: 'learner',
     canActivate: [AuthGuard],
-    data: { role: 'admin' },
+    children: [
+      { path: 'dashboard', component: UserDashboardComponent },
+      { path: 'scenarios/:id', component: UserDashboardComponent },
+      { path: 'scenarios/:id/feedback', component: UserDashboardComponent },
+      { path: 'results', component: UserDashboardComponent },
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+    ],
   },
   {
-    path: 'user-dashboard',
-    component: UserDashboardComponent,
+    path: 'trainer',
     canActivate: [AuthGuard],
+    children: [
+      { path: 'dashboard', component: AdminDashboardComponent },
+      { path: 'trainer/users/:id', component: AdminDashboardComponent },
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+    ],
   },
-
-  // Default redirect
-  { path: '', redirectTo: '/user-dashboard', pathMatch: 'full' },
-
   // Wildcard route - redirect to user dashboard if authenticated, login if not
-  { path: '**', redirectTo: '/user-dashboard' },
+  { path: '**', redirectTo: '/learner/dashboard' },
 ];
 
 @NgModule({
   imports: [RouterModule.forRoot(routes)],
   exports: [RouterModule],
+  providers: [AuthGuard],
 })
 export class AppRoutingModule {}

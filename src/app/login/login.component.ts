@@ -41,9 +41,9 @@ export class LoginComponent {
       // Login successful - redirect to appropriate dashboard
       const user = this.authService.getCurrentUser();
       if (user?.role === 'admin') {
-        this.router.navigate(['/admin-dashboard']);
+        this.router.navigate(['/trainer/dashboard']);
       } else {
-        this.router.navigate(['/user-dashboard']);
+        this.router.navigate(['/learner/dashboard']);
       }
     } else {
       // Login failed

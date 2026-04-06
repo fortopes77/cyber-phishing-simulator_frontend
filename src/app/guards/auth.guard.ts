@@ -34,7 +34,7 @@ export class AuthGuard implements CanActivate {
         console.log(
           `Access denied - requires ${requiredRole} role. Redirecting to dashboard.`,
         );
-        this.router.navigate(['/user-dashboard']);
+        this.router.navigate(['/learner/dashboard']);
         return false;
       }
     }

@@ -27,10 +27,10 @@ export class AppComponent {
   }
 
   goToAdminDashboard(): void {
-    this.router.navigate(['/admin-dashboard']);
+    this.router.navigate(['/trainer/dashboard']);
   }
 
   goToUserDashboard(): void {
-    this.router.navigate(['/user-dashboard']);
+    this.router.navigate(['/learner/dashboard']);
   }
 }
