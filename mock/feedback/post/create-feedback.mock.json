@@ -1,0 +1,9 @@
+{
+  "success": true,
+  "feedback": {
+    "id": "f_001",
+    "attemptId": "a_123",
+    "generatedBy": "AI",
+    "content": "This was a strong decision. You correctly identified..."
+  }
+}

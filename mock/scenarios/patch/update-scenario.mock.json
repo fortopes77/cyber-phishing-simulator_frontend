@@ -1,0 +1,8 @@
+{
+  "success": true,
+  "message": "Scenario updated successfully",
+  "scenario": {
+    "id": "s_002",
+    "title": "Updated Scenario Title"
+  }
+}

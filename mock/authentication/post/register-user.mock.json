@@ -1,0 +1,10 @@
+{
+  "success": true,
+  "message": "User registered successfully",
+  "user": {
+    "id": "u_12345",
+    "role": "learner",
+    "email": "user@example.com",
+    "createdAt": "2026-04-06T10:00:00Z"
+  }
+}
