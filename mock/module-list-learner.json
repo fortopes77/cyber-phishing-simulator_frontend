@@ -1,0 +1,12 @@
+[
+  {
+    "moduleId": "module1",
+    "moduleName": "Phishing Awareness",
+    "version": "1.2.0",
+    "description": "Learn how to recognize and avoid phishing attacks",
+    "hasUserCompleted": true,
+    "completionDate": "2024-06-01T12:00:00Z",
+    "score": 95,
+    "timeSpent": 3600
+  }
+]

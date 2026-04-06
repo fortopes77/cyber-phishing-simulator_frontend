@@ -1,0 +1,10 @@
+{
+  "scenarios": [
+    {
+      "id": "s_001",
+      "title": "Invoice Fraud Attempt",
+      "difficulty": "medium",
+      "category": "Invoice fraud"
+    }
+  ]
+}

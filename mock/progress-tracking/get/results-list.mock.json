@@ -1,0 +1,136 @@
+{
+  "results": [
+    {
+      "userId": "u_12345",
+      "name": "Learner One",
+      "completedModules": 3,
+      "averageScore": 82
+    },
+    {
+      "userId": "u_67890",
+      "name": "Learner Two",
+      "completedModules": 1,
+      "averageScore": 55
+    },
+    {
+      "userId": "u_23456",
+      "name": "Learner Three",
+      "completedModules": 5,
+      "averageScore": 90
+    },
+    {
+      "userId": "u_34567",
+      "name": "Learner Four",
+      "completedModules": 2,
+      "averageScore": 68
+    },
+    {
+      "userId": "u_45678",
+      "name": "Learner Five",
+      "completedModules": 4,
+      "averageScore": 74
+    },
+    {
+      "userId": "u_56789",
+      "name": "Learner Six",
+      "completedModules": 6,
+      "averageScore": 88
+    },
+    {
+      "userId": "u_67891",
+      "name": "Learner Seven",
+      "completedModules": 3,
+      "averageScore": 79
+    },
+    {
+      "userId": "u_78912",
+      "name": "Learner Eight",
+      "completedModules": 7,
+      "averageScore": 93
+    },
+    {
+      "userId": "u_89123",
+      "name": "Learner Nine",
+      "completedModules": 1,
+      "averageScore": 61
+    },
+    {
+      "userId": "u_91234",
+      "name": "Learner Ten",
+      "completedModules": 5,
+      "averageScore": 81
+    },
+    {
+      "userId": "u_01345",
+      "name": "Learner Eleven",
+      "completedModules": 4,
+      "averageScore": 76
+    },
+    {
+      "userId": "u_12456",
+      "name": "Learner Twelve",
+      "completedModules": 2,
+      "averageScore": 69
+    },
+    {
+      "userId": "u_23567",
+      "name": "Learner Thirteen",
+      "completedModules": 3,
+      "averageScore": 72
+    },
+    {
+      "userId": "u_34678",
+      "name": "Learner Fourteen",
+      "completedModules": 8,
+      "averageScore": 95
+    },
+    {
+      "userId": "u_45789",
+      "name": "Learner Fifteen",
+      "completedModules": 6,
+      "averageScore": 84
+    },
+    {
+      "userId": "u_56891",
+      "name": "Learner Sixteen",
+      "completedModules": 2,
+      "averageScore": 58
+    },
+    {
+      "userId": "u_67912",
+      "name": "Learner Seventeen",
+      "completedModules": 4,
+      "averageScore": 77
+    },
+    {
+      "userId": "u_78123",
+      "name": "Learner Eighteen",
+      "completedModules": 9,
+      "averageScore": 97
+    },
+    {
+      "userId": "u_89234",
+      "name": "Learner Nineteen",
+      "completedModules": 5,
+      "averageScore": 85
+    },
+    {
+      "userId": "u_90345",
+      "name": "Learner Twenty",
+      "completedModules": 7,
+      "averageScore": 91
+    },
+    {
+      "userId": "u_01456",
+      "name": "Learner Twenty-One",
+      "completedModules": 3,
+      "averageScore": 70
+    },
+    {
+      "userId": "u_12567",
+      "name": "Learner Twenty-Two",
+      "completedModules": 1,
+      "averageScore": 60
+    }
+  ]
+}

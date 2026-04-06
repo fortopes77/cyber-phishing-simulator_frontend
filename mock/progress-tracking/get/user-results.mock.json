@@ -1,0 +1,12 @@
+{
+  "userId": "u_12345",
+  "summary": {
+    "modulesCompleted": 3,
+    "averageScore": 82,
+    "improvement": {
+      "firstAttemptScore": 60,
+      "latestAttemptScore": 90
+    },
+    "commonMistakes": ["Link clicking"]
+  }
+}

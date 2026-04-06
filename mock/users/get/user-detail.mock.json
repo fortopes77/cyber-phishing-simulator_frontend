@@ -1,0 +1,11 @@
+{
+  "id": "u_12345",
+  "name": "Learner One",
+  "email": "learner1@example.com",
+  "role": "learner",
+  "results": {
+    "completedModules": 3,
+    "averageScore": 82,
+    "commonMistakes": ["Link clicking", "Authority impersonation"]
+  }
+}

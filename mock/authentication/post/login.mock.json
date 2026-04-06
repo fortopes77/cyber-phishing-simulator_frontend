@@ -1,0 +1,9 @@
+{
+  "success": true,
+  "token": "jwt.token.here",
+  "user": {
+    "id": "u_12345",
+    "role": "trainer",
+    "email": "trainer@example.com"
+  }
+}
