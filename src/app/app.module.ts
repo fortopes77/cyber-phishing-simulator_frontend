@@ -11,6 +11,7 @@ import { UserDashboardComponent } from './dashboards/user-dashboard/user-dashboa
 import { AuthService } from './services/auth.service';
 import { AuthGuard } from './guards/auth.guard';
 import { CommonModule, UpperCasePipe } from '@angular/common';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 // import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 @NgModule({
@@ -26,6 +27,7 @@ import { CommonModule, UpperCasePipe } from '@angular/common';
     AppRoutingModule,
     CommonModule,
     UpperCasePipe,
+    FontAwesomeModule,
   ],
   providers: [AuthService, AuthGuard],
   bootstrap: [AppComponent],
