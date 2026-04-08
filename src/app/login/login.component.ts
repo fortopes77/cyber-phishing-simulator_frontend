@@ -6,6 +6,7 @@ import { AuthService } from '../services/auth.service';
   selector: 'app-login',
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss'],
+  standalone: false,
 })
 export class LoginComponent {
   credential: string = '';
@@ -41,9 +42,9 @@ export class LoginComponent {
       // Login successful - redirect to appropriate dashboard
       const user = this.authService.getCurrentUser();
       if (user?.role === 'admin') {
-        this.router.navigate(['/admin-dashboard']);
+        this.router.navigate(['/trainer/dashboard']);
       } else {
-        this.router.navigate(['/user-dashboard']);
+        this.router.navigate(['/learner/dashboard']);
       }
     } else {
       // Login failed

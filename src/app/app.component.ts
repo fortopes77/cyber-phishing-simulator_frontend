@@ -4,9 +4,10 @@ import { AuthService, User } from './services/auth.service';
 import { Observable } from 'rxjs';
 
 @Component({
-  selector: 'app-root',
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.scss'],
+    selector: 'app-root',
+    templateUrl: './app.component.html',
+    styleUrls: ['./app.component.scss'],
+    standalone: false
 })
 export class AppComponent {
   title = 'phishing-frontend';
@@ -27,10 +28,10 @@ export class AppComponent {
   }
 
   goToAdminDashboard(): void {
-    this.router.navigate(['/admin-dashboard']);
+    this.router.navigate(['/trainer/dashboard']);
   }
 
   goToUserDashboard(): void {
-    this.router.navigate(['/user-dashboard']);
+    this.router.navigate(['/learner/dashboard']);
   }
 }

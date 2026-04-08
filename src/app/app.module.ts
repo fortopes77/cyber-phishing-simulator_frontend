@@ -10,7 +10,9 @@ import { UserDashboardComponent } from './dashboards/user-dashboard/user-dashboa
 
 import { AuthService } from './services/auth.service';
 import { AuthGuard } from './guards/auth.guard';
+import { CommonModule, UpperCasePipe } from '@angular/common';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+// import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 @NgModule({
   declarations: [
@@ -19,7 +21,14 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
     AdminDashboardComponent,
     UserDashboardComponent,
   ],
-  imports: [BrowserModule, FormsModule, AppRoutingModule, FontAwesomeModule],
+  imports: [
+    BrowserModule,
+    FormsModule,
+    AppRoutingModule,
+    CommonModule,
+    UpperCasePipe,
+    FontAwesomeModule,
+  ],
   providers: [AuthService, AuthGuard],
   bootstrap: [AppComponent],
 })
