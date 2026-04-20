@@ -1,3 +1,19 @@
 body {
   margin: 0;
+  font-family: "Inter", sans-serif;
+}
+
+app-nav {
+  display: block;
+}
+
+app-nav + .app-container {
+  margin-top: 60px;
+  margin-left: 282px;
+  padding: 1rem;
+  transition: margin-left 0.28s ease;
+}
+
+app-nav.sidebar-hidden + .app-container {
+  margin-left: 0;
 }

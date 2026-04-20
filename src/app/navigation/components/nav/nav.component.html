@@ -1,0 +1,75 @@
+<div class="topbar">
+  <button
+    class="topbar-toggle"
+    type="button"
+    aria-label="Toggle sidebar"
+    (click)="toggleSidebar()"
+  >
+    <fa-icon [icon]="bars"></fa-icon>
+  </button>
+
+  <div></div>
+
+  <div class="topbar-user" *ngIf="isAuthenticated">
+    <button
+      class="profile-button"
+      type="button"
+      aria-label="Open user menu"
+      (click)="toggleProfileMenu()"
+    >
+      <span class="user-icon">👤</span>
+      <span class="profile-name">{{ currentUser?.username }}</span>
+    </button>
+    <div class="profile-dropdown" *ngIf="profileOpen">
+      <button type="button" class="dropdown-item">Profile Settings</button>
+      <button type="button" class="dropdown-item logout" (click)="logout()">
+        Logout
+      </button>
+    </div>
+  </div>
+</div>
+
+<aside class="sidebar" [class.hidden]="sidebarHidden">
+  <div class="sidebar-header">
+    <div class="brand">
+      <img src="assets/phish-logo-dark.png" alt="Phish logo" />
+      <span>Cyber Phishing</span>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <ul *ngIf="currentUser?.role === 'admin'">
+      <li>
+        <a routerLink="/trainer/dashboard" routerLinkActive="active"
+          >Dashboard</a
+        >
+      </li>
+      <li>
+        <a routerLink="/trainer/modules" routerLinkActive="active">Modules</a>
+      </li>
+      <li>
+        <a routerLink="/trainer/students" routerLinkActive="active">Students</a>
+      </li>
+      <li>
+        <a routerLink="/trainer/analytics" routerLinkActive="active"
+          >Analytics</a
+        >
+      </li>
+    </ul>
+    <ul *ngIf="currentUser?.role === 'user'">
+      <li>
+        <a routerLink="/learner/dashboard" routerLinkActive="active"
+          >Dashboard</a
+        >
+      </li>
+      <li>
+        <a routerLink="/learner/scenarios" routerLinkActive="active"
+          >Scenarios</a
+        >
+      </li>
+      <li>
+        <a routerLink="/learner/results" routerLinkActive="active">Results</a>
+      </li>
+    </ul>
+  </nav>
+</aside>
