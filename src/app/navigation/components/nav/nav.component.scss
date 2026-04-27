@@ -22,13 +22,12 @@
 
 :host(.sidebar-hidden) .topbar {
   left: 0;
-  width: 100%;
 }
 
 .sidebar {
   width: 250px;
   height: 100vh;
-  background-color: #051b31;
+  background-color: #1b2b3a;
   color: white;
   position: fixed;
   top: 0;
@@ -130,11 +129,14 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  max-height: 40px;
 }
 
 .brand img {
-  height: 50px;
-  width: auto;
+  height: auto;
+  width: 100%;
+  object-fit: cover;
+  max-height: 38px;
 }
 
 .brand span {
