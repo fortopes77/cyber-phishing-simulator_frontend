@@ -1,0 +1,7 @@
+app-nav + .app-container {
+  margin-left: 282px;
+}
+
+.sidebar-hidden + .app-container {
+  margin-left: 0;
+}
