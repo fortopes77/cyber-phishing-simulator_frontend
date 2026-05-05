@@ -22,11 +22,6 @@ export class AppComponent {
     this.isAuthenticated$ = this.authService.isAuthenticated$;
   }
 
-  // logout(): void {
-  //   this.authService.logout();
-  //   this.router.navigate(['/login']);
-  // }
-
   goToAdminDashboard(): void {
     this.router.navigate(['/trainer/dashboard']);
   }
