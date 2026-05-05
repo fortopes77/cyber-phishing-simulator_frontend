@@ -1,5 +1,7 @@
 <!-- Navigation Bar -->
-<app-nav *ngIf="currentUser$ | async"></app-nav>
+@if (currentUser$ | async) {
+  <app-nav></app-nav>
+}
 
 <!-- Main Content -->
 <div class="app-container">

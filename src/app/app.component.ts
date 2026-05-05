@@ -4,10 +4,10 @@ import { AuthService, User } from './services/auth.service';
 import { Observable } from 'rxjs';
 
 @Component({
-    selector: 'app-root',
-    templateUrl: './app.component.html',
-    styleUrls: ['./app.component.scss'],
-    standalone: false
+  selector: 'app-root',
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.scss'],
+  standalone: false,
 })
 export class AppComponent {
   title = 'phishing-frontend';
@@ -22,10 +22,10 @@ export class AppComponent {
     this.isAuthenticated$ = this.authService.isAuthenticated$;
   }
 
-  logout(): void {
-    this.authService.logout();
-    this.router.navigate(['/login']);
-  }
+  // logout(): void {
+  //   this.authService.logout();
+  //   this.router.navigate(['/login']);
+  // }
 
   goToAdminDashboard(): void {
     this.router.navigate(['/trainer/dashboard']);
