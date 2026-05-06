@@ -13,6 +13,7 @@ import { AuthGuard } from './guards/auth.guard';
 import { CommonModule, UpperCasePipe } from '@angular/common';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NavComponent } from './navigation/nav.component';
+import { HttpClient, provideHttpClient } from '@angular/common/http';
 // import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 @NgModule({
@@ -31,7 +32,7 @@ import { NavComponent } from './navigation/nav.component';
     FontAwesomeModule,
     NavComponent,
   ],
-  providers: [AuthService, AuthGuard],
+  providers: [AuthService, AuthGuard, provideHttpClient()],
   bootstrap: [AppComponent],
 })
 export class AppModule {}

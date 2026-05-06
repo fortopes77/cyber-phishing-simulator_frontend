@@ -25,7 +25,7 @@ export class LoginComponent {
     private router: Router,
   ) {}
 
-  onLogin(): void {
+  async onLogin(): Promise<void> {
     // Clear previous error
     this.errorMessage = '';
 
@@ -38,7 +38,10 @@ export class LoginComponent {
     this.isLoading = true;
 
     // Attempt login
-    if (this.authService.login(this.credential.trim(), this.password.trim())) {
+    const result = await this.authService
+      .login(this.credential.trim(), this.password.trim())
+      .toPromise();
+    if (result) {
       // Login successful - redirect to appropriate dashboard
       const user = this.authService.getCurrentUser();
       if (user?.role === 'admin') {
