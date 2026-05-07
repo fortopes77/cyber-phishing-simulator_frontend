@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, tap } from 'rxjs';
 
 export interface User {
   id: string;
@@ -59,41 +59,35 @@ export class AuthService {
    * Login user with username/email and password
    * Accepts either username or email for credentials
    */
-  login(credential: string, password: string): any {
-    // Find user by username or email
-    return this.http.post('http://localhost:3000/auth/login', {
-      credential: 'testuser',
-      password: 'testpassword123',
-    });
-    // const user = this.mockUsers.find(
-    //   (u) =>
-    //     (u.username === credential || u.email === credential) &&
-    //     u.password === password,
-    // );
+  login(credential: string, password: string) {
+    return this.http
+      .post<any>('http://localhost:3000/auth/login', {
+        credential,
+        password,
+      })
+      .pipe(
+        tap((user) => {
+          const token = user.token;
 
-    // if (!user) {
-    //   console.error('Invalid credentials');
-    //   return false;
-    // }
+          localStorage.setItem(this.STORAGE_KEY, token);
 
-    // // Generate mock JWT-like token
-    // const token = this.generateMockToken(user);
+          const userData: User = {
+            id: user.user.id,
+            username: user.user.username,
+            email: user.user.email,
+            role: user.user.role,
+          };
 
-    // // Store token and user in localStorage
-    // localStorage.setItem(this.STORAGE_KEY, token);
-    // const userData: User = {
-    //   id: user.username,
-    //   username: user.username,
-    //   email: user.email,
-    //   role: user.role,
-    // };
-    // localStorage.setItem(this.USER_STORAGE_KEY, JSON.stringify(userData));
+          localStorage.setItem(this.USER_STORAGE_KEY, JSON.stringify(userData));
 
-    // // Update subjects
-    // this.currentUserSubject.next(userData);
-    // this.isAuthenticatedSubject.next(true);
+          this.currentUserSubject.next(userData);
+          this.isAuthenticatedSubject.next(true);
+        }),
+      );
+  }
 
-    // return true;
+  getFeedback(payload: any) {
+    return this.http.post('http://127.0.0.1:8000/feedback', payload);
   }
 
   /**

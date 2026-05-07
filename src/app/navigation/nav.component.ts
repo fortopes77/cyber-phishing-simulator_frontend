@@ -43,6 +43,36 @@ export class NavComponent implements OnInit, OnDestroy {
     );
   }
 
+  triggerFeedback() {
+    this.authService
+      .getFeedback({
+        scenario_content: 'Fake Microsoft password reset email',
+        scenarioChoices: [
+          {
+            id: 1,
+            text: 'Clicked the link',
+            isCorrect: false,
+            scenarioId: 1,
+          },
+          {
+            id: 2,
+            text: 'Reported the email',
+            isCorrect: true,
+            scenarioId: 1,
+          },
+        ],
+        selectedChoiceId: 1,
+      })
+      .subscribe({
+        next: (res) => {
+          console.log(res);
+        },
+        error: (err) => {
+          console.error(err);
+        },
+      });
+  }
+
   ngOnDestroy() {
     this.subscription.unsubscribe();
   }

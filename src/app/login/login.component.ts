@@ -41,7 +41,7 @@ export class LoginComponent {
     const result = await this.authService
       .login(this.credential.trim(), this.password.trim())
       .toPromise();
-    if (result) {
+    if (result.success) {
       // Login successful - redirect to appropriate dashboard
       const user = this.authService.getCurrentUser();
       if (user?.role === 'admin') {
