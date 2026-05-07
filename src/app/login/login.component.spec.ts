@@ -2,11 +2,14 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { LoginComponent } from './login.component';
-import { AuthService } from '../services/auth.service';
+import { AuthService } from '../auth/auth.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { FormsModule } from '@angular/forms';
 import { of } from 'rxjs';
-import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import {
+  provideHttpClient,
+  withInterceptorsFromDi,
+} from '@angular/common/http';
 
 describe('LoginComponent', () => {
   let component: LoginComponent;
@@ -22,15 +25,15 @@ describe('LoginComponent', () => {
     const routerSpy = jasmine.createSpyObj('Router', ['navigate']);
 
     await TestBed.configureTestingModule({
-    declarations: [LoginComponent],
-    imports: [FormsModule],
-    providers: [
+      declarations: [LoginComponent],
+      imports: [FormsModule],
+      providers: [
         { provide: AuthService, useValue: authServiceSpy },
         { provide: Router, useValue: routerSpy },
         provideHttpClient(withInterceptorsFromDi()),
         provideHttpClientTesting(),
-    ]
-}).compileComponents();
+      ],
+    }).compileComponents();
 
     authService = TestBed.inject(AuthService) as jasmine.SpyObj<AuthService>;
     router = TestBed.inject(Router) as jasmine.SpyObj<Router>;

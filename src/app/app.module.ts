@@ -8,12 +8,15 @@ import { LoginComponent } from './login/login.component';
 import { AdminDashboardComponent } from './dashboards/admin-dashboard/admin-dashboard.component';
 import { UserDashboardComponent } from './dashboards/user-dashboard/user-dashboard.component';
 
-import { AuthService } from './services/auth.service';
+import { AuthService } from './auth/auth.service';
 import { AuthGuard } from './guards/auth.guard';
 import { CommonModule, UpperCasePipe } from '@angular/common';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NavComponent } from './navigation/nav.component';
 import { HttpClient, provideHttpClient } from '@angular/common/http';
+import { AuthModule } from './auth/auth.module';
+import { StoreModule } from '@ngrx/store';
+import { EffectsModule } from '@ngrx/effects';
 // import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 @NgModule({
@@ -31,8 +34,11 @@ import { HttpClient, provideHttpClient } from '@angular/common/http';
     UpperCasePipe,
     FontAwesomeModule,
     NavComponent,
+    AuthModule,
+    StoreModule.forRoot({}),
+    EffectsModule.forRoot([]),
   ],
-  providers: [AuthService, AuthGuard, provideHttpClient()],
+  providers: [AuthGuard, provideHttpClient()],
   bootstrap: [AppComponent],
 })
 export class AppModule {}

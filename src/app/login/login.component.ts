@@ -1,6 +1,9 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
-import { AuthService } from '../services/auth.service';
+import { AuthService } from '../auth/auth.service';
+import { AuthActions } from '../auth/+state/auth.actions';
+import { Store } from '@ngrx/store';
+import { selectAuthState } from '../auth/+state/auth.selectors';
 
 @Component({
   selector: 'app-login',
@@ -23,7 +26,25 @@ export class LoginComponent {
   constructor(
     private authService: AuthService,
     private router: Router,
+    private store: Store,
   ) {}
+
+  ngOnInit() {
+    this.subscribeToLoginSuccess();
+  }
+
+  subscribeToLoginSuccess() {
+    this.store.select(selectAuthState).subscribe((authState) => {
+      if (authState?.isAuthenticated) {
+        this.isLoading = false;
+      }
+      if (authState?.user?.role === 'admin') {
+        this.router.navigate(['/trainer/dashboard']);
+      } else {
+        this.router.navigate(['/learner/dashboard']);
+      }
+    });
+  }
 
   async onLogin(): Promise<void> {
     // Clear previous error
@@ -38,21 +59,24 @@ export class LoginComponent {
     this.isLoading = true;
 
     // Attempt login
-    const result = await this.authService
-      .login(this.credential.trim(), this.password.trim())
-      .toPromise();
-    if (result.success) {
-      // Login successful - redirect to appropriate dashboard
-      const user = this.authService.getCurrentUser();
-      if (user?.role === 'admin') {
-        this.router.navigate(['/trainer/dashboard']);
-      } else {
-        this.router.navigate(['/learner/dashboard']);
-      }
-    } else {
-      // Login failed
-      this.errorMessage = 'Invalid username/email or password';
-      this.isLoading = false;
-    }
+    this.store.dispatch(
+      AuthActions.login({
+        credential: this.credential,
+        password: this.password,
+      }),
+    );
+    // if (result) {
+    //   // Login successful - redirect to appropriate dashboard
+    //   const user = this.authService.getCurrentUser();
+    //   if (user?.role === 'admin') {
+    //     this.router.navigate(['/trainer/dashboard']);
+    //   } else {
+    //     this.router.navigate(['/learner/dashboard']);
+    //   }
+    // } else {
+    //   // Login failed
+    //   this.errorMessage = 'Invalid username/email or password';
+    //   this.isLoading = false;
+    // }
   }
 }

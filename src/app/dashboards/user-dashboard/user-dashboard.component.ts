@@ -1,11 +1,11 @@
 import { Component } from '@angular/core';
-import { AuthService, User } from '../../services/auth.service';
+import { AuthService, User } from '../../auth/auth.service';
 
 @Component({
-    selector: 'app-user-dashboard',
-    templateUrl: './user-dashboard.component.html',
-    styleUrls: ['./user-dashboard.component.scss'],
-    standalone: false
+  selector: 'app-user-dashboard',
+  templateUrl: './user-dashboard.component.html',
+  styleUrls: ['./user-dashboard.component.scss'],
+  standalone: false,
 })
 export class UserDashboardComponent {
   currentUser: User | null = null;

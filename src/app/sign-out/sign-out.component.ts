@@ -1,6 +1,6 @@
 import { Component, AfterViewInit } from '@angular/core';
 import { RouterModule, Router } from '@angular/router';
-import { AuthService } from '../services/auth.service';
+import { AuthService } from '../auth/auth.service';
 
 @Component({
   selector: 'app-sign-out',

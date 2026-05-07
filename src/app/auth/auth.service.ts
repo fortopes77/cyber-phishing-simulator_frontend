@@ -60,30 +60,10 @@ export class AuthService {
    * Accepts either username or email for credentials
    */
   login(credential: string, password: string) {
-    return this.http
-      .post<any>('http://localhost:3000/auth/login', {
-        credential,
-        password,
-      })
-      .pipe(
-        tap((user) => {
-          const token = user.token;
-
-          localStorage.setItem(this.STORAGE_KEY, token);
-
-          const userData: User = {
-            id: user.user.id,
-            username: user.user.username,
-            email: user.user.email,
-            role: user.user.role,
-          };
-
-          localStorage.setItem(this.USER_STORAGE_KEY, JSON.stringify(userData));
-
-          this.currentUserSubject.next(userData);
-          this.isAuthenticatedSubject.next(true);
-        }),
-      );
+    return this.http.post('http://localhost:3000/auth/login', {
+      credential,
+      password,
+    });
   }
 
   getFeedback(payload: any) {
