@@ -23,7 +23,7 @@ export class AuthGuard implements CanActivate {
       take(1),
       map((auth) => {
         // 1. Not logged in
-        if (!auth?.isAuthenticated || !auth?.token) {
+        if (!auth?.isAuthenticated && !auth?.token) {
           console.log('Access denied - not authenticated');
           this.router.navigate(['/login']);
           return false;

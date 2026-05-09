@@ -1,22 +1,22 @@
 import { NgModule } from '@angular/core';
-import { BrowserModule } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
+import { BrowserModule } from '@angular/platform-browser';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
-import { LoginComponent } from './login/login.component';
-import { AdminDashboardComponent } from './dashboards/admin-dashboard/admin-dashboard.component';
-import { UserDashboardComponent } from './dashboards/user-dashboard/user-dashboard.component';
+import { LoginComponent } from './auth/components/login/login.component';
 
-import { AuthService } from './auth/auth.service';
-import { AuthGuard } from './guards/auth.guard';
 import { CommonModule, UpperCasePipe } from '@angular/common';
+import { provideHttpClient } from '@angular/common/http';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { NavComponent } from './navigation/nav.component';
-import { HttpClient, provideHttpClient } from '@angular/common/http';
-import { AuthModule } from './auth/auth.module';
-import { StoreModule } from '@ngrx/store';
 import { EffectsModule } from '@ngrx/effects';
+import { StoreModule } from '@ngrx/store';
+import { AdminDashboardComponent } from './admin/components/admin-dashboard/admin-dashboard.component';
+import { AuthModule } from './auth/auth.module';
+import { AuthGuard } from './guards/auth.guard';
+import { UserDashboardComponent } from './learner/components/user-dashboard/user-dashboard.component';
+import { NavComponent } from './shared/components/navigation/nav.component';
+import { DataCardComponent } from 'src/app/shared/components/data-card/data-card.component';
 // import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 @NgModule({
@@ -37,6 +37,7 @@ import { EffectsModule } from '@ngrx/effects';
     AuthModule,
     StoreModule.forRoot({}),
     EffectsModule.forRoot([]),
+    DataCardComponent,
   ],
   providers: [AuthGuard, provideHttpClient()],
   bootstrap: [AppComponent],

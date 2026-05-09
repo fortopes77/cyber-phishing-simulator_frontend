@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
-import { AuthService, User } from '../../auth/auth.service';
+import { AuthService, User } from '../../../auth/auth.service';
+import { iconLibrary } from 'src/app/shared/constants/font-awesome-icons.const';
 
 @Component({
   selector: 'app-user-dashboard',
@@ -9,11 +10,6 @@ import { AuthService, User } from '../../auth/auth.service';
 })
 export class UserDashboardComponent {
   currentUser: User | null = null;
-
-  constructor(private authService: AuthService) {
-    // Subscribe to current user
-    this.authService.currentUser$.subscribe((user) => {
-      this.currentUser = user;
-    });
-  }
+  fontAwesomeIcon = iconLibrary;
+  constructor() {}
 }

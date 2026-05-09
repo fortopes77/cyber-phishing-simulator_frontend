@@ -1,9 +1,9 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
-import { AuthService } from '../auth/auth.service';
-import { AuthActions } from '../auth/+state/auth.actions';
+import { AuthService } from '../../auth.service';
+import { AuthActions } from '../../+state/auth.actions';
 import { Store } from '@ngrx/store';
-import { selectAuthState } from '../auth/+state/auth.selectors';
+import { selectAuthState } from '../../+state/auth.selectors';
 
 @Component({
   selector: 'app-login',
@@ -65,18 +65,5 @@ export class LoginComponent {
         password: this.password,
       }),
     );
-    // if (result) {
-    //   // Login successful - redirect to appropriate dashboard
-    //   const user = this.authService.getCurrentUser();
-    //   if (user?.role === 'admin') {
-    //     this.router.navigate(['/trainer/dashboard']);
-    //   } else {
-    //     this.router.navigate(['/learner/dashboard']);
-    //   }
-    // } else {
-    //   // Login failed
-    //   this.errorMessage = 'Invalid username/email or password';
-    //   this.isLoading = false;
-    // }
   }
 }

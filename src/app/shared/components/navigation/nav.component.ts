@@ -1,10 +1,12 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, Router } from '@angular/router';
-import { AuthService, User } from '../auth/auth.service';
-import { Subscription } from 'rxjs';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Router, RouterModule } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faBars } from '@fortawesome/free-solid-svg-icons';
+import { Store } from '@ngrx/store';
+import { Subscription } from 'rxjs';
+import { selectAuthState } from '../../../auth/+state/auth.selectors';
+import { AuthService, User } from '../../../auth/auth.service';
+import { iconLibrary } from '../../constants/font-awesome-icons.const';
 
 @Component({
   selector: 'app-nav',
@@ -17,30 +19,28 @@ import { faBars } from '@fortawesome/free-solid-svg-icons';
   },
 })
 export class NavComponent implements OnInit, OnDestroy {
-  currentUser: User | null = null;
+  currentUser: User | undefined = undefined;
   isAuthenticated = false;
   sidebarHidden = false;
   profileOpen = false;
-  private subscription: Subscription = new Subscription();
-
-  bars = faBars;
+  fontAwesomeIcons = iconLibrary;
 
   constructor(
     private authService: AuthService,
     private router: Router,
+    private store: Store,
   ) {}
 
   ngOnInit() {
-    this.subscription.add(
-      this.authService.currentUser$.subscribe((user) => {
-        this.currentUser = user;
-      }),
-    );
-    this.subscription.add(
-      this.authService.isAuthenticated$.subscribe((auth) => {
-        this.isAuthenticated = auth;
-      }),
-    );
+    this.subscribeToAuthState();
+  }
+
+  subscribeToAuthState() {
+    this.store.select(selectAuthState).subscribe((authState) => {
+      if (authState?.isAuthenticated) {
+        this.currentUser = authState.user;
+      }
+    });
   }
 
   triggerFeedback() {
@@ -73,9 +73,7 @@ export class NavComponent implements OnInit, OnDestroy {
       });
   }
 
-  ngOnDestroy() {
-    this.subscription.unsubscribe();
-  }
+  ngOnDestroy() {}
 
   toggleSidebar() {
     this.sidebarHidden = !this.sidebarHidden;

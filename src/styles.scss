@@ -1,6 +1,12 @@
 body {
   margin: 0;
   font-family: "Inter", sans-serif;
+  background-color: #f8f8f8;
+  color: #1b2b3a;
+}
+
+a {
+  font-size: 16px;
 }
 
 app-nav {
@@ -10,10 +16,5 @@ app-nav {
 app-nav + .app-container {
   margin-top: 60px;
   margin-left: 282px;
-  padding: 1rem;
-  transition: margin-left 0.28s ease;
-}
-
-app-nav.sidebar-hidden + .app-container {
-  margin-left: 0;
+  padding: 2rem;
 }
