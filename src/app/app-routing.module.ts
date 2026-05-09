@@ -14,7 +14,7 @@ const routes: Routes = [
   // Protected routes
   {
     path: 'learner',
-    // canActivate: [AuthGuard],
+    canActivate: [AuthGuard],
     children: [
       { path: 'dashboard', component: UserDashboardComponent },
       { path: 'scenarios/:id', component: UserDashboardComponent },
@@ -25,7 +25,7 @@ const routes: Routes = [
   },
   {
     path: 'trainer',
-    // canActivate: [AuthGuard],
+    canActivate: [AuthGuard],
     children: [
       { path: 'dashboard', component: AdminDashboardComponent },
       { path: 'trainer/users/:id', component: AdminDashboardComponent },
