@@ -8,39 +8,61 @@
     </p>
   </div>
 
-  <div class="dashboard-content">
-    <div class="card">
-      <h2>Admin Access</h2>
-      <p>You have administrative privileges.</p>
-      <p>This page is restricted to admin users only.</p>
-    </div>
+  <div class="dashboard-statistics">
+    <app-data-card
+      label="Total Learners"
+      [statistic]="{ singleValue: 52 }"
+      [icon]="fontAwesomeIcons.userGroupIcon"
+      dataType="total"
+    />
+    <app-data-card
+      label="Active Modules"
+      [statistic]="{ singleValue: 8 }"
+      [icon]="fontAwesomeIcons.openBookIcon"
+      dataType="module"
+    /><app-data-card
+      label="Completion Rate"
+      [statistic]="{ percentage: 78 }"
+      [icon]="fontAwesomeIcons.targetIcon"
+      dataType="total"
+    /><app-data-card
+      label="Average Score"
+      [statistic]="{ percentage: 81 }"
+      [icon]="fontAwesomeIcons.trendUpIcon"
+      dataType="average"
+    />
+  </div>
+  <div>
+    <div completion-overview>
+      <app-dashboard-card
+        title="Completion Overview"
+        description="Module completion rates by cohort"
+        actionText="View Details"
+        (actionClick)="viewDetails()"
+      >
+        <app-progress-row
+          label="Bachelor of IT Students"
+          [value]="50"
+        ></app-progress-row>
 
-    <div class="card">
-      <h2>Features</h2>
-      <ul>
-        <li>User Management</li>
-        <li>System Configuration</li>
-        <li>Access Control</li>
-        <li>Audit Logs</li>
-      </ul>
-    </div>
+        <app-progress-row
+          label="Bachelor of Computer Science Students"
+          [value]="78"
+        ></app-progress-row>
 
-    <div class="card">
-      <h2>Quick Stats</h2>
-      <div class="stats">
-        <div class="stat-item">
-          <div class="stat-number">42</div>
-          <div class="stat-label">Active Users</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-number">128</div>
-          <div class="stat-label">Campaigns</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-number">95%</div>
-          <div class="stat-label">Completion Rate</div>
-        </div>
-      </div>
+        <app-progress-row label="Staff" [value]="28"></app-progress-row>
+
+        <app-progress-row label="Contractors" [value]="12"></app-progress-row>
+      </app-dashboard-card>
+    </div>
+    <div recent-activity>
+      <app-dashboard-card
+        title="Recent Activity"
+        description="Latest learner actions"
+        actionText="View More"
+      >
+        <app-activity-list [items]="activities"></app-activity-list>
+      </app-dashboard-card>
     </div>
   </div>
 </div>

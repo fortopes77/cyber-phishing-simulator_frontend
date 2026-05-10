@@ -1,0 +1,13 @@
+<div class="progress-row">
+  <div class="progress-row-label">
+    {{ label }}
+  </div>
+
+  <div class="progress-row-bar">
+    <div
+      class="progress-row-fill"
+      [style.width.%]="percentage"
+      [style.background]="color"
+    ></div>
+  </div>
+</div>

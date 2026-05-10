@@ -13,7 +13,7 @@ import { AuthService, User } from './auth/auth.service';
 })
 export class AppComponent {
   title = 'phishing-frontend';
-  currentUser: User | undefined = undefined;
+  currentUser?: User;
   isAuthenticated$: Observable<boolean>;
 
   constructor(
@@ -25,10 +25,10 @@ export class AppComponent {
   }
 
   ngOnInit() {
-    this.subscribeToAuthState();
+    this.subscribeToAuthUser();
   }
 
-  subscribeToAuthState() {
+  subscribeToAuthUser() {
     this.store.select(selectAuthState).subscribe((authState) => {
       if (authState?.isAuthenticated) {
         this.currentUser = authState.user;

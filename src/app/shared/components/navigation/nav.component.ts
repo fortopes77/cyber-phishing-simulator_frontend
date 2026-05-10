@@ -19,7 +19,7 @@ import { iconLibrary } from '../../constants/font-awesome-icons.const';
   },
 })
 export class NavComponent implements OnInit, OnDestroy {
-  currentUser: User | undefined = undefined;
+  currentUser?: User;
   isAuthenticated = false;
   sidebarHidden = false;
   profileOpen = false;
@@ -32,10 +32,10 @@ export class NavComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
-    this.subscribeToAuthState();
+    this.subscribeToAuthUser();
   }
 
-  subscribeToAuthState() {
+  subscribeToAuthUser() {
     this.store.select(selectAuthState).subscribe((authState) => {
       if (authState?.isAuthenticated) {
         this.currentUser = authState.user;

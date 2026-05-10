@@ -1,0 +1,32 @@
+<div class="activity-item">
+  <div
+    class="activity-item__icon"
+    [ngClass]="{
+      completed: item.status === 'completed',
+      started: item.status === 'started',
+      failed: item.status === 'failed',
+    }"
+  >
+    @if (item.status === "completed") {
+      <span>✓</span>
+    } @else if (item.status === "started") {
+      <span>▶</span>
+    } @else if (item.status === "failed") {
+      <span>✕</span>
+    }
+  </div>
+
+  <div class="activity-item__content">
+    <div class="activity-item__title">
+      {{ item.userName }}
+    </div>
+
+    <div class="activity-item__description">
+      {{ item.action }}
+    </div>
+  </div>
+
+  <div class="activity-item__time">
+    {{ item.timestamp }}
+  </div>
+</div>
