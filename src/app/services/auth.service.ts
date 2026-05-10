@@ -1,3 +1,4 @@
+import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 
@@ -43,7 +44,7 @@ export class AuthService {
   public isAuthenticated$: Observable<boolean> =
     this.isAuthenticatedSubject.asObservable();
 
-  constructor() {
+  constructor(private http: HttpClient) {
     // Restore user session if token exists
     if (this.hasValidToken()) {
       const storedUser = this.loadUserFromStorage();
@@ -58,37 +59,41 @@ export class AuthService {
    * Login user with username/email and password
    * Accepts either username or email for credentials
    */
-  login(credential: string, password: string): boolean {
+  login(credential: string, password: string): any {
     // Find user by username or email
-    const user = this.mockUsers.find(
-      (u) =>
-        (u.username === credential || u.email === credential) &&
-        u.password === password,
-    );
+    return this.http.post('http://localhost:3000/auth/login', {
+      credential: 'testuser',
+      password: 'testpassword123',
+    });
+    // const user = this.mockUsers.find(
+    //   (u) =>
+    //     (u.username === credential || u.email === credential) &&
+    //     u.password === password,
+    // );
 
-    if (!user) {
-      console.error('Invalid credentials');
-      return false;
-    }
+    // if (!user) {
+    //   console.error('Invalid credentials');
+    //   return false;
+    // }
 
-    // Generate mock JWT-like token
-    const token = this.generateMockToken(user);
+    // // Generate mock JWT-like token
+    // const token = this.generateMockToken(user);
 
-    // Store token and user in localStorage
-    localStorage.setItem(this.STORAGE_KEY, token);
-    const userData: User = {
-      id: user.username,
-      username: user.username,
-      email: user.email,
-      role: user.role,
-    };
-    localStorage.setItem(this.USER_STORAGE_KEY, JSON.stringify(userData));
+    // // Store token and user in localStorage
+    // localStorage.setItem(this.STORAGE_KEY, token);
+    // const userData: User = {
+    //   id: user.username,
+    //   username: user.username,
+    //   email: user.email,
+    //   role: user.role,
+    // };
+    // localStorage.setItem(this.USER_STORAGE_KEY, JSON.stringify(userData));
 
-    // Update subjects
-    this.currentUserSubject.next(userData);
-    this.isAuthenticatedSubject.next(true);
+    // // Update subjects
+    // this.currentUserSubject.next(userData);
+    // this.isAuthenticatedSubject.next(true);
 
-    return true;
+    // return true;
   }
 
   /**

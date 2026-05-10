@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
-import { AuthService, User } from '../../../services/auth.service';
+import { AuthService, User } from '../services/auth.service';
 import { Subscription } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faBars } from '@fortawesome/free-solid-svg-icons';
@@ -57,7 +57,6 @@ export class NavComponent implements OnInit, OnDestroy {
 
   logout() {
     this.profileOpen = false;
-    this.authService.logout();
-    this.router.navigate(['/login']);
+    this.router.navigate(['/sign-out']);
   }
 }
