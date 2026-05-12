@@ -10,6 +10,10 @@ import { AuthService, User } from './auth/auth.service';
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
   standalone: false,
+  selector: 'app-root',
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.scss'],
+  standalone: false,
 })
 export class AppComponent {
   title = 'phishing-frontend';

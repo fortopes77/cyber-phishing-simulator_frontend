@@ -1,0 +1,49 @@
+.sign-out-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #263645 5%, #7fd4e0 100%);
+  padding: 20px;
+}
+
+.sign-out-card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 40px;
+  max-width: 400px;
+  text-align: center;
+
+  h1 {
+    color: #333;
+    margin-bottom: 16px;
+    font-size: 28px;
+  }
+
+  p {
+    color: #666;
+    margin-bottom: 32px;
+    font-size: 16px;
+  }
+
+  .btn-login {
+    background-color: #667eea;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 4px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+
+    &:hover {
+      background-color: #764ba2;
+    }
+
+    &:active {
+      transform: scale(0.98);
+    }
+  }
+}
