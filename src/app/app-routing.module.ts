@@ -1,7 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { LoginComponent } from './auth/components/login/login.component';
-import { SignOutComponent } from './sign-out/sign-out.component';
 import { AuthGuard } from './guards/auth.guard';
 import { SignOutComponent } from './auth/components/sign-out/sign-out.component';
 import { UserDashboardComponent } from './learner/components/user-dashboard/user-dashboard.component';
@@ -11,7 +10,6 @@ const routes: Routes = [
   // Public routes
   // Public routes
   { path: 'login', component: LoginComponent },
-  { path: 'sign-out', component: SignOutComponent },
   { path: 'sign-out', component: SignOutComponent },
 
   // Protected routes

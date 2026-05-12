@@ -1,5 +1,4 @@
 import { HttpClient } from '@angular/common/http';
-import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 
@@ -45,7 +44,6 @@ export class AuthService {
   public isAuthenticated$: Observable<boolean> =
     this.isAuthenticatedSubject.asObservable();
 
-  constructor(private http: HttpClient) {
   constructor(private http: HttpClient) {
     // Restore user session if token exists
     if (this.hasValidToken()) {
