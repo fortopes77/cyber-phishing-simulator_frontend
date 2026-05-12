@@ -1,0 +1,73 @@
+<aside class="sidebar" [class.hidden]="sidebarHidden">
+  <div class="sidebar-header">
+    <div class="brand">
+      <img src="assets/phish-logo-long.png" alt="Phish logo" />
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    @if (currentUser?.role === "admin") {
+      <ul>
+        <li>
+          <fa-icon [icon]="fontAwesomeIcons.progressBarsIcon"></fa-icon>
+          <a routerLink="/trainer/dashboard" routerLinkActive="active"
+            >Dashboard</a
+          >
+        </li>
+        <li>
+          <fa-icon [icon]="fontAwesomeIcons.userIcon"></fa-icon>
+          <a routerLink="/trainer/learners" routerLinkActive="active"
+            >Learners</a
+          >
+        </li>
+        <!-- TODO PHISH-133: Implement Cohorts feature -->
+        <li>
+          <fa-icon [icon]="fontAwesomeIcons.userGroupIcon"></fa-icon>
+          <a routerLink="/trainer/cohorts" routerLinkActive="active">Cohorts</a>
+        </li>
+        <li>
+          <fa-icon [icon]="fontAwesomeIcons.openBookIcon"></fa-icon>
+          <a routerLink="/trainer/analytics" routerLinkActive="active"
+            >Modules</a
+          >
+        </li>
+        <li>
+          <fa-icon [icon]="fontAwesomeIcons.groupLayerIcon"></fa-icon>
+          <a routerLink="/trainer/analytics" routerLinkActive="active"
+            >Scenario Library</a
+          >
+        </li>
+        <li>
+          <fa-icon [icon]="fontAwesomeIcons.chartColumnIcon"></fa-icon>
+          <a routerLink="/trainer/analytics" routerLinkActive="active"
+            >Reports & Analytics</a
+          >
+        </li>
+        <li>
+          <fa-icon [icon]="fontAwesomeIcons.cogIcon"></fa-icon>
+          <a routerLink="/trainer/analytics" routerLinkActive="active"
+            >System Settings</a
+          >
+        </li>
+      </ul>
+    } @else {
+      <ul>
+        <li class="nav-item">
+          <fa-icon [icon]="fontAwesomeIcons.progressBarsIcon"></fa-icon>
+          <a routerLink="/learner/dashboard" routerLinkActive="active"
+            >Dashboard</a
+          >
+        </li>
+        <li class="nav-item">
+          <fa-icon [icon]="fontAwesomeIcons.groupLayerIcon"></fa-icon>
+          <a routerLink="/learner/scenarios" routerLinkActive="active"
+            >Scenarios</a
+          >
+        </li>
+        <li class="nav-item">
+          <a routerLink="/learner/results" routerLinkActive="active">Results</a>
+        </li>
+      </ul>
+    }
+  </nav>
+</aside>

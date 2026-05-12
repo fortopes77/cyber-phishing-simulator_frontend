@@ -1,0 +1,68 @@
+<div class="dashboard-container">
+  <div class="dashboard-header">
+    <h1>Admin Dashboard</h1>
+    <p *ngIf="currentUser" class="user-info">
+      Welcome, <strong>{{ currentUser.username }}</strong> ({{
+        currentUser.role
+      }})
+    </p>
+  </div>
+
+  <div class="dashboard-statistics">
+    <app-data-card
+      label="Total Learners"
+      [statistic]="{ singleValue: 52 }"
+      [icon]="fontAwesomeIcons.userGroupIcon"
+      dataType="total"
+    />
+    <app-data-card
+      label="Active Modules"
+      [statistic]="{ singleValue: 8 }"
+      [icon]="fontAwesomeIcons.openBookIcon"
+      dataType="module"
+    /><app-data-card
+      label="Completion Rate"
+      [statistic]="{ percentage: 78 }"
+      [icon]="fontAwesomeIcons.targetIcon"
+      dataType="total"
+    /><app-data-card
+      label="Average Score"
+      [statistic]="{ percentage: 81 }"
+      [icon]="fontAwesomeIcons.trendUpIcon"
+      dataType="average"
+    />
+  </div>
+  <div>
+    <div completion-overview>
+      <app-dashboard-card
+        title="Completion Overview"
+        description="Module completion rates by cohort"
+        actionText="View Details"
+        (actionClick)="viewDetails()"
+      >
+        <app-progress-row
+          label="Bachelor of IT Students"
+          [value]="50"
+        ></app-progress-row>
+
+        <app-progress-row
+          label="Bachelor of Computer Science Students"
+          [value]="78"
+        ></app-progress-row>
+
+        <app-progress-row label="Staff" [value]="28"></app-progress-row>
+
+        <app-progress-row label="Contractors" [value]="12"></app-progress-row>
+      </app-dashboard-card>
+    </div>
+    <div recent-activity>
+      <app-dashboard-card
+        title="Recent Activity"
+        description="Latest learner actions"
+        actionText="View More"
+      >
+        <app-activity-list [items]="activities"></app-activity-list>
+      </app-dashboard-card>
+    </div>
+  </div>
+</div>

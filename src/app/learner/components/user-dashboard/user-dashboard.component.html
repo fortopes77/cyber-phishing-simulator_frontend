@@ -1,0 +1,36 @@
+<div class="dashboard-container">
+  <div class="dashboard-header">
+    <h1>User Dashboard</h1>
+    <p *ngIf="currentUser" class="user-info">
+      Welcome back, <strong>{{ currentUser.username }}</strong> ({{
+        currentUser.role
+      }})
+    </p>
+  </div>
+
+  <div class="dashboard-content">
+    <app-data-card
+      [icon]="fontAwesomeIcon.openBookIcon"
+      label="Modules Completed"
+      [statistic]="{ topValue: 3, bottomValue: 5 }"
+      dataType="module"
+    >
+    </app-data-card>
+
+    <app-data-card
+      [icon]="fontAwesomeIcon.targetIcon"
+      label="Scenarios Completed"
+      [statistic]="{ topValue: 1, bottomValue: 2 }"
+      dataType="scenario"
+    >
+    </app-data-card>
+
+    <app-data-card
+      [icon]="fontAwesomeIcon.awardIcon"
+      label="Average Score"
+      [statistic]="{ percentage: 75 }"
+      dataType="average"
+    >
+    </app-data-card>
+  </div>
+</div>
