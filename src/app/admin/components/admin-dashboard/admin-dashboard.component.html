@@ -32,8 +32,8 @@
       dataType="average"
     />
   </div>
-  <div>
-    <div completion-overview>
+  <div class="completion-activity-section">
+    <div class="completion-overview">
       <app-dashboard-card
         title="Completion Overview"
         description="Module completion rates by cohort"
@@ -55,7 +55,7 @@
         <app-progress-row label="Contractors" [value]="12"></app-progress-row>
       </app-dashboard-card>
     </div>
-    <div recent-activity>
+    <div class="recent-activity">
       <app-dashboard-card
         title="Recent Activity"
         description="Latest learner actions"
@@ -64,5 +64,27 @@
         <app-activity-list [items]="activities"></app-activity-list>
       </app-dashboard-card>
     </div>
+  </div>
+  <div class="action-card-section">
+    <app-action-card
+      title="Manage Learners"
+      subtitle="View and edit learner profiles"
+      [icon]="fontAwesomeIcons.userGroupIcon"
+      (click)="viewDetails()"
+    ></app-action-card>
+
+    <app-action-card
+      title="Manage Modules"
+      subtitle="Create and edit training modules"
+      [icon]="fontAwesomeIcons.openBookIcon"
+      (click)="viewDetails()"
+    ></app-action-card>
+
+    <app-action-card
+      title="View Reports"
+      subtitle="Analyze learner performance"
+      [icon]="fontAwesomeIcons.targetIcon"
+      (click)="viewDetails()"
+    ></app-action-card>
   </div>
 </div>

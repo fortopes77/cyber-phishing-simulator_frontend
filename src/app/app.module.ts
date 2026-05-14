@@ -22,6 +22,7 @@ import { ProgressRowComponent } from './shared/components/progress-row/progress-
 import { DashboardCardComponent } from './shared/components/dashboard-card/dashboard-card.component';
 import { ActivityItemComponent } from './admin/components/activity-item/activity-item.component';
 import { ActivityListComponent } from './admin/components/activity-list/activity-list.component';
+import { ActionCardComponent } from 'src/app/shared/components/action-card/action-card.component';
 // import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 @NgModule({
@@ -47,6 +48,7 @@ import { ActivityListComponent } from './admin/components/activity-list/activity
     DashboardCardComponent,
     ActivityItemComponent,
     ActivityListComponent,
+    ActionCardComponent,
   ],
   providers: [
     AuthGuard,
