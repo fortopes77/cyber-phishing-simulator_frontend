@@ -1,12 +1,15 @@
 import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 import { BrowserModule } from '@angular/platform-browser';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { LoginComponent } from './auth/components/login/login.component';
+import { LoginComponent } from './auth/components/login/login.component';
 
 import { CommonModule, UpperCasePipe } from '@angular/common';
+import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClient } from '@angular/common/http';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { EffectsModule } from '@ngrx/effects';
@@ -49,6 +52,11 @@ import { ActionCardComponent } from 'src/app/shared/components/action-card/actio
     ActivityItemComponent,
     ActivityListComponent,
     ActionCardComponent,
+  ],
+  providers: [
+    AuthGuard,
+    provideHttpClient(),
+    provideStore({}, { metaReducers }),
   ],
   providers: [
     AuthGuard,
