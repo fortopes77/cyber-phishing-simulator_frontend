@@ -1,0 +1,23 @@
+<button class="action-card" [class.disabled]="disabled" (click)="onClick()">
+  <div class="action-card__left">
+    <div class="action-card__icon">
+      <fa-icon [icon]="icon"></fa-icon>
+    </div>
+
+    <div class="action-card__content">
+      <div class="action-card__title">
+        {{ title }}
+      </div>
+
+      @if (subtitle) {
+        <div class="action-card__subtitle">
+          {{ subtitle }}
+        </div>
+      }
+    </div>
+  </div>
+
+  <div class="action-card__arrow">
+    <fa-icon [icon]="fontAwesomeIcons.arrowRightIcon"></fa-icon>
+  </div>
+</button>

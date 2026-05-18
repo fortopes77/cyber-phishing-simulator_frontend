@@ -1,4 +1,5 @@
 import {
+  faArrowRight,
   faArrowTrendUp,
   faAward,
   faBarsProgress,
@@ -26,4 +27,5 @@ export const iconLibrary = {
   targetIcon: faBullseye,
   awardIcon: faAward,
   trendUpIcon: faArrowTrendUp,
+  arrowRightIcon: faArrowRight,
 };
