@@ -1,0 +1,305 @@
+.page {
+  padding: 32px;
+  background: #f5f7fa;
+  min-height: 100vh;
+}
+
+/* -------------------------------- */
+/* Header */
+/* -------------------------------- */
+
+.module-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+
+  margin-bottom: 32px;
+
+  &__left {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  &__back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+
+    font-size: 14px;
+    color: #4b5563;
+
+    cursor: pointer;
+
+    &:hover {
+      color: #111827;
+    }
+  }
+
+  &__tags {
+    display: flex;
+    gap: 8px;
+  }
+
+  &__title {
+    font-size: 48px;
+    font-weight: 700;
+    color: #1f2937;
+
+    line-height: 1.1;
+
+    margin: 0;
+  }
+
+  &__description {
+    font-size: 18px;
+    color: #6b7280;
+
+    max-width: 900px;
+  }
+
+  &__right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 20px;
+  }
+}
+
+/* -------------------------------- */
+/* Tags */
+/* -------------------------------- */
+
+.tag {
+  padding: 6px 12px;
+  border-radius: 999px;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  &--gray {
+    background: #e5e7eb;
+    color: #374151;
+  }
+
+  &--green {
+    background: #dcfce7;
+    color: #15803d;
+  }
+}
+
+/* -------------------------------- */
+/* Score */
+/* -------------------------------- */
+
+.score-card {
+  text-align: right;
+
+  &__label {
+    font-size: 13px;
+    color: #6b7280;
+  }
+
+  &__value {
+    font-size: 36px;
+    font-weight: 700;
+    color: #2563eb;
+  }
+}
+
+/* -------------------------------- */
+/* Shared Cards */
+/* -------------------------------- */
+
+.section-card {
+  background: white;
+
+  border-radius: 20px;
+
+  padding: 28px;
+
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.06),
+    0 4px 12px rgba(0, 0, 0, 0.04);
+
+  margin-bottom: 28px;
+}
+
+/* -------------------------------- */
+/* Section Titles */
+/* -------------------------------- */
+
+.section-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1f2937;
+
+  margin: 0 0 4px 0;
+}
+
+.section-description {
+  font-size: 15px;
+  color: #6b7280;
+
+  margin-bottom: 24px;
+}
+
+/* -------------------------------- */
+/* Progress */
+/* -------------------------------- */
+
+.module-progress {
+  &__top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    margin-bottom: 16px;
+  }
+
+  &__label {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2937;
+  }
+
+  &__stats {
+    font-size: 14px;
+    color: #6b7280;
+  }
+
+  &__track {
+    height: 12px;
+
+    background: #dbeafe;
+
+    border-radius: 999px;
+
+    overflow: hidden;
+  }
+
+  &__fill {
+    height: 100%;
+
+    background: #1976d2;
+
+    border-radius: inherit;
+
+    transition: width 300ms ease;
+  }
+}
+
+/* -------------------------------- */
+/* Scenario List */
+/* -------------------------------- */
+
+.scenario-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* -------------------------------- */
+/* Scenario Item */
+/* -------------------------------- */
+
+.scenario-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  padding: 18px 20px;
+
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+
+  background: #f9fafb;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+
+  cursor: pointer;
+
+  &:hover {
+    background: white;
+
+    border-color: #cbd5e1;
+
+    transform: translateY(-1px);
+  }
+
+  &__left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  &__number {
+    width: 32px;
+    height: 32px;
+
+    border-radius: 50%;
+
+    background: #dbeafe;
+    color: #2563eb;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-weight: 700;
+    font-size: 14px;
+  }
+
+  &__content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  &__title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2937;
+  }
+
+  &__meta {
+    display: flex;
+    gap: 8px;
+  }
+
+  &__status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    font-size: 14px;
+    font-weight: 500;
+
+    &--completed {
+      color: #2563eb;
+    }
+
+    &--progress {
+      color: #ca8a04;
+    }
+  }
+}
+
+/* -------------------------------- */
+/* Small Meta Pills */
+/* -------------------------------- */
+
+.pill {
+  padding: 4px 8px;
+
+  border-radius: 6px;
+
+  font-size: 12px;
+  font-weight: 500;
+
+  background: #e5e7eb;
+  color: #374151;
+}

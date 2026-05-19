@@ -23,7 +23,7 @@ import { metaReducers } from './meta.reducer';
 import { DashboardCardComponent } from './shared/components/dashboard-card/dashboard-card.component';
 import { NavComponent } from './shared/components/navigation/nav.component';
 import { ProgressRowComponent } from './shared/components/progress-row/progress-row.component';
-// import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { LearningProgressCardComponent } from './learner/components/learning-progress-card/learning-progress-card.component';
 
 @NgModule({
   declarations: [
@@ -49,6 +49,7 @@ import { ProgressRowComponent } from './shared/components/progress-row/progress-
     ActivityItemComponent,
     ActivityListComponent,
     ActionCardComponent,
+    LearningProgressCardComponent,
   ],
   providers: [
     AuthGuard,

@@ -6,8 +6,10 @@ import {
   faBookOpen,
   faBullseye,
   faChartColumn,
+  faClock,
   faCog,
   faLayerGroup,
+  faLock,
   faUser,
   faUserGroup,
 } from '@fortawesome/free-solid-svg-icons';
@@ -24,8 +26,10 @@ export const iconLibrary = {
   groupLayerIcon: faLayerGroup,
   chartColumnIcon: faChartColumn,
   cogIcon: faCog,
+  lockIcon: faLock,
   targetIcon: faBullseye,
   awardIcon: faAward,
   trendUpIcon: faArrowTrendUp,
   arrowRightIcon: faArrowRight,
+  clockIcon: faClock,
 };

@@ -3,6 +3,8 @@ import { RouterModule, Routes } from '@angular/router';
 import { LoginComponent } from './auth/components/login/login.component';
 import { AuthGuard } from './guards/auth.guard';
 import { SignOutComponent } from './auth/components/sign-out/sign-out.component';
+import { UserSettingsComponent } from './auth/components/user-settings/user-settings.component';
+import { ModulePageComponent } from './learner/components/module-page/module-page.component';
 import { UserDashboardComponent } from './learner/components/user-dashboard/user-dashboard.component';
 import { AdminDashboardComponent } from './admin/components/admin-dashboard/admin-dashboard.component';
 
@@ -32,6 +34,16 @@ const routes: Routes = [
       { path: 'trainer/users/:id', component: AdminDashboardComponent },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
+  },
+  {
+    path: 'learning/:slug',
+    component: ModulePageComponent,
+    canActivate: [AuthGuard],
+  },
+  {
+    path: 'settings',
+    component: UserSettingsComponent,
+    canActivate: [AuthGuard],
   },
   // Wildcard route - redirect to user dashboard if authenticated, login if not
   { path: '**', redirectTo: '/learner/dashboard' },
