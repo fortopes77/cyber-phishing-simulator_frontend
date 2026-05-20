@@ -1,12 +1,12 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Statistic } from '../../models/statistic.model';
 import { IconDefinition } from '@fortawesome/free-solid-svg-icons';
-import { BrowserModule } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-data-card',
-  imports: [FaIconComponent, BrowserModule],
+  imports: [CommonModule, FaIconComponent],
   templateUrl: './data-card.component.html',
   styleUrl: './data-card.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

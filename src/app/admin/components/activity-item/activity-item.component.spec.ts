@@ -8,12 +8,17 @@ describe('ActivityItemComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ActivityItemComponent]
-    })
-    .compileComponents();
+      imports: [ActivityItemComponent],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(ActivityItemComponent);
     component = fixture.componentInstance;
+    component.item = {
+      userName: 'Test User',
+      action: 'Completed test',
+      timestamp: '1 hour ago',
+      status: 'completed',
+    } as any;
     fixture.detectChanges();
   });
 

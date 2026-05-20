@@ -35,12 +35,14 @@ export class LoginComponent {
 
   subscribeToLoginSuccess() {
     this.store.select(selectAuthState).subscribe((authState) => {
-      if (authState?.isAuthenticated) {
-        this.isLoading = false;
+      if (!authState || !authState.isAuthenticated) {
+        return;
       }
-      if (authState?.user?.role === 'admin') {
+
+      this.isLoading = false;
+      if (authState.user?.role === 'admin') {
         this.router.navigate(['/trainer/dashboard']);
-      } else {
+      } else if (authState.user?.role) {
         this.router.navigate(['/learner/dashboard']);
       }
     });
@@ -50,8 +52,11 @@ export class LoginComponent {
     // Clear previous error
     this.errorMessage = '';
 
+    const credential = this.credential.trim();
+    const password = this.password.trim();
+
     // Validate inputs
-    if (!this.credential.trim() || !this.password.trim()) {
+    if (!credential || !password) {
       this.errorMessage = 'Please enter both username/email and password';
       return;
     }
@@ -61,8 +66,8 @@ export class LoginComponent {
     // Attempt login
     this.store.dispatch(
       AuthActions.login({
-        credential: this.credential,
-        password: this.password,
+        credential,
+        password,
       }),
     );
   }
