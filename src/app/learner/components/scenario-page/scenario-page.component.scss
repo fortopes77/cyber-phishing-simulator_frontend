@@ -1,0 +1,113 @@
+.scenario-page {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.scenario-page__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.scenario-page__module {
+  font-size: 1rem;
+  color: #65748b;
+  margin-bottom: 8px;
+}
+
+.scenario-page__counter {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.scenario-alert {
+  border: 1px solid #f5c76a;
+  background: #fff4e5;
+  color: #8b5e00;
+  padding: 18px 20px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+}
+
+.scenario-alert p {
+  margin: 8px 0 0;
+}
+
+.scenario-card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 9px 24px rgba(52, 72, 98, 0.08);
+  padding: 26px;
+  margin-bottom: 24px;
+}
+
+.scenario-card__top {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.scenario-card__tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  color: #1f3d64;
+  background: #eef4fb;
+  border-radius: 999px;
+  padding: 8px 14px;
+}
+
+.scenario-card__tag--difficulty {
+  background: #e8f5e9;
+  color: #1c5a33;
+}
+
+.scenario-card__from,
+.scenario-card__subject {
+  width: 100%;
+}
+
+.scenario-card__from {
+  color: #5f6e7a;
+  font-size: 0.9rem;
+  margin-top: 8px;
+}
+
+.scenario-card__subject {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-top: 8px;
+}
+
+.scenario-card__body {
+  padding: 20px 0 0;
+  font-family: "Inter", sans-serif;
+  font-size: 0.95rem;
+  color: #2f3d4c;
+  white-space: pre-wrap;
+  line-height: 1.7;
+}
+
+.scenario-page__actions {
+  display: flex;
+  justify-content: center;
+}
+
+.primary-button {
+  background: #1177ee;
+  border: none;
+  color: #fff;
+  border-radius: 10px;
+  padding: 14px 28px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.primary-button:hover {
+  background: #0f65d6;
+}

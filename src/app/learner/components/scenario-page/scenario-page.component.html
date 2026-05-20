@@ -1,0 +1,36 @@
+<div class="scenario-page">
+  <div class="scenario-page__header">
+    <div class="scenario-page__info">
+      <div class="scenario-page__module">{{ moduleTitle }}</div>
+      <div class="scenario-page__counter">
+        Scenario {{ scenarioNumber }} of {{ totalScenarios }}
+      </div>
+    </div>
+  </div>
+
+  <div class="scenario-alert">
+    <strong>This is a training scenario</strong>
+    <p>Review this message carefully and decide if it’s safe or suspicious</p>
+  </div>
+
+  <div class="scenario-card">
+    <div class="scenario-card__top">
+      <span class="scenario-card__tag">{{ scenario.type }}</span>
+      <span class="scenario-card__tag scenario-card__tag--difficulty">{{
+        scenario.difficulty
+      }}</span>
+      <div class="scenario-card__from">From: {{ scenario.from }}</div>
+      <div class="scenario-card__subject">{{ scenario.subject }}</div>
+    </div>
+
+    <div class="scenario-card__body">
+      <p>{{ scenario.body }}</p>
+    </div>
+  </div>
+
+  <div class="scenario-page__actions">
+    <button class="primary-button" (click)="makeDecision()">
+      Make Your Decision
+    </button>
+  </div>
+</div>

@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-module-page',
@@ -30,7 +30,10 @@ export class ModulePageComponent {
     },
   ];
 
-  constructor(private route: ActivatedRoute) {
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+  ) {
     this.route.paramMap.subscribe((params) => {
       const s = params.get('slug') || '';
       this.slug = s;
@@ -39,5 +42,13 @@ export class ModulePageComponent {
         ? s.replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
         : 'Module';
     });
+  }
+
+  continueModule(): void {
+    const nextScenario =
+      this.scenarios.find((scenario) => scenario.status !== 'Completed') ||
+      this.scenarios[0];
+
+    this.router.navigate(['/learner/scenarios', nextScenario.id]);
   }
 }

@@ -1,0 +1,126 @@
+.scenario-choice-page {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.scenario-choice-page__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.scenario-choice-page__nav {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  font-size: 0.95rem;
+  color: #1f3d64;
+}
+
+.link-button {
+  background: transparent;
+  border: none;
+  color: #1177ee;
+  cursor: pointer;
+  font-size: 0.95rem;
+  padding: 0;
+}
+
+.scenario-alert {
+  border: 1px solid #f5c76a;
+  background: #fff4e5;
+  color: #8b5e00;
+  padding: 18px 20px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+}
+
+.scenario-choice-card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 9px 24px rgba(52, 72, 98, 0.08);
+  padding: 32px;
+}
+
+.scenario-choice-card__title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.scenario-choice-card__subtitle {
+  text-align: center;
+  color: #586475;
+  margin-bottom: 24px;
+}
+
+.scenario-choice-card__scenario-info {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.scenario-choice-card__scenario-title {
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.scenario-choice-card__scenario-from {
+  color: #7d8a9b;
+}
+
+.scenario-choice-card__options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.decision-button {
+  border: 1px solid #dde4ed;
+  border-radius: 16px;
+  background: #f8f9fb;
+  color: #1f3d64;
+  text-align: left;
+  padding: 24px;
+  cursor: pointer;
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.decision-button.selected {
+  border-color: #1177ee;
+  background: #eef4ff;
+}
+
+.decision-button__icon {
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #e6efff;
+  border-radius: 50%;
+  font-size: 1.2rem;
+}
+
+.decision-button--safe .decision-button__icon {
+  background: #e9f4ee;
+}
+
+.decision-button--suspicious .decision-button__icon {
+  background: #fff2e6;
+}
+
+.decision-button__label {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.decision-button__description {
+  color: #6f7b8b;
+  font-size: 0.9rem;
+}

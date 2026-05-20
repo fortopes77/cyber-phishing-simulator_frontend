@@ -1,15 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
+import { RouterTestingModule } from '@angular/router/testing';
 import { of } from 'rxjs';
 import { ModulePageComponent } from './module-page.component';
 
 describe('ModulePageComponent', () => {
   let component: ModulePageComponent;
   let fixture: ComponentFixture<ModulePageComponent>;
+  let router: Router;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ModulePageComponent],
+      imports: [ModulePageComponent, RouterTestingModule],
       providers: [
         {
           provide: ActivatedRoute,
@@ -19,6 +21,9 @@ describe('ModulePageComponent', () => {
         },
       ],
     }).compileComponents();
+
+    router = TestBed.inject(Router);
+    spyOn(router, 'navigate');
 
     fixture = TestBed.createComponent(ModulePageComponent);
     component = fixture.componentInstance;
@@ -35,5 +40,11 @@ describe('ModulePageComponent', () => {
 
   it('should generate a formatted title from slug', () => {
     expect(component.title).toBe('Email Phishing');
+  });
+
+  it('should navigate to the next incomplete scenario on continue', () => {
+    component.continueModule();
+
+    expect(router.navigate).toHaveBeenCalledWith(['/learner/scenarios', 2]);
   });
 });
