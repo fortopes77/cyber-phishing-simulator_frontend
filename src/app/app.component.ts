@@ -30,9 +30,7 @@ export class AppComponent {
 
   subscribeToAuthUser() {
     this.store.select(selectAuthState).subscribe((authState) => {
-      if (authState?.isAuthenticated) {
-        this.currentUser = authState.user;
-      }
+      this.currentUser = authState.user;
     });
   }
 

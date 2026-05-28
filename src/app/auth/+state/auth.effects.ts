@@ -33,4 +33,16 @@ export class AuthEffects {
       ),
     ),
   );
+
+  logout$ = createEffect(
+    () =>
+      this.actions$.pipe(
+        ofType(AuthActions.logout),
+        map(() => {
+          this.authService.logout();
+          return AuthActions.logoutSuccess();
+        }),
+      ),
+    { dispatch: true },
+  );
 }

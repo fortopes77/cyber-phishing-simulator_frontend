@@ -29,4 +29,10 @@ export const authReducer = createReducer(
     isAuthenticated: true,
     token,
   })),
+  on(AuthActions.logoutSuccess, (state) => ({
+    ...state,
+    user: undefined,
+    token: undefined,
+    isAuthenticated: false,
+  })),
 );

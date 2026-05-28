@@ -1,6 +1,8 @@
 import { Component, AfterViewInit } from '@angular/core';
 import { RouterModule, Router } from '@angular/router';
 import { AuthService } from '../../auth.service';
+import { Store } from '@ngrx/store';
+import { AuthActions } from '../../+state/auth.actions';
 
 @Component({
   selector: 'app-sign-out',
@@ -13,11 +15,12 @@ export class SignOutComponent implements AfterViewInit {
   constructor(
     private authService: AuthService,
     private router: Router,
+    private store: Store,
   ) {}
 
   ngAfterViewInit() {
     setTimeout(() => {
-      this.authService.logout();
+      this.store.dispatch(AuthActions.logout());
     }, 0);
   }
 

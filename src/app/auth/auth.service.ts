@@ -73,11 +73,12 @@ export class AuthService {
   /**
    * Logout current user and clear storage
    */
-  logout(): void {
+  logout(): boolean {
     localStorage.removeItem(this.STORAGE_KEY);
     localStorage.removeItem(this.USER_STORAGE_KEY);
     this.currentUserSubject.next(null);
     this.isAuthenticatedSubject.next(false);
+    return true;
   }
 
   /**
