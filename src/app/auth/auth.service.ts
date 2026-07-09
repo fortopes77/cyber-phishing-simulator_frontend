@@ -60,14 +60,14 @@ export class AuthService {
    * Accepts either username or email for credentials
    */
   login(credential: string, password: string) {
-    return this.http.post('http://localhost:3000/auth/login', {
+    return this.http.post('/api/auth/login', {
       credential,
       password,
     });
   }
 
   getFeedback(payload: any) {
-    return this.http.post('http://127.0.0.1:8000/feedback', payload);
+    return this.http.post('/api/feedback', payload);
   }
 
   /**
