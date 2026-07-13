@@ -1,0 +1,40 @@
+{
+  "scenarios": [
+    {
+      "id": "s_001",
+      "title": "Invoice Fraud Attempt",
+      "difficulty": "medium",
+      "category": "Invoice fraud"
+    },
+    {
+      "id": "s_002",
+      "title": "Password Reset Phishing",
+      "difficulty": "easy",
+      "category": "Credential theft"
+    },
+    {
+      "id": "s_003",
+      "title": "Suspicious Payroll Update",
+      "difficulty": "hard",
+      "category": "Payroll fraud"
+    },
+    {
+      "id": "s_004",
+      "title": "Gift Card Scam Email",
+      "difficulty": "easy",
+      "category": "Gift card fraud"
+    },
+    {
+      "id": "s_005",
+      "title": "CEO Fraud Wire Transfer",
+      "difficulty": "hard",
+      "category": "Business email compromise"
+    },
+    {
+      "id": "s_006",
+      "title": "Shared Document Malware Link",
+      "difficulty": "medium",
+      "category": "Malware delivery"
+    }
+  ]
+}

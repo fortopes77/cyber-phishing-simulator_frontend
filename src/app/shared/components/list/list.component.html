@@ -1,0 +1,33 @@
+<div class="list-wrapper">
+  <table class="list-table" *ngIf="hasRows; else emptyState">
+    <thead>
+      <tr>
+        <th *ngFor="let column of columns">{{ column.label }}</th>
+        <th *ngIf="actions.length">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr
+        *ngFor="let row of rows"
+        class="data-row"
+        (click)="handleRowClick(row)"
+      >
+        <td *ngFor="let column of columns">{{ getCellValue(column, row) }}</td>
+        <td *ngIf="actions.length" class="actions-cell">
+          <button
+            type="button"
+            *ngFor="let action of actions"
+            class="action-button"
+            (click)="$event.stopPropagation(); handleAction(action, row)"
+          >
+            {{ action.label }}
+          </button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <ng-template #emptyState>
+    <p class="empty-state">{{ emptyMessage }}</p>
+  </ng-template>
+</div>

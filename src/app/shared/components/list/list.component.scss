@@ -1,0 +1,53 @@
+.list-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.list-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+}
+
+.list-table th,
+.list-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+}
+
+.list-table th {
+  font-weight: 600;
+  background: #f9fafb;
+}
+
+.data-row {
+  cursor: pointer;
+}
+
+.data-row:hover {
+  background-color: #f9fafb;
+}
+
+.actions-cell {
+  white-space: nowrap;
+}
+
+.action-button {
+  margin-right: 0.5rem;
+  padding: 0.35rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.25rem;
+  background: #fff;
+  cursor: pointer;
+}
+
+.action-button:last-child {
+  margin-right: 0;
+}
+
+.empty-state {
+  padding: 1rem;
+  color: #6b7280;
+  font-style: italic;
+}

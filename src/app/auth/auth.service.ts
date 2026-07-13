@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
+import { environment } from 'src/environments/environment';
 
 export interface User {
   id: string;
@@ -15,6 +16,7 @@ export interface User {
 export class AuthService {
   private readonly STORAGE_KEY = 'auth_token';
   private readonly USER_STORAGE_KEY = 'current_user';
+  private apiEndpoint = environment.apiUrl || 'http://localhost:3000/';
 
   // Mock user database - username and email can be used interchangeably
   private readonly mockUsers = [
@@ -60,14 +62,14 @@ export class AuthService {
    * Accepts either username or email for credentials
    */
   login(credential: string, password: string) {
-    return this.http.post('/api/auth/login', {
+    return this.http.post(`${this.apiEndpoint}auth/login`, {
       credential,
       password,
     });
   }
 
   getFeedback(payload: any) {
-    return this.http.post('/api/feedback', payload);
+    return this.http.post(`${this.apiEndpoint}feedback`, payload);
   }
 
   /**

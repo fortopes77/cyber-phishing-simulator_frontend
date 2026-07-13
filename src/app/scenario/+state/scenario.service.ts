@@ -1,0 +1,19 @@
+import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { environment } from 'src/environments/environment.development';
+
+@Injectable({
+  providedIn: 'root',
+})
+export class ScenarioService {
+  private apiEndpoint = environment.apiUrl || 'http://localhost:3000/';
+
+  constructor(private http: HttpClient) {}
+
+  getScenarios() {
+    // If your mock folder is served from the web root as /mock/... use an absolute path
+    // that starts with a leading slash so it resolves from the server root.
+    return this.http.get('/mock/scenarios/get/scenario-list.mock.json');
+    // return this.http.get(`${this.apiEndpoint}scenarios`);
+  }
+}

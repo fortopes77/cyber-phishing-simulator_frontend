@@ -21,9 +21,11 @@ import { AuthGuard } from './guards/auth.guard';
 import { UserDashboardComponent } from './learner/components/user-dashboard/user-dashboard.component';
 import { metaReducers } from './meta.reducer';
 import { DashboardCardComponent } from './shared/components/dashboard-card/dashboard-card.component';
+import { ListComponent } from './shared/components/list/list.component';
 import { NavComponent } from './shared/components/navigation/nav.component';
 import { ProgressRowComponent } from './shared/components/progress-row/progress-row.component';
 import { LearningProgressCardComponent } from './learner/components/learning-progress-card/learning-progress-card.component';
+import { ScenarioModule } from './scenario/scenario.module';
 
 @NgModule({
   declarations: [
@@ -41,6 +43,7 @@ import { LearningProgressCardComponent } from './learner/components/learning-pro
     FontAwesomeModule,
     NavComponent,
     AuthModule,
+    ScenarioModule,
     StoreModule.forRoot({}),
     EffectsModule.forRoot([]),
     DataCardComponent,
@@ -50,6 +53,7 @@ import { LearningProgressCardComponent } from './learner/components/learning-pro
     ActivityListComponent,
     ActionCardComponent,
     LearningProgressCardComponent,
+    ListComponent,
   ],
   providers: [
     AuthGuard,

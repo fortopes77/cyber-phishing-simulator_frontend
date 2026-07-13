@@ -10,6 +10,7 @@ import { ScenarioPageComponent } from './learner/components/scenario-page/scenar
 import { ModuleResultsComponent } from './learner/components/module-results/module-results.component';
 import { UserDashboardComponent } from './learner/components/user-dashboard/user-dashboard.component';
 import { AdminDashboardComponent } from './admin/components/admin-dashboard/admin-dashboard.component';
+import { ScenarioListComponent } from './scenario/scenario-list/scenario-list.component';
 
 const routes: Routes = [
   // Public routes
@@ -35,6 +36,7 @@ const routes: Routes = [
     children: [
       { path: 'dashboard', component: AdminDashboardComponent },
       { path: 'trainer/users/:id', component: AdminDashboardComponent },
+      { path: 'scenarios', component: ScenarioListComponent },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
   },
