@@ -1,6 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { HeaderComponent } from 'src/app/shared/components/header/header.component';
+import {
+  HeaderComponent,
+  HeaderCreateAction,
+} from 'src/app/shared/components/header/header.component';
 import {
   ListAction,
   ListColumn,
@@ -9,6 +12,7 @@ import {
 import { ScenarioActions } from '../+state/scenario.actions';
 import { selectScenarioList } from '../+state/scenario.selectors';
 import { DashboardCardComponent } from 'src/app/shared/components/dashboard-card/dashboard-card.component';
+import { Actions, ofType } from '@ngrx/effects';
 
 @Component({
   selector: 'app-scenario-list',
@@ -20,8 +24,21 @@ export class ScenarioListComponent implements OnInit {
   columns: ListColumn[] = [];
   rows: Record<string, unknown>[] = [];
   actions: ListAction[] = [];
+  createActions: HeaderCreateAction[] = [
+    {
+      label: 'Create with AI',
+      action: () => this.handleCreateWithAi(),
+    },
+    {
+      label: 'Create manually',
+      action: () => this.handleCreateManually(),
+    },
+  ];
 
-  constructor(private store: Store) {}
+  constructor(
+    private store: Store,
+    private actions$: Actions,
+  ) {}
 
   ngOnInit(): void {
     this.actions = [
@@ -36,6 +53,7 @@ export class ScenarioListComponent implements OnInit {
     ];
 
     this.subscribeToScenarioList();
+    this.subscribeToScenarioCreateSuccess();
     this.store.dispatch(ScenarioActions.fetchList());
   }
 
@@ -46,6 +64,14 @@ export class ScenarioListComponent implements OnInit {
         : [];
       this.columns = this.buildColumns(this.rows);
     });
+  }
+
+  subscribeToScenarioCreateSuccess(): void {
+    this.actions$
+      .pipe(ofType(ScenarioActions.createScenarioSuccess))
+      .subscribe((scenario: any) => {
+        console.log(scenario);
+      });
   }
 
   private buildColumns(rows: Record<string, unknown>[]): ListColumn[] {
@@ -72,5 +98,13 @@ export class ScenarioListComponent implements OnInit {
 
   private handleDelete(row: Record<string, unknown>): void {
     console.log('Delete scenario', row);
+  }
+
+  private handleCreateWithAi(): void {
+    this.store.dispatch(ScenarioActions.createScenario());
+  }
+
+  private handleCreateManually(): void {
+    console.log('Create scenario manually');
   }
 }

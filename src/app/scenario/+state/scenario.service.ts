@@ -16,4 +16,8 @@ export class ScenarioService {
     return this.http.get('/mock/scenarios/get/scenario-list.mock.json');
     // return this.http.get(`${this.apiEndpoint}scenarios`);
   }
+
+  createScenario() {
+    return this.http.get('http://localhost:8000/simple-scenario');
+  }
 }
