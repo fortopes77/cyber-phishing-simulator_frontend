@@ -37,10 +37,8 @@ export class ScenarioListComponent implements OnInit {
   ];
 
   constructor(
-    
     private store: Store,
     private router: Router,
-  ,
     private actions$: Actions,
   ) {}
 
