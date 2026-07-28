@@ -48,4 +48,22 @@ describe('ListComponent', () => {
       fixture.nativeElement.querySelector('button')?.textContent,
     ).toContain('Edit');
   });
+
+  it('should paginate rows to a maximum of 10 per page', () => {
+    component.columns = [{ key: 'name', label: 'Name' }];
+    component.rows = Array.from({ length: 12 }, (_, index) => ({
+      name: `Item ${index + 1}`,
+    }));
+
+    fixture.detectChanges();
+
+    const rows = Array.from(
+      fixture.nativeElement.querySelectorAll(
+        'tbody tr',
+      ) as NodeListOf<HTMLElement>,
+    );
+
+    expect(rows.length).toBe(10);
+    expect(fixture.nativeElement.textContent).toContain('Page 1 of 2');
+  });
 });

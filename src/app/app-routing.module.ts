@@ -39,6 +39,7 @@ const routes: Routes = [
       { path: 'trainer/users/:id', component: AdminDashboardComponent },
       { path: 'scenarios', component: ScenarioListComponent },
       { path: 'scenarios/:id/edit', component: ScenarioEditComponent },
+      { path: 'scenarios/create', component: ScenarioEditComponent },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
   },

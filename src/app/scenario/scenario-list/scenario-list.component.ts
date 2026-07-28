@@ -14,10 +14,16 @@ import { ScenarioActions } from '../+state/scenario.actions';
 import { selectScenarioList } from '../+state/scenario.selectors';
 import { DashboardCardComponent } from 'src/app/shared/components/dashboard-card/dashboard-card.component';
 import { Actions, ofType } from '@ngrx/effects';
+import { DeleteConfirmationModalComponent } from 'src/app/shared/components/delete-confirmation-modal/delete-confirmation-modal.component';
 
 @Component({
   selector: 'app-scenario-list',
-  imports: [HeaderComponent, ListComponent, DashboardCardComponent],
+  imports: [
+    HeaderComponent,
+    ListComponent,
+    DashboardCardComponent,
+    DeleteConfirmationModalComponent,
+  ],
   templateUrl: './scenario-list.component.html',
   styleUrl: './scenario-list.component.scss',
 })
@@ -35,6 +41,10 @@ export class ScenarioListComponent implements OnInit {
       action: () => this.handleCreateManually(),
     },
   ];
+
+  isDeleteModalOpen = false;
+  selectedScenarioTitle = '';
+  selectedScenarioRow: Record<string, unknown> | null = null;
 
   constructor(
     private store: Store,
@@ -55,7 +65,8 @@ export class ScenarioListComponent implements OnInit {
     ];
 
     this.subscribeToScenarioList();
-    this.subscribeToScenarioCreateSuccess();
+    this.subscribeToAIScenarioCreateSuccess();
+    this.subscribeToCreateScenarioSuccess();
     this.store.dispatch(ScenarioActions.fetchList());
   }
 
@@ -68,11 +79,22 @@ export class ScenarioListComponent implements OnInit {
     });
   }
 
-  subscribeToScenarioCreateSuccess(): void {
+  subscribeToAIScenarioCreateSuccess(): void {
     this.actions$
-      .pipe(ofType(ScenarioActions.createScenarioSuccess))
+      .pipe(ofType(ScenarioActions.createAIScenarioSuccess))
       .subscribe((scenario: any) => {
         console.log(scenario);
+        this.store.dispatch(
+          ScenarioActions.createScenario({ scenario: scenario['scenario'] }),
+        );
+      });
+  }
+
+  subscribeToCreateScenarioSuccess(): void {
+    this.actions$
+      .pipe(ofType(ScenarioActions.createScenarioSuccess))
+      .subscribe(() => {
+        this.store.dispatch(ScenarioActions.fetchList());
       });
   }
 
@@ -105,14 +127,33 @@ export class ScenarioListComponent implements OnInit {
   }
 
   private handleDelete(row: Record<string, unknown>): void {
-    console.log('Delete scenario', row);
+    this.selectedScenarioRow = row;
+    this.selectedScenarioTitle = String(row['title'] ?? row['name'] ?? 'this scenario');
+    this.isDeleteModalOpen = true;
+  }
+
+  confirmDelete(): void {
+    this.isDeleteModalOpen = false;
+    if (!this.selectedScenarioRow) {
+      return;
+    }
+
+    console.log('Delete scenario', this.selectedScenarioRow);
+    this.selectedScenarioRow = null;
+    this.selectedScenarioTitle = '';
+  }
+
+  cancelDelete(): void {
+    this.isDeleteModalOpen = false;
+    this.selectedScenarioRow = null;
+    this.selectedScenarioTitle = '';
   }
 
   private handleCreateWithAi(): void {
-    this.store.dispatch(ScenarioActions.createScenario());
+    this.store.dispatch(ScenarioActions.createAIScenario());
   }
 
   private handleCreateManually(): void {
-    console.log('Create scenario manually');
+    this.router.navigate(['/trainer/scenarios/create']);
   }
 }

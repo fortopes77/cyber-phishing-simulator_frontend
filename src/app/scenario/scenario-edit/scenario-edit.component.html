@@ -1,7 +1,13 @@
 <section class="scenario-edit-page">
   <div class="page-header">
-    <h1>Edit scenario</h1>
-    <p>Update the scenario details below and save your changes.</p>
+    <h1>{{ isCreateMode ? "Create Scenario" : "Edit Scenario" }}</h1>
+    <p>
+      {{
+        isCreateMode
+          ? "Create a new scenario below."
+          : "Update the scenario details below and save your changes."
+      }}
+    </p>
   </div>
 
   <form

@@ -24,7 +24,20 @@ export class ScenarioService {
     return this.http.get(`${this.apiEndpoint}scenarios/${scenarioId}`);
   }
 
-  createScenario() {
+  createScenario(scenario: any) {
+    const newScenario = {
+      moduleId: 2,
+      title: scenario.subject,
+      content: 'This is a sample content for the scenario.',
+      category: scenario.category,
+      difficulty: scenario.difficulty,
+      interactionType: scenario.category,
+      scenarioDescription: 'Test scenario description',
+    };
+    return this.http.post(`${this.apiEndpoint}scenarios`, newScenario);
+  }
+
+  createScenarioWithAI() {
     return this.http.get('http://localhost:8000/simple-scenario');
   }
 }

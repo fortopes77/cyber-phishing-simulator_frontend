@@ -7,3 +7,11 @@
 <app-dashboard-card>
   <app-list [columns]="columns" [rows]="rows" [actions]="actions"></app-list>
 </app-dashboard-card>
+
+<app-delete-confirmation-modal
+  [isOpen]="isDeleteModalOpen"
+  [title]="selectedScenarioTitle"
+  [message]="'Are you sure you wish to delete'"
+  (confirmed)="confirmDelete()"
+  (cancelled)="cancelDelete()"
+></app-delete-confirmation-modal>

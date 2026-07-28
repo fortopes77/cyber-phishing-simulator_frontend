@@ -43,8 +43,12 @@ export class ScenarioEditComponent implements OnInit {
     'Drag and Drop',
   ];
   scenarioId: string | null = null;
+  isCreateMode = false;
 
   ngOnInit(): void {
+    this.isCreateMode = this.route.snapshot.url.some((segment) =>
+      segment.path.includes('create'),
+    );
     this.subscribeToScenarioDetails();
     this.scenarioId = this.route.snapshot.paramMap.get('id');
 
