@@ -49,4 +49,23 @@ export class ScenarioEffects {
       ),
     ),
   );
+  createScenario$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(ScenarioActions.createScenario),
+      mergeMap(() =>
+        this.scenarioService.createScenario().pipe(
+          map((scenario: any) =>
+            ScenarioActions.createScenarioSuccess({ scenario }),
+          ),
+          catchError((error) =>
+            of(
+              ScenarioActions.createScenarioFailure({
+                error: error.message || 'Failed to create scenario',
+              }),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
 }
