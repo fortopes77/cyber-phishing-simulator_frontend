@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { HeaderComponent } from 'src/app/shared/components/header/header.component';
 import {
@@ -21,7 +22,10 @@ export class ScenarioListComponent implements OnInit {
   rows: Record<string, unknown>[] = [];
   actions: ListAction[] = [];
 
-  constructor(private store: Store) {}
+  constructor(
+    private store: Store,
+    private router: Router,
+  ) {}
 
   ngOnInit(): void {
     this.actions = [
@@ -67,7 +71,13 @@ export class ScenarioListComponent implements OnInit {
   }
 
   private handleEdit(row: Record<string, unknown>): void {
-    console.log('Edit scenario', row);
+    const scenarioId = row['id'] ?? row['_id'];
+
+    if (scenarioId == null) {
+      return;
+    }
+
+    this.router.navigate(['/trainer/scenarios', String(scenarioId), 'edit']);
   }
 
   private handleDelete(row: Record<string, unknown>): void {

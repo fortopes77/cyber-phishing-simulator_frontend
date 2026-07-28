@@ -31,4 +31,18 @@ export const scenarioReducer = createReducer(
     loading: false,
     error,
   })),
+  on(ScenarioActions.fetchScenarioDetails, (state) => ({
+    ...state,
+    loading: true,
+  })),
+  on(ScenarioActions.fetchScenarioDetailsSuccess, (state, { scenario }) => ({
+    ...state,
+    scenario,
+    loading: false,
+  })),
+  on(ScenarioActions.fetchScenarioDetailsFailure, (state, { error }) => ({
+    ...state,
+    loading: false,
+    error,
+  })),
 );

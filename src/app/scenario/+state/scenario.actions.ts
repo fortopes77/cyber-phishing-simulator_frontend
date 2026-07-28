@@ -6,5 +6,8 @@ export const ScenarioActions = createActionGroup({
     fetchList: emptyProps(),
     fetchListSuccess: props<{ scenarios: any[] }>(),
     fetchListFailure: props<{ error: string }>(),
+    fetchScenarioDetails: props<{ scenarioId: string }>(),
+    fetchScenarioDetailsSuccess: props<{ scenario: any }>(),
+    fetchScenarioDetailsFailure: props<{ error: string }>(),
   },
 });

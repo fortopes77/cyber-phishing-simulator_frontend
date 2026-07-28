@@ -10,6 +10,7 @@ import { ScenarioPageComponent } from './learner/components/scenario-page/scenar
 import { ModuleResultsComponent } from './learner/components/module-results/module-results.component';
 import { UserDashboardComponent } from './learner/components/user-dashboard/user-dashboard.component';
 import { AdminDashboardComponent } from './admin/components/admin-dashboard/admin-dashboard.component';
+import { ScenarioEditComponent } from './scenario/scenario-edit/scenario-edit.component';
 import { ScenarioListComponent } from './scenario/scenario-list/scenario-list.component';
 
 const routes: Routes = [
@@ -37,6 +38,7 @@ const routes: Routes = [
       { path: 'dashboard', component: AdminDashboardComponent },
       { path: 'trainer/users/:id', component: AdminDashboardComponent },
       { path: 'scenarios', component: ScenarioListComponent },
+      { path: 'scenarios/:id/edit', component: ScenarioEditComponent },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
   },
@@ -55,7 +57,7 @@ const routes: Routes = [
 ];
 
 @NgModule({
-  imports: [RouterModule.forRoot(routes)],
+  imports: [RouterModule.forRoot(routes), ScenarioEditComponent],
   exports: [RouterModule],
   providers: [AuthGuard],
 })

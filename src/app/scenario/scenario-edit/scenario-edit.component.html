@@ -1,1 +1,93 @@
-<p>scenario-edit works!</p>
+<section class="scenario-edit-page">
+  <div class="page-header">
+    <h1>Edit scenario</h1>
+    <p>Update the scenario details below and save your changes.</p>
+  </div>
+
+  <form
+    class="scenario-form"
+    [formGroup]="scenarioForm"
+    (ngSubmit)="onSubmit()"
+  >
+    <div class="form-grid">
+      <label class="field">
+        <span>Module</span>
+        <select formControlName="moduleId">
+          <option value="" disabled>Select a module</option>
+          <option *ngFor="let option of moduleOptions" [value]="option">
+            {{ option }}
+          </option>
+        </select>
+      </label>
+
+      <label class="field">
+        <span>Title</span>
+        <input
+          type="text"
+          formControlName="title"
+          placeholder="Enter scenario title"
+        />
+      </label>
+
+      <label class="field field-full">
+        <span>Content</span>
+        <textarea
+          rows="4"
+          formControlName="content"
+          placeholder="Enter the scenario content"
+        ></textarea>
+      </label>
+
+      <label class="field">
+        <span>Category</span>
+        <select formControlName="category">
+          <option value="" disabled>Select a category</option>
+          <option *ngFor="let option of categoryOptions" [value]="option">
+            {{ option }}
+          </option>
+        </select>
+      </label>
+
+      <label class="field">
+        <span>Difficulty</span>
+        <select formControlName="difficulty">
+          <option value="" disabled>Select a difficulty</option>
+          <option *ngFor="let option of difficultyOptions" [value]="option">
+            {{ option }}
+          </option>
+        </select>
+      </label>
+
+      <label class="field">
+        <span>Interaction type</span>
+        <select formControlName="interactionType">
+          <option value="" disabled>Select interaction type</option>
+          <option
+            *ngFor="let option of interactionTypeOptions"
+            [value]="option"
+          >
+            {{ option }}
+          </option>
+        </select>
+      </label>
+
+      <label class="field field-full">
+        <span>Scenario description</span>
+        <textarea
+          rows="4"
+          formControlName="description"
+          placeholder="Describe the scenario"
+        ></textarea>
+      </label>
+    </div>
+
+    <div class="actions">
+      <button type="button" class="btn btn-secondary" (click)="onCancel()">
+        Cancel
+      </button>
+      <button type="submit" class="btn btn-primary">Save</button>
+    </div>
+
+    <!-- TODO Implement save confirmation message -->
+  </form>
+</section>

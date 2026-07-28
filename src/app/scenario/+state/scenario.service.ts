@@ -13,7 +13,14 @@ export class ScenarioService {
   getScenarios() {
     // If your mock folder is served from the web root as /mock/... use an absolute path
     // that starts with a leading slash so it resolves from the server root.
-    return this.http.get('/mock/scenarios/get/scenario-list.mock.json');
-    // return this.http.get(`${this.apiEndpoint}scenarios`);
+    // return this.http.get('/mock/scenarios/get/scenario-list.mock.json');
+    return this.http.get(`${this.apiEndpoint}scenarios`);
+  }
+
+  getScenarioDetails(scenarioId: string) {
+    // If your mock folder is served from the web root as /mock/... use an absolute path
+    // that starts with a leading slash so it resolves from the server root.
+    // return this.http.get(`/mock/scenarios/get/scenario-details-${scenarioId}.mock.json`);
+    return this.http.get(`${this.apiEndpoint}scenarios/${scenarioId}`);
   }
 }
