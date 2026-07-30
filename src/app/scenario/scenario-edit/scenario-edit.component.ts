@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, inject, OnInit } from '@angular/core';
 import {
   FormBuilder,
@@ -14,7 +14,7 @@ import { selectScenario } from '../+state/scenario.selectors';
 @Component({
   selector: 'app-scenario-edit',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [ReactiveFormsModule],
   templateUrl: './scenario-edit.component.html',
   styleUrl: './scenario-edit.component.scss',
 })

@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 
@@ -12,7 +12,7 @@ interface ScenarioResult {
 @Component({
   selector: 'app-module-results',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [RouterModule],
   templateUrl: './module-results.component.html',
   styleUrls: ['./module-results.component.scss'],
 })

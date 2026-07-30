@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, ElementRef, HostListener, Input } from '@angular/core';
 
 export interface HeaderCreateAction {
@@ -8,7 +8,7 @@ export interface HeaderCreateAction {
 
 @Component({
   selector: 'app-header',
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './header.component.html',
   styleUrl: './header.component.scss',
 })

@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 
 const PAGE_SIZE = 10;
@@ -16,7 +16,7 @@ export interface ListAction {
 
 @Component({
   selector: 'app-list',
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './list.component.html',
   styleUrl: './list.component.scss',
 })

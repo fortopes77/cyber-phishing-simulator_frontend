@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -10,7 +10,7 @@ import { iconLibrary } from '../../constants/font-awesome-icons.const';
 
 @Component({
   selector: 'app-nav',
-  imports: [CommonModule, RouterModule, FaIconComponent],
+  imports: [RouterModule, FaIconComponent],
   templateUrl: './nav.component.html',
   styleUrls: ['./nav.component.scss'],
   standalone: true,

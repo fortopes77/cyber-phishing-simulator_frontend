@@ -20,20 +20,22 @@
     </p>
 
     <ul class="scenario-list">
-      <li *ngFor="let result of scenarioResults" class="scenario-item">
-        <div class="scenario-title">{{ result.title }}</div>
-        <div class="scenario-answer">
-          <span class="label">Your answer:</span>
-          <strong>{{ result.answer }}</strong>
-        </div>
-        <div
-          class="scenario-outcome"
-          [class.correct]="result.correct"
-          [class.incorrect]="!result.correct"
-        >
-          {{ result.correct ? "Correct" : "Incorrect" }}
-        </div>
-      </li>
+      @for (result of scenarioResults; track result) {
+        <li class="scenario-item">
+          <div class="scenario-title">{{ result.title }}</div>
+          <div class="scenario-answer">
+            <span class="label">Your answer:</span>
+            <strong>{{ result.answer }}</strong>
+          </div>
+          <div
+            class="scenario-outcome"
+            [class.correct]="result.correct"
+            [class.incorrect]="!result.correct"
+            >
+            {{ result.correct ? "Correct" : "Incorrect" }}
+          </div>
+        </li>
+      }
     </ul>
 
     <div class="actions">

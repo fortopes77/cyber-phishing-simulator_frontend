@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 
@@ -11,7 +11,7 @@ interface Scenario {
 @Component({
   selector: 'app-scenario-choice',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [RouterModule],
   templateUrl: './scenario-choice.component.html',
   styleUrls: ['./scenario-choice.component.scss'],
 })

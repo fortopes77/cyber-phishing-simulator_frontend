@@ -1,55 +1,68 @@
 <div class="list-wrapper">
-  <div class="list-scroll-container" *ngIf="hasRows; else emptyState">
-    <table class="list-table">
-      <thead>
-        <tr>
-          <th *ngFor="let column of columns">{{ column.label }}</th>
-          <th *ngIf="actions.length">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr
-          *ngFor="let row of visibleRows"
-          class="data-row"
-          (click)="handleRowClick(row)"
-        >
-          <td *ngFor="let column of columns">
-            {{ getCellValue(column, row) }}
-          </td>
-          <td *ngIf="actions.length" class="actions-cell">
-            <button
-              type="button"
-              *ngFor="let action of actions"
-              class="action-button"
-              (click)="$event.stopPropagation(); handleAction(action, row)"
-            >
-              {{ action.label }}
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-
-  <div class="pagination" *ngIf="showPagination">
-    <button
-      type="button"
-      (click)="goToPreviousPage()"
-      [disabled]="currentPage === 1"
-    >
-      Previous
-    </button>
-    <span>Page {{ currentPage }} of {{ totalPages }}</span>
-    <button
-      type="button"
-      (click)="goToNextPage()"
-      [disabled]="currentPage === totalPages"
-    >
-      Next
-    </button>
-  </div>
-
-  <ng-template #emptyState>
+  @if (hasRows) {
+    <div class="list-scroll-container">
+      <table class="list-table">
+        <thead>
+          <tr>
+            @for (column of columns; track column) {
+              <th>{{ column.label }}</th>
+            }
+            @if (actions.length) {
+              <th>Actions</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of visibleRows; track row) {
+            <tr
+              class="data-row"
+              (click)="handleRowClick(row)"
+              >
+              @for (column of columns; track column) {
+                <td>
+                  {{ getCellValue(column, row) }}
+                </td>
+              }
+              @if (actions.length) {
+                <td class="actions-cell">
+                  @for (action of actions; track action) {
+                    <button
+                      type="button"
+                      class="action-button"
+                      (click)="$event.stopPropagation(); handleAction(action, row)"
+                      >
+                      {{ action.label }}
+                    </button>
+                  }
+                </td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  } @else {
     <p class="empty-state">{{ emptyMessage }}</p>
-  </ng-template>
+  }
+
+  @if (showPagination) {
+    <div class="pagination">
+      <button
+        type="button"
+        (click)="goToPreviousPage()"
+        [disabled]="currentPage === 1"
+        >
+        Previous
+      </button>
+      <span>Page {{ currentPage }} of {{ totalPages }}</span>
+      <button
+        type="button"
+        (click)="goToNextPage()"
+        [disabled]="currentPage === totalPages"
+        >
+        Next
+      </button>
+    </div>
+  }
+
 </div>

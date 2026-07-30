@@ -4,28 +4,32 @@
     <p>{{ subtitle }}</p>
   </div>
 
-  <div class="header__actions" *ngIf="hasCreateActions">
-    <button
-      type="button"
-      class="create-button"
-      aria-haspopup="menu"
-      [attr.aria-expanded]="isCreateMenuOpen"
-      (click)="toggleCreateMenu()"
-    >
-      Create
-      <span class="create-button__chevron" aria-hidden="true"></span>
-    </button>
-
-    <div class="create-menu" role="menu" *ngIf="isCreateMenuOpen">
+  @if (hasCreateActions) {
+    <div class="header__actions">
       <button
         type="button"
-        class="create-menu__item"
-        role="menuitem"
-        *ngFor="let action of createActions"
-        (click)="handleCreateAction(action)"
-      >
-        {{ action.label }}
+        class="create-button"
+        aria-haspopup="menu"
+        [attr.aria-expanded]="isCreateMenuOpen"
+        (click)="toggleCreateMenu()"
+        >
+        Create
+        <span class="create-button__chevron" aria-hidden="true"></span>
       </button>
+      @if (isCreateMenuOpen) {
+        <div class="create-menu" role="menu">
+          @for (action of createActions; track action) {
+            <button
+              type="button"
+              class="create-menu__item"
+              role="menuitem"
+              (click)="handleCreateAction(action)"
+              >
+              {{ action.label }}
+            </button>
+          }
+        </div>
+      }
     </div>
-  </div>
+  }
 </header>
