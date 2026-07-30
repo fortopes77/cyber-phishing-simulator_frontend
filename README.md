@@ -1,27 +1,62 @@
-# PhishingFrontend
+# Cyber Phishing Simulator Frontend
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 20.0.1.
+This Angular frontend powers the Cyber Phishing Simulator experience for learners and trainers. It provides the user interface for authentication, learner dashboards, scenario delivery, scenario management, and admin workflows.
 
-## Development server
+## What this project contains
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+- Authentication flows for sign-in, sign-out, and profile settings
+- Learner-facing views such as dashboards, results, and module progression
+- Trainer/admin views for managing learners, scenarios, and administration tasks
+- Shared UI components for headers, cards, navigation, and reusable list tables
+- NgRx state management for auth and scenario related features
 
-## Code scaffolding
+## Project structure
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+- `src/app/auth` – authentication UI and state
+- `src/app/learner` – learner dashboards, module pages, and learner-specific components
+- `src/app/scenario` – scenario management, editing, and learner scenario flows
+- `src/app/admin` – administrator dashboard and related views
+- `src/app/shared` – shared components, models, and constants
+- `src/environments` – environment configuration for development and production
 
-## Build
+## Getting started
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+### Prerequisites
 
-## Running unit tests
+- Node.js and npm
+- Angular CLI (or use the local package from this project)
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+### Install dependencies
 
-## Running end-to-end tests
+```bash
+npm install
+```
 
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
+### Run the development server
 
-## Further help
+```bash
+npm start
+```
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+Then open http://localhost:4200/ in your browser.
+
+### Build for production
+
+```bash
+npm run build
+```
+
+### Run unit tests
+
+```bash
+npm test -- --watch=false --browsers=ChromeHeadless
+```
+
+## Notes
+
+This app is currently structured around a role-based experience:
+
+- Learners can view dashboards, scenarios, and results
+- Trainers/admins can manage learners and scenario libraries
+
+If you are working on a new feature, it is usually best to place shared UI under `src/app/shared`, feature-specific screens under the relevant domain folder, and state updates under the corresponding NgRx slice.
