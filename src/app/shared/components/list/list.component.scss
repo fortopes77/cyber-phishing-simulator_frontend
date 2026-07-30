@@ -6,7 +6,7 @@
 }
 
 .list-scroll-container {
-  max-height: calc(100vh - 16rem);
+  min-height: calc(100vh - 20rem);
   overflow: auto;
   border: 1px solid #e5e7eb;
   border-radius: 0.5rem;
@@ -42,7 +42,14 @@
   white-space: nowrap;
 }
 
-.action-button {
+.action-menu-wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.action-button,
+.action-menu-trigger,
+.action-menu-item {
   margin-right: 0.5rem;
   padding: 0.35rem 0.75rem;
   border: 1px solid #d1d5db;
@@ -53,6 +60,42 @@
 
 .action-button:last-child {
   margin-right: 0;
+}
+
+.action-menu-trigger {
+  min-width: 2.25rem;
+  padding: 0.35rem 0.55rem;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.action-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.25rem);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  min-width: 10rem;
+  padding: 0.25rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+}
+
+.action-menu-item {
+  width: 100%;
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.action-menu-item:hover {
+  background: #f3f4f6;
 }
 
 .pagination {

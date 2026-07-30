@@ -40,4 +40,15 @@ export class ScenarioService {
   createScenarioWithAI() {
     return this.http.get('http://localhost:8000/simple-scenario');
   }
+
+  updateScenario(scenarioId: string, updatedScenario: any) {
+    return this.http.patch(
+      `${this.apiEndpoint}scenarios/${scenarioId}`,
+      updatedScenario,
+    );
+  }
+
+  deleteScenario(scenarioId: string) {
+    return this.http.delete(`${this.apiEndpoint}scenarios/${scenarioId}`);
+  }
 }

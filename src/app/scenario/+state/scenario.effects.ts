@@ -87,4 +87,46 @@ export class ScenarioEffects {
       ),
     ),
   );
+  updateScenario$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(ScenarioActions.updateScenario),
+      mergeMap((action) =>
+        this.scenarioService
+          .updateScenario(action.scenarioId, action.updatedScenario)
+          .pipe(
+            map((scenario: any) =>
+              ScenarioActions.updateScenarioSuccess({ scenario }),
+            ),
+            catchError((error) =>
+              of(
+                ScenarioActions.updateScenarioFailure({
+                  error: error.message || 'Failed to update scenario',
+                }),
+              ),
+            ),
+          ),
+      ),
+    ),
+  );
+  deleteScenario$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(ScenarioActions.deleteScenario),
+      mergeMap((action) =>
+        this.scenarioService.deleteScenario(action.scenarioId).pipe(
+          map(() =>
+            ScenarioActions.deleteScenarioSuccess({
+              scenarioId: action.scenarioId,
+            }),
+          ),
+          catchError((error) =>
+            of(
+              ScenarioActions.deleteScenarioFailure({
+                error: error.message || 'Failed to delete scenario',
+              }),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
 }

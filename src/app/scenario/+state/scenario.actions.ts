@@ -15,5 +15,11 @@ export const ScenarioActions = createActionGroup({
     createScenario: props<{ scenario: any }>(),
     createScenarioSuccess: props<{ scenario: any }>(),
     createScenarioFailure: props<{ error: string }>(),
+    updateScenario: props<{ scenarioId: string; updatedScenario: any }>(),
+    updateScenarioSuccess: props<{ scenario: any }>(),
+    updateScenarioFailure: props<{ error: string }>(),
+    deleteScenario: props<{ scenarioId: string }>(),
+    deleteScenarioSuccess: props<{ scenarioId: string }>(),
+    deleteScenarioFailure: props<{ error: string }>(),
   },
 });

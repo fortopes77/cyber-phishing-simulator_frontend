@@ -10,8 +10,8 @@ import {
   ListColumn,
   ListComponent,
 } from 'src/app/shared/components/list/list.component';
-import { ScenarioActions } from '../+state/scenario.actions';
-import { selectScenarioList } from '../+state/scenario.selectors';
+import { ScenarioActions } from '../../+state/scenario.actions';
+import { selectScenarioList } from '../../+state/scenario.selectors';
 import { DashboardCardComponent } from 'src/app/shared/components/dashboard-card/dashboard-card.component';
 import { Actions, ofType } from '@ngrx/effects';
 import { DeleteConfirmationModalComponent } from 'src/app/shared/components/delete-confirmation-modal/delete-confirmation-modal.component';
@@ -128,7 +128,9 @@ export class ScenarioListComponent implements OnInit {
 
   private handleDelete(row: Record<string, unknown>): void {
     this.selectedScenarioRow = row;
-    this.selectedScenarioTitle = String(row['title'] ?? row['name'] ?? 'this scenario');
+    this.selectedScenarioTitle = String(
+      row['title'] ?? row['name'] ?? 'this scenario',
+    );
     this.isDeleteModalOpen = true;
   }
 

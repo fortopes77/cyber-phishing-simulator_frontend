@@ -13,11 +13,8 @@
           </tr>
         </thead>
         <tbody>
-          @for (row of visibleRows; track row) {
-            <tr
-              class="data-row"
-              (click)="handleRowClick(row)"
-              >
+          @for (row of visibleRows; track row; let rowIndex = $index) {
+            <tr class="data-row" (click)="handleRowClick(row)">
               @for (column of columns; track column) {
                 <td>
                   {{ getCellValue(column, row) }}
@@ -25,14 +22,60 @@
               }
               @if (actions.length) {
                 <td class="actions-cell">
-                  @for (action of actions; track action) {
-                    <button
-                      type="button"
-                      class="action-button"
-                      (click)="$event.stopPropagation(); handleAction(action, row)"
+                  @if (shouldUseDropdown) {
+                    <div
+                      class="action-menu-wrapper"
+                      (click)="$event.stopPropagation()"
+                    >
+                      @for (action of visibleActions; track action) {
+                        <button
+                          type="button"
+                          class="action-button"
+                          (click)="
+                            $event.stopPropagation(); handleAction(action, row)
+                          "
+                        >
+                          {{ action.label }}
+                        </button>
+                      }
+
+                      @if (overflowActions.length) {
+                        <button
+                          type="button"
+                          class="action-menu-trigger"
+                          (click)="toggleActionsMenu(rowIndex, $event)"
+                          aria-label="More actions"
+                        >
+                          ⋯
+                        </button>
+                      }
+
+                      @if (activeActionMenuIndex === rowIndex) {
+                        <div class="action-menu">
+                          @for (action of overflowActions; track action) {
+                            <button
+                              type="button"
+                              class="action-menu-item"
+                              (click)="handleAction(action, row)"
+                            >
+                              {{ action.label }}
+                            </button>
+                          }
+                        </div>
+                      }
+                    </div>
+                  } @else {
+                    @for (action of actions; track action) {
+                      <button
+                        type="button"
+                        class="action-button"
+                        (click)="
+                          $event.stopPropagation(); handleAction(action, row)
+                        "
                       >
-                      {{ action.label }}
-                    </button>
+                        {{ action.label }}
+                      </button>
+                    }
                   }
                 </td>
               }
@@ -51,7 +94,7 @@
         type="button"
         (click)="goToPreviousPage()"
         [disabled]="currentPage === 1"
-        >
+      >
         Previous
       </button>
       <span>Page {{ currentPage }} of {{ totalPages }}</span>
@@ -59,10 +102,9 @@
         type="button"
         (click)="goToNextPage()"
         [disabled]="currentPage === totalPages"
-        >
+      >
         Next
       </button>
     </div>
   }
-
 </div>

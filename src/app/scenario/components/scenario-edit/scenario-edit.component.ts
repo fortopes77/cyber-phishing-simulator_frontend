@@ -1,4 +1,3 @@
-
 import { Component, inject, OnInit } from '@angular/core';
 import {
   FormBuilder,
@@ -7,9 +6,9 @@ import {
   Validators,
 } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ScenarioActions } from '../+state/scenario.actions';
+import { ScenarioActions } from '../../+state/scenario.actions';
 import { Store } from '@ngrx/store';
-import { selectScenario } from '../+state/scenario.selectors';
+import { selectScenario } from '../../+state/scenario.selectors';
 
 @Component({
   selector: 'app-scenario-edit',

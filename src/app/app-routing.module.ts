@@ -5,13 +5,14 @@ import { AuthGuard } from './guards/auth.guard';
 import { SignOutComponent } from './auth/components/sign-out/sign-out.component';
 import { UserSettingsComponent } from './auth/components/user-settings/user-settings.component';
 import { ModulePageComponent } from './learner/components/module-page/module-page.component';
-import { ScenarioChoiceComponent } from './learner/components/scenario-choice/scenario-choice.component';
-import { ScenarioPageComponent } from './learner/components/scenario-page/scenario-page.component';
+import { ScenarioChoiceComponent } from './scenario/components/scenario-choice/scenario-choice.component';
+import { ScenarioPageComponent } from './scenario/components/scenario-page/scenario-page.component';
 import { ModuleResultsComponent } from './learner/components/module-results/module-results.component';
 import { UserDashboardComponent } from './learner/components/user-dashboard/user-dashboard.component';
 import { AdminDashboardComponent } from './admin/components/admin-dashboard/admin-dashboard.component';
-import { ScenarioEditComponent } from './scenario/scenario-edit/scenario-edit.component';
-import { ScenarioListComponent } from './scenario/scenario-list/scenario-list.component';
+import { ScenarioEditComponent } from './scenario/components/scenario-edit/scenario-edit.component';
+import { ScenarioListComponent } from './scenario/components/scenario-list/scenario-list.component';
+import { LearnerListComponent } from './learner/components/learner-list/learner-list.component';
 
 const routes: Routes = [
   // Public routes
@@ -37,6 +38,7 @@ const routes: Routes = [
     children: [
       { path: 'dashboard', component: AdminDashboardComponent },
       { path: 'trainer/users/:id', component: AdminDashboardComponent },
+      { path: 'learners', component: LearnerListComponent },
       { path: 'scenarios', component: ScenarioListComponent },
       { path: 'scenarios/:id/edit', component: ScenarioEditComponent },
       { path: 'scenarios/create', component: ScenarioEditComponent },
@@ -58,7 +60,11 @@ const routes: Routes = [
 ];
 
 @NgModule({
-  imports: [RouterModule.forRoot(routes), ScenarioEditComponent],
+  imports: [
+    RouterModule.forRoot(routes),
+    ScenarioEditComponent,
+    LearnerListComponent,
+  ],
   exports: [RouterModule],
   providers: [AuthGuard],
 })
