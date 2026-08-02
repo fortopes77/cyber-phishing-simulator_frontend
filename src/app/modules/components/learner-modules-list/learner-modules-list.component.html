@@ -1,0 +1,87 @@
+<app-header
+  title="My Modules"
+  subtitle="Complete your assigned training modules"
+></app-header>
+
+<div class="controls">
+  <div class="search-wrap">
+    <input
+      type="search"
+      placeholder="Search modules..."
+      [(ngModel)]="search"
+      (input)="applyFilters()"
+      class="search-input"
+      aria-label="Search modules"
+    />
+  </div>
+
+  <div class="filter-wrap">
+    <button
+      type="button"
+      class="filter-button"
+      (click)="showFilters = !showFilters"
+    >
+      Filter
+    </button>
+    <div *ngIf="showFilters" class="filter-panel">
+      <label>
+        Difficulty
+        <select [(ngModel)]="difficultyFilter" (change)="applyFilters()">
+          <option value="">All</option>
+          <option value="beginner">Beginner</option>
+          <option value="intermediate">Intermediate</option>
+          <option value="advanced">Advanced</option>
+        </select>
+      </label>
+      <button type="button" class="clear-btn" (click)="clearFilters()">
+        Clear
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="modules-grid">
+  @for (m of filteredModules; track $index) {
+    <div class="module-card">
+      <div class="card-top">
+        <div class="status-indicator" [ngClass]="getStatusClass(m.progress)">
+          <span class="status-icon">
+            <fa-icon [icon]="getStatusIcon(m.progress)"></fa-icon>
+          </span>
+        </div>
+        <div class="progress-pill">
+          {{ m.progress * 100 | number: "1.0-0" }}%
+        </div>
+      </div>
+
+      <h3 class="module-title">{{ m.title }}</h3>
+      <p class="module-desc">{{ m.description }}</p>
+
+      <div class="card-meta">
+        <div class="badge difficulty">{{ m.difficulty }}</div>
+        <div class="scenarios">
+          {{
+            m.scenarios > 1
+              ? m.scenarios + " scenarios"
+              : m.scenarios + " scenario"
+          }}
+        </div>
+        <div class="status">
+          {{
+            m.progress >= 1
+              ? "Completed"
+              : m.progress > 0
+                ? "In Progress"
+                : "Not Started"
+          }}
+        </div>
+      </div>
+
+      <div class="progress-row">
+        <div class="progress-track">
+          <div class="progress-fill" [style.width.%]="m.progress * 100"></div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

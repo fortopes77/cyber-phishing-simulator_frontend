@@ -6,6 +6,7 @@ import {
   faBookOpen,
   faBullseye,
   faChartColumn,
+  faCircleCheck,
   faClock,
   faCog,
   faLayerGroup,
@@ -16,6 +17,7 @@ import {
   faUserGroup,
   faUserSlash,
 } from '@fortawesome/free-solid-svg-icons';
+import { faCircle } from '@fortawesome/free-regular-svg-icons';
 
 /**
  * FontAwesome icons
@@ -40,4 +42,6 @@ export const iconLibrary = {
   keyIcon: faLock,
   userSlashIcon: faUserSlash,
   exchangeIcon: faArrowRight,
+  checkCircleIcon: faCircleCheck,
+  circleRegularIcon: faCircle,
 };

@@ -14,6 +14,7 @@ import { ScenarioEditComponent } from './scenario/components/scenario-edit/scena
 import { ScenarioListComponent } from './scenario/components/scenario-list/scenario-list.component';
 import { LearnerListComponent } from './learner/components/learner-list/learner-list.component';
 import { CohortsListComponent } from './cohorts/components/cohorts-list/cohorts-list.component';
+import { LearnerModulesListComponent } from './modules/components/learner-modules-list/learner-modules-list.component';
 
 const routes: Routes = [
   // Public routes
@@ -27,6 +28,7 @@ const routes: Routes = [
     canActivate: [AuthGuard],
     children: [
       { path: 'dashboard', component: UserDashboardComponent },
+      { path: 'modules', component: LearnerModulesListComponent },
       { path: 'scenarios/:id', component: ScenarioPageComponent },
       { path: 'scenarios/:id/feedback', component: ScenarioChoiceComponent },
       { path: 'results', component: ModuleResultsComponent },
