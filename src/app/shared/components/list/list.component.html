@@ -38,18 +38,35 @@
               [matTooltip]="getActionTooltip(action)"
               (click)="$event.stopPropagation(); handleAction(action, row)"
             >
-              <fa-icon [icon]="action.icon"></fa-icon>
+              <fa-icon [icon]="getActionIcon(action)"></fa-icon>
             </button>
 
             <button
               *ngIf="overflowActions.length"
               type="button"
               class="action-menu-trigger"
-              (click)="$event.stopPropagation()"
+              (click)="$event.stopPropagation(); toggleActionsMenu(row, $event)"
               aria-label="More actions"
+              [attr.aria-expanded]="openMenuRowKey === getRowMenuKey(row)"
             >
               ⋯
             </button>
+
+            <div
+              *ngIf="openMenuRowKey === getRowMenuKey(row)"
+              class="action-menu"
+              role="menu"
+            >
+              <button
+                *ngFor="let action of overflowActions"
+                type="button"
+                class="action-menu-item"
+                role="menuitem"
+                (click)="$event.stopPropagation(); handleAction(action, row)"
+              >
+                {{ action.label }}
+              </button>
+            </div>
           </div>
 
           <ng-container *ngIf="!shouldUseDropdown">
@@ -60,7 +77,7 @@
               [matTooltip]="getActionTooltip(action)"
               (click)="$event.stopPropagation(); handleAction(action, row)"
             >
-              <fa-icon [icon]="action.icon"></fa-icon>
+              <fa-icon [icon]="getActionIcon(action)"></fa-icon>
             </button>
           </ng-container>
         </td>

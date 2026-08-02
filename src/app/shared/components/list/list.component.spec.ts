@@ -73,4 +73,29 @@ describe('ListComponent', () => {
     expect(sortHeaders.length).toBe(2);
     expect(fixture.nativeElement.textContent).toContain('Actions');
   });
+
+  it('should open the overflow action menu when the ellipsis trigger is clicked', () => {
+    component.columns = [{ key: 'name', label: 'Name' }];
+    component.rows = [{ name: 'Ada' }];
+    component.actions = [
+      { label: 'Edit', action: jasmine.createSpy('edit') },
+      { label: 'View', action: jasmine.createSpy('view') },
+      { label: 'Delete', action: jasmine.createSpy('delete') },
+    ];
+
+    fixture.detectChanges();
+
+    const trigger = fixture.nativeElement.querySelector(
+      '.action-menu-trigger',
+    ) as HTMLElement;
+    expect(trigger).not.toBeNull();
+
+    trigger.click();
+    fixture.detectChanges();
+
+    const menuItems =
+      fixture.nativeElement.querySelectorAll('.action-menu-item');
+    expect(menuItems.length).toBe(1);
+    expect(menuItems[0].textContent).toContain('Delete');
+  });
 });

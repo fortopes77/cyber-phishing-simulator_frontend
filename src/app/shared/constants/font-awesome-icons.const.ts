@@ -14,6 +14,7 @@ import {
   faTrash,
   faUser,
   faUserGroup,
+  faUserSlash,
 } from '@fortawesome/free-solid-svg-icons';
 
 /**
@@ -35,5 +36,8 @@ export const iconLibrary = {
   arrowRightIcon: faArrowRight,
   clockIcon: faClock,
   penIcon: faPen,
-  trashIcon: faTrash, // Placeholder for trash icon, replace with actual FontAwesome icon if needed
+  trashIcon: faTrash,
+  keyIcon: faLock,
+  userSlashIcon: faUserSlash,
+  exchangeIcon: faArrowRight,
 };

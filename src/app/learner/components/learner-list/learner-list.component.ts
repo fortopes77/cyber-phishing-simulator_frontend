@@ -6,6 +6,7 @@ import {
   ListColumn,
   ListComponent,
 } from 'src/app/shared/components/list/list.component';
+import { iconLibrary } from 'src/app/shared/constants/font-awesome-icons.const';
 
 @Component({
   selector: 'app-learner-list',
@@ -47,23 +48,28 @@ export class LearnerListComponent implements OnInit {
       {
         label: 'Edit',
         action: (row) => this.handleLearnerAction('Edit', row),
+        icon: iconLibrary.penIcon,
       },
       {
         label: 'Delete',
         action: (row) => this.handleLearnerAction('Delete', row),
+        icon: iconLibrary.trashIcon,
       },
       {
         label: 'Forgot password',
         action: (row) => this.handleLearnerAction('Forgot password', row),
+        icon: iconLibrary.keyIcon,
       },
       {
         label: 'Deactivate',
         action: (row) => this.handleLearnerAction('Deactivate', row),
+        icon: iconLibrary.userSlashIcon,
       },
       {
         label: 'Change assigned cohort',
         action: (row) =>
           this.handleLearnerAction('Change assigned cohort', row),
+        icon: iconLibrary.exchangeIcon,
       },
     ];
 

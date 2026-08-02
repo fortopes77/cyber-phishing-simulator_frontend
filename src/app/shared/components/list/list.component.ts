@@ -19,6 +19,7 @@ import {
   FaIconComponent,
   IconDefinition,
 } from '@fortawesome/angular-fontawesome';
+import { faCircle } from '@fortawesome/free-solid-svg-icons';
 import { iconLibrary } from '../../constants/font-awesome-icons.const';
 
 const PAGE_SIZE = 10;
@@ -55,6 +56,7 @@ export class ListComponent {
   private _columns: ListColumn[] = [];
   private _rows: Record<string, unknown>[] = [];
   private _actions: ListAction[] = [];
+  openMenuRowKey: string | null = null;
 
   @Input()
   set columns(value: ListColumn[]) {
@@ -203,29 +205,38 @@ export class ListComponent {
     this.tableDataSource.data = sortedRows;
   }
 
-  toggleActionsMenu(index: number, event: Event): void {
+  toggleActionsMenu(row: Record<string, unknown>, event: Event): void {
     event.stopPropagation();
+    const rowKey = this.getRowMenuKey(row);
+    this.openMenuRowKey = this.openMenuRowKey === rowKey ? null : rowKey;
   }
 
   handleAction(action: ListAction, row: Record<string, unknown>): void {
     action.action(row);
     this.actionClicked.emit({ action, row });
+    this.openMenuRowKey = null;
   }
 
-  getActionIcon(action: ListAction): unknown {
+  getRowMenuKey(row: Record<string, unknown>): string {
+    const rowIndex = this.rows.indexOf(row);
+    return rowIndex >= 0 ? `row-${rowIndex}` : JSON.stringify(row);
+  }
+
+  getActionIcon(action: ListAction): IconDefinition {
     if (!action.icon) {
-      return this.fontAwesomeIcons.arrowRightIcon;
+      return this.fontAwesomeIcons.arrowRightIcon ?? faCircle;
     }
 
     if (typeof action.icon === 'string') {
       const iconKey = `${action.icon}Icon`;
       return (
-        this.fontAwesomeIcons[iconKey as keyof typeof this.fontAwesomeIcons] ??
-        this.fontAwesomeIcons.arrowRightIcon
+        (this.fontAwesomeIcons[
+          iconKey as keyof typeof this.fontAwesomeIcons
+        ] as IconDefinition | undefined) ?? faCircle
       );
     }
 
-    return action.icon;
+    return action.icon as IconDefinition;
   }
 
   getActionTooltip(action: ListAction): string {
