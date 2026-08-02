@@ -13,6 +13,7 @@ import { AdminDashboardComponent } from './admin/components/admin-dashboard/admi
 import { ScenarioEditComponent } from './scenario/components/scenario-edit/scenario-edit.component';
 import { ScenarioListComponent } from './scenario/components/scenario-list/scenario-list.component';
 import { LearnerListComponent } from './learner/components/learner-list/learner-list.component';
+import { CohortsListComponent } from './cohorts/components/cohorts-list/cohorts-list.component';
 
 const routes: Routes = [
   // Public routes
@@ -39,6 +40,7 @@ const routes: Routes = [
       { path: 'dashboard', component: AdminDashboardComponent },
       { path: 'trainer/users/:id', component: AdminDashboardComponent },
       { path: 'learners', component: LearnerListComponent },
+      { path: 'cohorts', component: CohortsListComponent },
       { path: 'scenarios', component: ScenarioListComponent },
       { path: 'scenarios/:id/edit', component: ScenarioEditComponent },
       { path: 'scenarios/create', component: ScenarioEditComponent },
@@ -64,6 +66,7 @@ const routes: Routes = [
     RouterModule.forRoot(routes),
     ScenarioEditComponent,
     LearnerListComponent,
+    CohortsListComponent,
   ],
   exports: [RouterModule],
   providers: [AuthGuard],
