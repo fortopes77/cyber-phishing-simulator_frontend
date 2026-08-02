@@ -1,6 +1,4 @@
 .scenario-edit-page {
-  max-width: 840px;
-  margin: 2rem auto;
   padding: 1.5rem;
   border: 1px solid #d7dce5;
   border-radius: 12px;
@@ -26,6 +24,66 @@
   display: flex;
   flex-direction: column;
   gap: 1rem;
+}
+
+.editor-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 40%;
+  gap: 1.5rem;
+  align-items: flex-start;
+}
+
+.form-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.preview-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 320px;
+}
+
+.preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.15rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #f8fafc;
+}
+
+.preview-header h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.preview-header p {
+  margin: 0.35rem 0 0;
+  color: #475569;
+  font-size: 0.95rem;
+}
+
+.preview-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.45rem 0.9rem;
+  border-radius: 999px;
+  background: #e0e7ff;
+  color: #3730a3;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.preview-card {
+  padding: 0;
+  border: none;
+  background: transparent;
 }
 
 .form-grid {
@@ -95,6 +153,12 @@
   margin: 0;
   color: #0f766e;
   font-weight: 600;
+}
+
+@media (max-width: 980px) {
+  .editor-layout {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 640px) {

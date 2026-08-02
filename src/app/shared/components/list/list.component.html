@@ -1,110 +1,79 @@
 <div class="list-wrapper">
-  @if (hasRows) {
-    <div class="list-scroll-container">
-      <table class="list-table">
-        <thead>
-          <tr>
-            @for (column of columns; track column) {
-              <th>{{ column.label }}</th>
-            }
-            @if (actions.length) {
-              <th>Actions</th>
-            }
-          </tr>
-        </thead>
-        <tbody>
-          @for (row of visibleRows; track row; let rowIndex = $index) {
-            <tr class="data-row" (click)="handleRowClick(row)">
-              @for (column of columns; track column) {
-                <td>
-                  {{ getCellValue(column, row) }}
-                </td>
-              }
-              @if (actions.length) {
-                <td class="actions-cell">
-                  @if (shouldUseDropdown) {
-                    <div
-                      class="action-menu-wrapper"
-                      (click)="$event.stopPropagation()"
-                    >
-                      @for (action of visibleActions; track action) {
-                        <button
-                          type="button"
-                          class="action-button"
-                          (click)="
-                            $event.stopPropagation(); handleAction(action, row)
-                          "
-                        >
-                          {{ action.label }}
-                        </button>
-                      }
+  <div *ngIf="hasRows" class="list-scroll-container">
+    <table
+      mat-table
+      [dataSource]="tableDataSource"
+      matSort
+      (matSortChange)="sortData($event)"
+      class="list-table"
+    >
+      <ng-container *ngFor="let column of columns">
+        <ng-container [matColumnDef]="column.key">
+          <th
+            mat-header-cell
+            *matHeaderCellDef
+            [mat-sort-header]="column.sortable !== false ? column.key : ''"
+            [disabled]="column.sortable === false"
+          >
+            {{ column.label }}
+          </th>
+          <td mat-cell *matCellDef="let row">
+            {{ getCellValue(column, row) }}
+          </td>
+        </ng-container>
+      </ng-container>
 
-                      @if (overflowActions.length) {
-                        <button
-                          type="button"
-                          class="action-menu-trigger"
-                          (click)="toggleActionsMenu(rowIndex, $event)"
-                          aria-label="More actions"
-                        >
-                          ⋯
-                        </button>
-                      }
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef>{{ actionsColumnLabel }}</th>
+        <td mat-cell *matCellDef="let row" class="actions-cell">
+          <div
+            *ngIf="shouldUseDropdown"
+            class="action-menu-wrapper"
+            (click)="$event.stopPropagation()"
+          >
+            <button
+              *ngFor="let action of visibleActions"
+              type="button"
+              class="action-button icon-button"
+              [matTooltip]="getActionTooltip(action)"
+              (click)="$event.stopPropagation(); handleAction(action, row)"
+            >
+              <fa-icon [icon]="action.icon"></fa-icon>
+            </button>
 
-                      @if (activeActionMenuIndex === rowIndex) {
-                        <div class="action-menu">
-                          @for (action of overflowActions; track action) {
-                            <button
-                              type="button"
-                              class="action-menu-item"
-                              (click)="handleAction(action, row)"
-                            >
-                              {{ action.label }}
-                            </button>
-                          }
-                        </div>
-                      }
-                    </div>
-                  } @else {
-                    @for (action of actions; track action) {
-                      <button
-                        type="button"
-                        class="action-button"
-                        (click)="
-                          $event.stopPropagation(); handleAction(action, row)
-                        "
-                      >
-                        {{ action.label }}
-                      </button>
-                    }
-                  }
-                </td>
-              }
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-  } @else {
-    <p class="empty-state">{{ emptyMessage }}</p>
-  }
+            <button
+              *ngIf="overflowActions.length"
+              type="button"
+              class="action-menu-trigger"
+              (click)="$event.stopPropagation()"
+              aria-label="More actions"
+            >
+              ⋯
+            </button>
+          </div>
 
-  @if (showPagination) {
-    <div class="pagination">
-      <button
-        type="button"
-        (click)="goToPreviousPage()"
-        [disabled]="currentPage === 1"
-      >
-        Previous
-      </button>
-      <span>Page {{ currentPage }} of {{ totalPages }}</span>
-      <button
-        type="button"
-        (click)="goToNextPage()"
-        [disabled]="currentPage === totalPages"
-      >
-        Next
-      </button>
-    </div>
-  }
+          <ng-container *ngIf="!shouldUseDropdown">
+            <button
+              *ngFor="let action of actions"
+              type="button"
+              class="action-button icon-button"
+              [matTooltip]="getActionTooltip(action)"
+              (click)="$event.stopPropagation(); handleAction(action, row)"
+            >
+              <fa-icon [icon]="action.icon"></fa-icon>
+            </button>
+          </ng-container>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr
+        mat-row
+        *matRowDef="let row; columns: displayedColumns"
+        (click)="handleRowClick(row)"
+      ></tr>
+    </table>
+  </div>
+
+  <p *ngIf="!hasRows" class="empty-state">{{ emptyMessage }}</p>
 </div>

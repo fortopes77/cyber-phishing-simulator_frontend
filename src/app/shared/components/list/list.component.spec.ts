@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
 import { ListComponent } from './list.component';
 
@@ -8,7 +9,7 @@ describe('ListComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ListComponent],
+      imports: [ListComponent, NoopAnimationsModule],
     }).compileComponents();
 
     fixture = TestBed.createComponent(ListComponent);
@@ -33,37 +34,43 @@ describe('ListComponent', () => {
 
     fixture.detectChanges();
 
-    const headers = Array.from(
-      fixture.nativeElement.querySelectorAll('th') as NodeListOf<HTMLElement>,
-    ).map((th) => th.textContent?.trim());
-    expect(headers).toEqual(['Name', 'Email', 'Actions']);
-
-    const firstRowCells = Array.from(
+    const headerLabels = Array.from(
       fixture.nativeElement.querySelectorAll(
-        'tbody tr:first-child td',
+        'th[mat-header-cell]',
       ) as NodeListOf<HTMLElement>,
-    ).map((td) => td.textContent?.trim());
-    expect(firstRowCells.slice(0, 2)).toEqual(['Ada', 'ada@example.com']);
-    expect(
-      fixture.nativeElement.querySelector('button')?.textContent,
-    ).toContain('Edit');
+    )
+      .map((header) => header.textContent?.trim())
+      .filter(Boolean);
+
+    expect(headerLabels).toContain('Name');
+    expect(headerLabels).toContain('Email');
+    expect(headerLabels).toContain('Actions');
+
+    expect(fixture.nativeElement.textContent).toContain('Ada');
+    expect(fixture.nativeElement.textContent).toContain('ada@example.com');
+    const actionButton = fixture.nativeElement.querySelector(
+      '.action-button',
+    ) as HTMLElement | null;
+    expect(actionButton).not.toBeNull();
+    expect(actionButton?.getAttribute('aria-label')).toBeNull();
   });
 
-  it('should paginate rows to a maximum of 10 per page', () => {
-    component.columns = [{ key: 'name', label: 'Name' }];
-    component.rows = Array.from({ length: 12 }, (_, index) => ({
-      name: `Item ${index + 1}`,
-    }));
+  it('should allow sorting by regular columns and keep the actions column unsortable', () => {
+    component.columns = [
+      { key: 'name', label: 'Name', sortable: true },
+      { key: 'email', label: 'Email', sortable: true },
+    ];
+    component.rows = [
+      { name: 'Grace', email: 'grace@example.com' },
+      { name: 'Ada', email: 'ada@example.com' },
+    ];
+    component.actions = [{ label: 'Edit', action: jasmine.createSpy('edit') }];
 
     fixture.detectChanges();
 
-    const rows = Array.from(
-      fixture.nativeElement.querySelectorAll(
-        'tbody tr',
-      ) as NodeListOf<HTMLElement>,
-    );
-
-    expect(rows.length).toBe(10);
-    expect(fixture.nativeElement.textContent).toContain('Page 1 of 2');
+    const sortHeaders =
+      fixture.nativeElement.querySelectorAll('th.mat-sort-header');
+    expect(sortHeaders.length).toBe(2);
+    expect(fixture.nativeElement.textContent).toContain('Actions');
   });
 });

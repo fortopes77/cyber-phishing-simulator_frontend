@@ -10,6 +10,8 @@ import {
   faCog,
   faLayerGroup,
   faLock,
+  faPen,
+  faTrash,
   faUser,
   faUserGroup,
 } from '@fortawesome/free-solid-svg-icons';
@@ -32,4 +34,6 @@ export const iconLibrary = {
   trendUpIcon: faArrowTrendUp,
   arrowRightIcon: faArrowRight,
   clockIcon: faClock,
+  penIcon: faPen,
+  trashIcon: faTrash, // Placeholder for trash icon, replace with actual FontAwesome icon if needed
 };
