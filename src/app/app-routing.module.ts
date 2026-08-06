@@ -29,6 +29,11 @@ const routes: Routes = [
     children: [
       { path: 'dashboard', component: UserDashboardComponent },
       { path: 'modules', component: LearnerModulesListComponent },
+      {
+        path: 'modules/:id',
+        component: ModulePageComponent,
+        canActivate: [AuthGuard],
+      },
       { path: 'scenarios/:id', component: ScenarioPageComponent },
       { path: 'scenarios/:id/feedback', component: ScenarioChoiceComponent },
       { path: 'results', component: ModuleResultsComponent },
@@ -49,11 +54,7 @@ const routes: Routes = [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
   },
-  {
-    path: 'learning/:slug',
-    component: ModulePageComponent,
-    canActivate: [AuthGuard],
-  },
+
   {
     path: 'settings',
     component: UserSettingsComponent,

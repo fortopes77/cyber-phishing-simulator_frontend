@@ -27,12 +27,15 @@ export class ScenarioService {
   createScenario(scenario: any) {
     const newScenario = {
       moduleId: 2,
-      title: scenario.subject,
-      content: 'This is a sample content for the scenario.',
+      title: scenario.title,
+      content: scenario.emailBody,
       category: scenario.category,
       difficulty: scenario.difficulty,
-      interactionType: scenario.category,
-      scenarioDescription: 'Test scenario description',
+      interactionType: scenario.interactionType,
+      scenarioDescription: scenario.scenarioDescription,
+      sender: scenario.sender,
+      recipient: scenario.recipient,
+      subject: scenario.subject,
     };
     return this.http.post(`${this.apiEndpoint}scenarios`, newScenario);
   }

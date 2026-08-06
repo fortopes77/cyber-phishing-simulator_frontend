@@ -22,7 +22,7 @@ export class UserDashboardComponent {
     totalScenarios: 2,
     progressPercentage: 50,
     icon: 'schedule',
-    route: '/learning/email-phishing',
+    route: '/learner/modules/email-phishing',
   };
   constructor(private store: Store) {}
 

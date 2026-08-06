@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
 import { HeaderComponent } from 'src/app/shared/components/header/header.component';
 import {
   faCircle,
@@ -23,7 +24,13 @@ interface ModuleCard {
 @Component({
   selector: 'app-learner-modules-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, HeaderComponent, FaIconComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterModule,
+    HeaderComponent,
+    FaIconComponent,
+  ],
   templateUrl: './learner-modules-list.component.html',
   styleUrls: ['./learner-modules-list.component.scss'],
 })

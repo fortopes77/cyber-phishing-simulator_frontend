@@ -42,7 +42,15 @@
 
 <div class="modules-grid">
   @for (m of filteredModules; track $index) {
-    <div class="module-card">
+    <div
+      class="module-card"
+      role="button"
+      tabindex="0"
+      [routerLink]="['/learner/modules', m.id]"
+      (keydown.enter)="
+        $event.preventDefault(); $any($event.currentTarget).click()
+      "
+    >
       <div class="card-top">
         <div class="status-indicator" [ngClass]="getStatusClass(m.progress)">
           <span class="status-icon">

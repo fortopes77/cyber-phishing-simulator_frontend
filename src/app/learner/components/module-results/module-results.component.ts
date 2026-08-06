@@ -1,4 +1,3 @@
-
 import { Component } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 
@@ -40,7 +39,7 @@ export class ModuleResultsComponent {
   constructor(private router: Router) {}
 
   retryModule(): void {
-    this.router.navigate(['/learning/email-phishing']);
+    this.router.navigate(['/learner/modules/email-phishing']);
   }
 
   backToModules(): void {

@@ -225,8 +225,14 @@ export class ScenarioListComponent implements OnInit {
     if (!this.selectedScenarioRow) {
       return;
     }
-
-    console.log('Delete scenario', this.selectedScenarioRow);
+    this.store.dispatch(
+      ScenarioActions.deleteScenario({
+        scenarioId: String(
+          this.selectedScenarioRow['id'] ?? this.selectedScenarioRow['_id'],
+        ),
+      }),
+    );
+    this.store.dispatch(ScenarioActions.fetchList());
     this.selectedScenarioRow = null;
     this.selectedScenarioTitle = '';
   }
