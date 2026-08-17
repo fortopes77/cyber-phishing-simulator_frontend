@@ -5,5 +5,8 @@
 
 <!-- Main Content -->
 <div class="app-container">
+  @if (currentUser) {
+    <app-breadcrumbs></app-breadcrumbs>
+  }
   <router-outlet></router-outlet>
 </div>

@@ -18,39 +18,93 @@ import { LearnerModulesListComponent } from './modules/components/learner-module
 
 const routes: Routes = [
   // Public routes
-  // Public routes
-  { path: 'login', component: LoginComponent },
-  { path: 'sign-out', component: SignOutComponent },
+  { path: 'login', component: LoginComponent, data: { breadcrumb: 'Login' } },
+  {
+    path: 'sign-out',
+    component: SignOutComponent,
+    data: { breadcrumb: 'Sign Out' },
+  },
 
   // Protected routes
   {
     path: 'learner',
     canActivate: [AuthGuard],
+    data: { breadcrumb: 'Learner' },
     children: [
-      { path: 'dashboard', component: UserDashboardComponent },
-      { path: 'modules', component: LearnerModulesListComponent },
+      {
+        path: 'dashboard',
+        component: UserDashboardComponent,
+        data: { breadcrumb: 'Dashboard' },
+      },
+      {
+        path: 'modules',
+        component: LearnerModulesListComponent,
+        data: { breadcrumb: 'Modules' },
+      },
       {
         path: 'modules/:id',
         component: ModulePageComponent,
         canActivate: [AuthGuard],
+        data: { breadcrumb: 'Module' },
       },
-      { path: 'scenarios/:id', component: ScenarioPageComponent },
-      { path: 'scenarios/:id/feedback', component: ScenarioChoiceComponent },
-      { path: 'results', component: ModuleResultsComponent },
+      {
+        path: 'scenarios/:id',
+        component: ScenarioPageComponent,
+        data: { breadcrumb: 'Scenario' },
+      },
+      {
+        path: 'scenarios/:id/feedback',
+        component: ScenarioChoiceComponent,
+        data: { breadcrumb: 'Feedback' },
+      },
+      {
+        path: 'results',
+        component: ModuleResultsComponent,
+        data: { breadcrumb: 'Results' },
+      },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
   },
   {
     path: 'trainer',
     canActivate: [AuthGuard],
+    data: { breadcrumb: 'Trainer' },
     children: [
-      { path: 'dashboard', component: AdminDashboardComponent },
-      { path: 'trainer/users/:id', component: AdminDashboardComponent },
-      { path: 'learners', component: LearnerListComponent },
-      { path: 'cohorts', component: CohortsListComponent },
-      { path: 'scenarios', component: ScenarioListComponent },
-      { path: 'scenarios/:id/edit', component: ScenarioEditComponent },
-      { path: 'scenarios/create', component: ScenarioEditComponent },
+      {
+        path: 'dashboard',
+        component: AdminDashboardComponent,
+        data: { breadcrumb: 'Dashboard' },
+      },
+      {
+        path: 'trainer/users/:id',
+        component: AdminDashboardComponent,
+        data: { breadcrumb: 'User' },
+      },
+      {
+        path: 'learners',
+        component: LearnerListComponent,
+        data: { breadcrumb: 'Learners' },
+      },
+      {
+        path: 'cohorts',
+        component: CohortsListComponent,
+        data: { breadcrumb: 'Cohorts' },
+      },
+      {
+        path: 'scenarios',
+        component: ScenarioListComponent,
+        data: { breadcrumb: 'Scenarios' },
+      },
+      {
+        path: 'scenarios/:id/edit',
+        component: ScenarioEditComponent,
+        data: { breadcrumb: 'Edit Scenario' },
+      },
+      {
+        path: 'scenarios/create',
+        component: ScenarioEditComponent,
+        data: { breadcrumb: 'Create Scenario' },
+      },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
   },
@@ -59,6 +113,7 @@ const routes: Routes = [
     path: 'settings',
     component: UserSettingsComponent,
     canActivate: [AuthGuard],
+    data: { breadcrumb: 'Settings' },
   },
   // Wildcard route - redirect to user dashboard if authenticated, login if not
   { path: '**', redirectTo: '/learner/dashboard' },

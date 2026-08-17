@@ -28,6 +28,7 @@ import { ProgressRowComponent } from './shared/components/progress-row/progress-
 import { LearningProgressCardComponent } from './learner/components/learning-progress-card/learning-progress-card.component';
 import { AssignedModuleCardComponent } from './learner/components/assigned-module-card/assigned-module-card.component';
 import { ScenarioModule } from './scenario/scenario.module';
+import { BreadcrumbsComponent } from './shared/components/breadcrumbs/breadcrumbs.component';
 
 @NgModule({
   declarations: [
@@ -58,6 +59,7 @@ import { ScenarioModule } from './scenario/scenario.module';
     ActionCardComponent,
     LearningProgressCardComponent,
     ListComponent,
+    BreadcrumbsComponent,
   ],
   providers: [
     AuthGuard,
