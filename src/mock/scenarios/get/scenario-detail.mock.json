@@ -1,0 +1,8 @@
+{
+  "id": "s_001",
+  "title": "Invoice Fraud Attempt",
+  "content": "An email pretending to be from a supplier...",
+  "difficulty": "medium",
+  "category": "Invoice fraud",
+  "options": ["Report", "Ignore", "Open Link"]
+}

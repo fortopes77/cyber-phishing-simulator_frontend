@@ -1,0 +1,130 @@
+{
+  "attempts": [
+    {
+      "id": "a_123",
+      "scenarioId": "s_001",
+      "decision": "Report",
+      "correct": true
+    },
+    {
+      "id": "a_124",
+      "scenarioId": "s_002",
+      "decision": "Delete",
+      "correct": true
+    },
+    {
+      "id": "a_125",
+      "scenarioId": "s_003",
+      "decision": "Report",
+      "correct": false
+    },
+    {
+      "id": "a_126",
+      "scenarioId": "s_004",
+      "decision": "Ignore",
+      "correct": true
+    },
+    {
+      "id": "a_127",
+      "scenarioId": "s_005",
+      "decision": "Click",
+      "correct": false
+    },
+    {
+      "id": "a_128",
+      "scenarioId": "s_006",
+      "decision": "Report",
+      "correct": true
+    },
+    {
+      "id": "a_129",
+      "scenarioId": "s_007",
+      "decision": "Delete",
+      "correct": true
+    },
+    {
+      "id": "a_130",
+      "scenarioId": "s_008",
+      "decision": "Report",
+      "correct": true
+    },
+    {
+      "id": "a_131",
+      "scenarioId": "s_009",
+      "decision": "Click",
+      "correct": false
+    },
+    {
+      "id": "a_132",
+      "scenarioId": "s_010",
+      "decision": "Ignore",
+      "correct": true
+    },
+    {
+      "id": "a_133",
+      "scenarioId": "s_011",
+      "decision": "Report",
+      "correct": true
+    },
+    {
+      "id": "a_134",
+      "scenarioId": "s_012",
+      "decision": "Delete",
+      "correct": false
+    },
+    {
+      "id": "a_135",
+      "scenarioId": "s_013",
+      "decision": "Report",
+      "correct": true
+    },
+    {
+      "id": "a_136",
+      "scenarioId": "s_014",
+      "decision": "Ignore",
+      "correct": false
+    },
+    {
+      "id": "a_137",
+      "scenarioId": "s_015",
+      "decision": "Click",
+      "correct": false
+    },
+    {
+      "id": "a_138",
+      "scenarioId": "s_016",
+      "decision": "Report",
+      "correct": true
+    },
+    {
+      "id": "a_139",
+      "scenarioId": "s_017",
+      "decision": "Delete",
+      "correct": true
+    },
+    {
+      "id": "a_140",
+      "scenarioId": "s_018",
+      "decision": "Report",
+      "correct": true
+    },
+    {
+      "id": "a_141",
+      "scenarioId": "s_019",
+      "decision": "Ignore",
+      "correct": true
+    },
+    {
+      "id": "a_142",
+      "scenarioId": "s_020",
+      "decision": "Click",
+      "correct": false
+    },
+    {
+      "id": "a_143",
+      "scenarioId": "s_021",
+      "decision": "Report",
+      "correct": true
+    }
+  ]
+}

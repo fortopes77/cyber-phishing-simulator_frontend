@@ -1,0 +1,9 @@
+{
+  "success": true,
+  "message": "User updated successfully",
+  "user": {
+    "id": "u_12345",
+    "name": "Updated Name",
+    "email": "updated@example.com"
+  }
+}

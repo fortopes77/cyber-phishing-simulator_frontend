@@ -1,0 +1,27 @@
+<app-header
+  title="Scenario Library"
+  subtitle="Manage and create scenarios for your learners."
+  [showCreateAction]="true"
+  [createActions]="createActions"
+></app-header>
+<app-dashboard-card>
+  <app-search-filter-bar
+    [searchPlaceholder]="'Search scenarios'"
+    [filterLabel]="'Difficulty'"
+    [filterOptions]="filterOptions"
+    [searchValue]="searchValue"
+    [filterValue]="filterValue"
+    (searchChange)="onSearchChange($event)"
+    (filterChange)="onFilterChange($event)"
+  ></app-search-filter-bar>
+
+  <app-list [columns]="columns" [rows]="rows" [actions]="actions"></app-list>
+</app-dashboard-card>
+
+<app-delete-confirmation-modal
+  [isOpen]="isDeleteModalOpen"
+  [title]="selectedScenarioTitle"
+  [message]="'Are you sure you wish to delete'"
+  (confirmed)="confirmDelete()"
+  (cancelled)="cancelDelete()"
+></app-delete-confirmation-modal>

@@ -1,0 +1,54 @@
+<div class="scenario-choice-page">
+  <div class="scenario-choice-page__header">
+    <div class="scenario-choice-page__nav">
+      <button class="link-button" (click)="backToScenario()">← Back</button>
+      <div>Scenario {{ scenarioNumber }} of {{ totalScenarios }}</div>
+    </div>
+  </div>
+
+  <div class="scenario-alert">
+    <strong>This is a training scenario</strong>
+  </div>
+
+  <div class="scenario-choice-card">
+    <div class="scenario-choice-card__title">What do you think?</div>
+    <div class="scenario-choice-card__subtitle">
+      Based on the message you just reviewed, is it safe or suspicious?
+    </div>
+
+    <div class="scenario-choice-card__scenario-info">
+      <div class="scenario-choice-card__scenario-title">
+        “{{ scenario.title }}”
+      </div>
+      <div class="scenario-choice-card__scenario-from">
+        From: {{ scenario.from }}
+      </div>
+    </div>
+
+    <div class="scenario-choice-card__options">
+      <button
+        class="decision-button decision-button--safe"
+        [class.selected]="selectedDecision === 'safe'"
+        (click)="selectDecision('safe')"
+      >
+        <div class="decision-button__icon">✔</div>
+        <div class="decision-button__label">Safe</div>
+        <div class="decision-button__description">
+          This is a legitimate message
+        </div>
+      </button>
+
+      <button
+        class="decision-button decision-button--suspicious"
+        [class.selected]="selectedDecision === 'suspicious'"
+        (click)="selectDecision('suspicious')"
+      >
+        <div class="decision-button__icon">⚠</div>
+        <div class="decision-button__label">Suspicious</div>
+        <div class="decision-button__description">
+          This looks like a phishing attempt
+        </div>
+      </button>
+    </div>
+  </div>
+</div>

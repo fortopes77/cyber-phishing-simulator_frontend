@@ -1,0 +1,57 @@
+.data-card {
+  background-color: #ffffff;
+  border: 1px solid #d9d9d9;
+  aspect-ratio: 5 / 1;
+  border-radius: 8px;
+  box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
+  padding: 20px;
+  display: flex;
+  align-items: flex-end;
+}
+
+.icon-wrapper {
+  margin-right: 20px;
+  padding: 10px;
+  border-radius: 15px;
+}
+
+.icon-wrapper fa-icon {
+  font-size: 48px;
+}
+
+.statistic {
+  font-size: 40px;
+  font-weight: 700;
+}
+
+.icon-wrapper.module {
+  background: #1da43644;
+}
+
+.icon-wrapper.module fa-icon {
+  color: #0fb800;
+}
+
+.icon-wrapper.scenario {
+  background: #a46c1d3d;
+}
+
+.icon-wrapper.scenario fa-icon {
+  color: #b85600;
+}
+
+.icon-wrapper.average {
+  background: #361da449;
+}
+
+.icon-wrapper.average fa-icon {
+  color: #2e00b8;
+}
+
+.icon-wrapper.total {
+  background: #1d34a449;
+}
+
+.icon-wrapper.total fa-icon {
+  color: #065baf;
+}

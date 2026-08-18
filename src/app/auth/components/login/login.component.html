@@ -1,0 +1,51 @@
+<div class="login-container">
+  <div class="login-box">
+    <img
+      src="assets/phish-logo-light.png"
+      alt="Login Image"
+      class="login-image"
+      />
+
+      <form (ngSubmit)="onLogin()">
+        <!-- Error Message -->
+        @if (errorMessage) {
+          <div class="error-message">
+            {{ errorMessage }}
+          </div>
+        }
+
+        <!-- Username/Email Input -->
+        <div class="form-group">
+          <label for="credential">Username or Email</label>
+          <input
+            id="credential"
+            type="text"
+            [(ngModel)]="credential"
+            name="credential"
+            placeholder="Enter username or email"
+            [disabled]="isLoading"
+            required
+            />
+          </div>
+
+          <!-- Password Input -->
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input
+              id="password"
+              type="password"
+              [(ngModel)]="password"
+              name="password"
+              placeholder="Enter password"
+              [disabled]="isLoading"
+              required
+              />
+            </div>
+
+            <!-- Login Button -->
+            <button type="submit" class="btn-login" [disabled]="isLoading">
+              {{ isLoading ? "Logging in..." : "Login" }}
+            </button>
+          </form>
+        </div>
+      </div>

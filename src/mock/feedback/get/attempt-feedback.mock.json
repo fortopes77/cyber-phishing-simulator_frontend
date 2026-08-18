@@ -1,0 +1,8 @@
+{
+  "attemptId": "a_123",
+  "feedback": {
+    "summary": "Good job identifying the suspicious invoice.",
+    "keyWarnings": ["Unexpected sender", "Urgent payment request"],
+    "improvementTips": ["Verify sender domain"]
+  }
+}

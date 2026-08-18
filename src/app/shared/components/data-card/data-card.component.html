@@ -1,0 +1,29 @@
+<div class="data-card">
+  @if (icon) {
+    <div
+      class="icon-wrapper"
+      [ngClass]="{
+        module: dataType === 'module',
+        scenario: dataType === 'scenario',
+        average: dataType === 'average',
+        total: dataType === 'total',
+      }"
+    >
+      <fa-icon [icon]="icon"></fa-icon>
+    </div>
+  }
+  <div>
+    <span class="statistic">
+      @if (statistic?.topValue) {
+        {{ statistic?.topValue }}/{{ statistic?.bottomValue }}
+      }
+      @if (statistic?.percentage) {
+        {{ statistic?.percentage }}%
+      }
+      @if (statistic?.singleValue) {
+        {{ statistic?.singleValue }}
+      }
+    </span>
+    <div class="label">{{ label }}</div>
+  </div>
+</div>

@@ -1,0 +1,132 @@
+<div class="scenario-page">
+  <div class="scenario-page__header">
+    <div class="scenario-page__info">
+      <div class="scenario-page__module">{{ moduleTitle }}</div>
+      <div class="scenario-page__counter">
+        Scenario {{ scenarioNumber }} of {{ totalScenarios }}
+      </div>
+    </div>
+  </div>
+
+  <div class="scenario-alert">
+    <strong>This is a training scenario</strong>
+    <p>Review this message carefully and decide if it’s safe or suspicious</p>
+  </div>
+
+  <div
+    class="scenario-card"
+    [ngClass]="'scenario-card--' + getScenarioTypeKey()"
+  >
+    <div class="scenario-card__top">
+      <span class="scenario-card__tag">{{ scenario.type }}</span>
+      <span class="scenario-card__tag scenario-card__tag--difficulty">{{
+        scenario.difficulty
+      }}</span>
+      <div class="scenario-card__from">From: {{ scenario.from }}</div>
+      <div class="scenario-card__subject">{{ scenario.subject }}</div>
+    </div>
+
+    <div class="scenario-card__body" [ngSwitch]="getScenarioTypeKey()">
+      <div *ngSwitchCase="'email'" class="message-shell message-shell--email">
+        <div class="message-shell__meta">
+          <span class="message-shell__label">From</span>
+          <span>{{ scenario.from }}</span>
+        </div>
+        <div class="message-shell__meta">
+          <span class="message-shell__label">Subject</span>
+          <span>{{ scenario.subject }}</span>
+        </div>
+        <div class="message-shell__content">{{ scenario.body }}</div>
+      </div>
+
+      <div *ngSwitchCase="'phone'" class="message-shell message-shell--phone">
+        <div class="message-shell__header">
+          <div class="message-shell__pill">Phone Transcript</div>
+          <div class="message-shell__subtle">{{ scenario.from }}</div>
+        </div>
+        <div class="message-shell__transcript">
+          <div
+            *ngFor="let entry of getTranscriptEntries()"
+            class="transcript-line"
+            [ngClass]="
+              entry.speaker === 'You'
+                ? 'transcript-line--user'
+                : 'transcript-line--caller'
+            "
+          >
+            <div class="transcript-line__speaker">{{ entry.speaker }}</div>
+            <div class="transcript-line__text">{{ entry.text }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div *ngSwitchCase="'text'" class="message-shell message-shell--text">
+        <div class="message-shell__header">
+          <div class="message-shell__pill">Text Thread</div>
+          <div class="message-shell__subtle">{{ scenario.from }}</div>
+        </div>
+        <div class="message-shell__chat">
+          <div
+            *ngFor="let message of getTextMessages()"
+            class="chat-bubble"
+            [ngClass]="
+              message.speaker === 'You'
+                ? 'chat-bubble--user'
+                : 'chat-bubble--caller'
+            "
+          >
+            <div class="chat-bubble__sender">{{ message.speaker }}</div>
+            <div class="chat-bubble__text">{{ message.text }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div
+        *ngSwitchCase="'invoice'"
+        class="message-shell message-shell--invoice"
+      >
+        <div class="invoice__header">
+          <div>
+            <div class="message-shell__pill">Invoice</div>
+            <div class="message-shell__subtle">{{ scenario.subject }}</div>
+          </div>
+          <div class="invoice__amount">{{ getInvoiceAmount() }}</div>
+        </div>
+        <div class="invoice__grid">
+          <div *ngFor="let field of getInvoiceFields()" class="invoice__field">
+            <span class="invoice__label">{{ field.label }}</span>
+            <span class="invoice__value">{{ field.value }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div *ngSwitchDefault class="message-shell">
+        <div class="message-shell__content">{{ scenario.body }}</div>
+      </div>
+    </div>
+
+    <div class="cue-selector">
+      <div class="cue-selector__title">Select suspicious cues</div>
+      <div class="cue-selector__hint">
+        Choose the signals you notice in this message.
+      </div>
+      <div class="cue-selector__list">
+        <button
+          type="button"
+          *ngFor="let cue of getSuspiciousCues()"
+          class="cue-chip"
+          [ngClass]="{ 'cue-chip--selected': isCueSelected(cue) }"
+          (click)="toggleCue(cue)"
+        >
+          {{ cue }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="scenario-page__actions">
+    <button class="primary-button" (click)="makeDecision()">
+      Make Your Decision
+    </button>
+  </div>
+</div>

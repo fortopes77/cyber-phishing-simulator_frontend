@@ -1,0 +1,150 @@
+<app-header
+  [title]="isCreateMode ? 'Create Scenario' : 'Edit Scenario'"
+  [subtitle]="
+    isCreateMode
+      ? 'Create a new scenario below.'
+      : 'Update the scenario details below and save your changes.'
+  "
+></app-header>
+<app-dashboard-card>
+  <form
+    class="scenario-form"
+    [formGroup]="scenarioForm"
+    (ngSubmit)="onSubmit()"
+  >
+    <div class="editor-layout">
+      <div class="form-panel">
+        <div class="form-grid">
+          <label class="field">
+            <span>Module</span>
+            <select formControlName="moduleId">
+              <option value="" disabled>Select a module</option>
+              @for (option of moduleOptions; track option) {
+                <option [value]="option">
+                  {{ option }}
+                </option>
+              }
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Title</span>
+            <input
+              type="text"
+              formControlName="title"
+              placeholder="Enter scenario title"
+            />
+          </label>
+
+          <label class="field field-full">
+            <span>Content</span>
+            <textarea
+              rows="4"
+              formControlName="content"
+              placeholder="Enter the scenario content"
+            ></textarea>
+          </label>
+
+          <label class="field">
+            <span>Category</span>
+            <select formControlName="category">
+              <option value="" disabled>Select a category</option>
+              @for (option of categoryOptions; track option) {
+                <option [value]="option">
+                  {{ option }}
+                </option>
+              }
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Difficulty</span>
+            <select formControlName="difficulty">
+              <option value="" disabled>Select a difficulty</option>
+              @for (option of difficultyOptions; track option) {
+                <option [value]="option">
+                  {{ option }}
+                </option>
+              }
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Interaction type</span>
+            <select formControlName="interactionType">
+              <option value="" disabled>Select interaction type</option>
+              @for (option of interactionTypeOptions; track option) {
+                <option [value]="option">
+                  {{ option }}
+                </option>
+              }
+            </select>
+          </label>
+
+          <label class="field field-full">
+            <span>Scenario description</span>
+            <textarea
+              rows="4"
+              formControlName="scenarioDescription"
+              placeholder="Describe the scenario"
+            ></textarea>
+          </label>
+        </div>
+
+        <div class="actions">
+          <button type="button" class="btn btn-secondary" (click)="onCancel()">
+            Cancel
+          </button>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </div>
+
+      <aside class="preview-panel">
+        <div class="preview-header">
+          <div>
+            <h2>Live Preview</h2>
+            <p>See how this scenario will appear on the scenario page.</p>
+          </div>
+          <span class="preview-tag">Scenario Page</span>
+        </div>
+
+        <div class="scenario-page preview-card">
+          <div class="scenario-page__header">
+            <div class="scenario-page__info">
+              <div class="scenario-page__module">{{ previewModuleTitle }}</div>
+              <div class="scenario-page__counter">
+                Scenario {{ previewScenarioNumber }} of
+                {{ previewTotalScenarios }}
+              </div>
+            </div>
+          </div>
+
+          <div class="scenario-alert">
+            <strong>This is a training scenario</strong>
+            <p>
+              Review this message carefully and decide if it’s safe or
+              suspicious
+            </p>
+          </div>
+
+          <div class="scenario-card">
+            <div class="scenario-card__top">
+              <span class="scenario-card__tag">{{ previewType }}</span>
+              <span class="scenario-card__tag scenario-card__tag--difficulty">
+                {{ previewDifficulty }}
+              </span>
+              <div class="scenario-card__from">From: {{ previewFrom }}</div>
+              <div class="scenario-card__subject">{{ previewSubject }}</div>
+            </div>
+
+            <div class="scenario-card__body">
+              <p>{{ previewBody }}</p>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <!-- TODO Implement save confirmation message -->
+  </form>
+</app-dashboard-card>

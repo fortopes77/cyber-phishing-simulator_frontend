@@ -1,0 +1,202 @@
+[
+  {
+    "name": "PhishingBasics",
+    "version": "1.1.0",
+    "description": "Introduction to phishing techniques and awareness",
+    "author": "Security Team",
+    "completionRate": 0.88,
+    "lastUpdated": "2024-06-02T10:30:00Z",
+    "numberOfStudentsAssigned": 200,
+    "numberOfStudentsCompleted": 176
+  },
+  {
+    "name": "EmailSecurity",
+    "version": "1.0.5",
+    "description": "Best practices for securing email communications",
+    "author": "IT Support",
+    "completionRate": 0.92,
+    "lastUpdated": "2024-06-03T14:15:00Z",
+    "numberOfStudentsAssigned": 180,
+    "numberOfStudentsCompleted": 165
+  },
+  {
+    "name": "SocialEngineering",
+    "version": "1.2.0",
+    "description": "Understanding social engineering attacks",
+    "author": "Awareness Group",
+    "completionRate": 0.85,
+    "lastUpdated": "2024-06-04T09:45:00Z",
+    "numberOfStudentsAssigned": 160,
+    "numberOfStudentsCompleted": 136
+  },
+  {
+    "name": "PasswordManagement",
+    "version": "1.0.2",
+    "description": "Creating and managing strong passwords",
+    "author": "Cyber Team",
+    "completionRate": 0.97,
+    "lastUpdated": "2024-06-05T16:20:00Z",
+    "numberOfStudentsAssigned": 220,
+    "numberOfStudentsCompleted": 213
+  },
+  {
+    "name": "MalwareDetection",
+    "version": "1.3.0",
+    "description": "Identifying and preventing malware infections",
+    "author": "Antivirus Dept",
+    "completionRate": 0.9,
+    "lastUpdated": "2024-06-06T11:00:00Z",
+    "numberOfStudentsAssigned": 190,
+    "numberOfStudentsCompleted": 171
+  },
+  {
+    "name": "NetworkSecurity",
+    "version": "1.1.5",
+    "description": "Securing networks against cyber threats",
+    "author": "Network Admins",
+    "completionRate": 0.87,
+    "lastUpdated": "2024-06-07T13:30:00Z",
+    "numberOfStudentsAssigned": 170,
+    "numberOfStudentsCompleted": 147
+  },
+  {
+    "name": "DataEncryption",
+    "version": "1.0.8",
+    "description": "Encrypting sensitive data for protection",
+    "author": "Encryption Experts",
+    "completionRate": 0.94,
+    "lastUpdated": "2024-06-08T08:45:00Z",
+    "numberOfStudentsAssigned": 140,
+    "numberOfStudentsCompleted": 131
+  },
+  {
+    "name": "IncidentResponse",
+    "version": "1.2.2",
+    "description": "Responding to cybersecurity incidents",
+    "author": "Response Team",
+    "completionRate": 0.83,
+    "lastUpdated": "2024-06-09T15:10:00Z",
+    "numberOfStudentsAssigned": 210,
+    "numberOfStudentsCompleted": 174
+  },
+  {
+    "name": "TwoFactorAuth",
+    "version": "1.0.3",
+    "description": "Implementing two-factor authentication",
+    "author": "Auth Specialists",
+    "completionRate": 0.96,
+    "lastUpdated": "2024-06-10T12:25:00Z",
+    "numberOfStudentsAssigned": 195,
+    "numberOfStudentsCompleted": 187
+  },
+  {
+    "name": "PhishingSimulation",
+    "version": "1.4.0",
+    "description": "Simulating phishing attacks for training",
+    "author": "Simulation Lab",
+    "completionRate": 0.89,
+    "lastUpdated": "2024-06-11T17:00:00Z",
+    "numberOfStudentsAssigned": 175,
+    "numberOfStudentsCompleted": 156
+  },
+  {
+    "name": "WebSecurity",
+    "version": "1.1.1",
+    "description": "Securing web applications and browsing",
+    "author": "Web Dev Team",
+    "completionRate": 0.91,
+    "lastUpdated": "2024-06-12T10:50:00Z",
+    "numberOfStudentsAssigned": 185,
+    "numberOfStudentsCompleted": 168
+  },
+  {
+    "name": "MobileSecurity",
+    "version": "1.0.7",
+    "description": "Protecting mobile devices from threats",
+    "author": "Mobile Experts",
+    "completionRate": 0.93,
+    "lastUpdated": "2024-06-13T14:40:00Z",
+    "numberOfStudentsAssigned": 165,
+    "numberOfStudentsCompleted": 153
+  },
+  {
+    "name": "CloudSecurity",
+    "version": "1.2.5",
+    "description": "Securing cloud-based services and data",
+    "author": "Cloud Admins",
+    "completionRate": 0.86,
+    "lastUpdated": "2024-06-14T09:15:00Z",
+    "numberOfStudentsAssigned": 155,
+    "numberOfStudentsCompleted": 133
+  },
+  {
+    "name": "IoTSecurity",
+    "version": "1.0.4",
+    "description": "Securing Internet of Things devices",
+    "author": "IoT Team",
+    "completionRate": 0.98,
+    "lastUpdated": "2024-06-15T16:35:00Z",
+    "numberOfStudentsAssigned": 130,
+    "numberOfStudentsCompleted": 127
+  },
+  {
+    "name": "ComplianceTraining",
+    "version": "1.3.1",
+    "description": "Understanding cybersecurity compliance",
+    "author": "Compliance Dept",
+    "completionRate": 0.84,
+    "lastUpdated": "2024-06-16T11:20:00Z",
+    "numberOfStudentsAssigned": 205,
+    "numberOfStudentsCompleted": 172
+  },
+  {
+    "name": "AdvancedPhishing",
+    "version": "1.1.8",
+    "description": "Advanced phishing techniques and countermeasures",
+    "author": "Advanced Security",
+    "completionRate": 0.87,
+    "lastUpdated": "2024-06-17T13:55:00Z",
+    "numberOfStudentsAssigned": 145,
+    "numberOfStudentsCompleted": 126
+  },
+  {
+    "name": "ForensicAnalysis",
+    "version": "1.0.9",
+    "description": "Conducting digital forensics on cyber incidents",
+    "author": "Forensics Team",
+    "completionRate": 0.95,
+    "lastUpdated": "2024-06-18T08:30:00Z",
+    "numberOfStudentsAssigned": 125,
+    "numberOfStudentsCompleted": 118
+  },
+  {
+    "name": "RiskAssessment",
+    "version": "1.2.3",
+    "description": "Assessing cybersecurity risks",
+    "author": "Risk Analysts",
+    "completionRate": 0.89,
+    "lastUpdated": "2024-06-19T15:45:00Z",
+    "numberOfStudentsAssigned": 175,
+    "numberOfStudentsCompleted": 156
+  },
+  {
+    "name": "EthicalHacking",
+    "version": "1.4.2",
+    "description": "Introduction to ethical hacking practices",
+    "author": "Hacking Ethics",
+    "completionRate": 0.82,
+    "lastUpdated": "2024-06-20T12:10:00Z",
+    "numberOfStudentsAssigned": 190,
+    "numberOfStudentsCompleted": 155
+  },
+  {
+    "name": "CyberAwareness",
+    "version": "1.0.6",
+    "description": "General cybersecurity awareness training",
+    "author": "Awareness Team",
+    "completionRate": 0.96,
+    "lastUpdated": "2024-06-21T17:25:00Z",
+    "numberOfStudentsAssigned": 225,
+    "numberOfStudentsCompleted": 216
+  }
+]

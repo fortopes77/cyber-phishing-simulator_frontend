@@ -1,0 +1,96 @@
+<div class="list-wrapper">
+  <div *ngIf="hasRows" class="list-scroll-container">
+    <table
+      mat-table
+      [dataSource]="tableDataSource"
+      matSort
+      (matSortChange)="sortData($event)"
+      class="list-table"
+    >
+      <ng-container *ngFor="let column of columns">
+        <ng-container [matColumnDef]="column.key">
+          <th
+            mat-header-cell
+            *matHeaderCellDef
+            [mat-sort-header]="column.sortable !== false ? column.key : ''"
+            [disabled]="column.sortable === false"
+          >
+            {{ column.label }}
+          </th>
+          <td mat-cell *matCellDef="let row">
+            {{ getCellValue(column, row) }}
+          </td>
+        </ng-container>
+      </ng-container>
+
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef>{{ actionsColumnLabel }}</th>
+        <td mat-cell *matCellDef="let row" class="actions-cell">
+          <div
+            *ngIf="shouldUseDropdown"
+            class="action-menu-wrapper"
+            (click)="$event.stopPropagation()"
+          >
+            <button
+              *ngFor="let action of visibleActions"
+              type="button"
+              class="action-button icon-button"
+              [matTooltip]="getActionTooltip(action)"
+              (click)="$event.stopPropagation(); handleAction(action, row)"
+            >
+              <fa-icon [icon]="getActionIcon(action)"></fa-icon>
+            </button>
+
+            <button
+              *ngIf="overflowActions.length"
+              type="button"
+              class="action-menu-trigger"
+              (click)="$event.stopPropagation(); toggleActionsMenu(row, $event)"
+              aria-label="More actions"
+              [attr.aria-expanded]="openMenuRowKey === getRowMenuKey(row)"
+            >
+              ⋯
+            </button>
+
+            <div
+              *ngIf="openMenuRowKey === getRowMenuKey(row)"
+              class="action-menu"
+              role="menu"
+            >
+              <button
+                *ngFor="let action of overflowActions"
+                type="button"
+                class="action-menu-item"
+                role="menuitem"
+                (click)="$event.stopPropagation(); handleAction(action, row)"
+              >
+                {{ action.label }}
+              </button>
+            </div>
+          </div>
+
+          <ng-container *ngIf="!shouldUseDropdown">
+            <button
+              *ngFor="let action of actions"
+              type="button"
+              class="action-button icon-button"
+              [matTooltip]="getActionTooltip(action)"
+              (click)="$event.stopPropagation(); handleAction(action, row)"
+            >
+              <fa-icon [icon]="getActionIcon(action)"></fa-icon>
+            </button>
+          </ng-container>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr
+        mat-row
+        *matRowDef="let row; columns: displayedColumns"
+        (click)="handleRowClick(row)"
+      ></tr>
+    </table>
+  </div>
+
+  <p *ngIf="!hasRows" class="empty-state">{{ emptyMessage }}</p>
+</div>

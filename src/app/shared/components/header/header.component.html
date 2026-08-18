@@ -1,0 +1,35 @@
+<header class="header">
+  <div class="header__copy">
+    <h1>{{ title }}</h1>
+    <p>{{ subtitle }}</p>
+  </div>
+
+  @if (hasCreateActions) {
+    <div class="header__actions">
+      <button
+        type="button"
+        class="create-button"
+        aria-haspopup="menu"
+        [attr.aria-expanded]="isCreateMenuOpen"
+        (click)="toggleCreateMenu()"
+        >
+        Create
+        <span class="create-button__chevron" aria-hidden="true"></span>
+      </button>
+      @if (isCreateMenuOpen) {
+        <div class="create-menu" role="menu">
+          @for (action of createActions; track action) {
+            <button
+              type="button"
+              class="create-menu__item"
+              role="menuitem"
+              (click)="handleCreateAction(action)"
+              >
+              {{ action.label }}
+            </button>
+          }
+        </div>
+      }
+    </div>
+  }
+</header>

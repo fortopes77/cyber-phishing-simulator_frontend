@@ -1,0 +1,8 @@
+{
+  "id": "a_123",
+  "scenarioId": "s_001",
+  "userId": "u_12345",
+  "decision": "Report",
+  "correct": true,
+  "timeTaken": 12
+}

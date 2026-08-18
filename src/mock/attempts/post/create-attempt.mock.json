@@ -1,0 +1,11 @@
+{
+  "success": true,
+  "attempt": {
+    "id": "a_123",
+    "scenarioId": "s_001",
+    "userId": "u_12345",
+    "decision": "Report",
+    "correct": true,
+    "timestamp": "2026-04-06T10:15:00Z"
+  }
+}

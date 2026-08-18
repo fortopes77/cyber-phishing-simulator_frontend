@@ -1,0 +1,39 @@
+<button class="learning-card" (click)="onClick()">
+  <div class="learning-card__icon">
+    <fa-icon [icon]="fontAwesomeIcons.clockIcon"></fa-icon>
+  </div>
+
+  <div class="learning-card__content">
+    <div class="learning-card__top">
+      <div class="learning-card__title">
+        {{ item.title }}
+      </div>
+
+      @if (item.level) {
+        <div class="learning-card__badge">
+          {{ item.level }}
+        </div>
+      }
+    </div>
+
+    <div class="learning-card__bottom">
+      <div class="learning-card__progress">
+        <div class="learning-card__progress-track">
+          <div
+            class="learning-card__progress-fill"
+            [style.width.%]="item.progressPercentage"
+          ></div>
+        </div>
+      </div>
+
+      <div class="learning-card__stats">
+        {{ item.completedScenarios }}/{{ item.totalScenarios }}
+        scenarios
+      </div>
+    </div>
+  </div>
+
+  <div class="learning-card__arrow">
+    <fa-icon [icon]="fontAwesomeIcons.arrowRightIcon"></fa-icon>
+  </div>
+</button>

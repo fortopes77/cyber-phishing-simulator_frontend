@@ -1,0 +1,26 @@
+<div class="search-filter-bar">
+  <label class="search-filter-bar__field">
+    <span class="search-filter-bar__label">Search</span>
+    <input
+      type="text"
+      [value]="searchValue"
+      [placeholder]="searchPlaceholder"
+      (input)="onSearchChange($any($event.target).value)"
+    />
+  </label>
+
+  @if (filterOptions.length) {
+    <label class="search-filter-bar__field">
+      <span class="search-filter-bar__label">{{ filterLabel }}</span>
+      <select
+        [value]="filterValue"
+        (change)="onFilterChange($any($event.target).value)"
+      >
+        <option value="all">All</option>
+        @for (option of filterOptions; track option) {
+          <option [value]="option">{{ option }}</option>
+        }
+      </select>
+    </label>
+  }
+</div>

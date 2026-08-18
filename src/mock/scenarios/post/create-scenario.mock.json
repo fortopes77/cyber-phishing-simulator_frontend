@@ -1,0 +1,10 @@
+{
+  "success": true,
+  "message": "Scenario created successfully",
+  "scenario": {
+    "id": "s_002",
+    "title": "New Scenario",
+    "difficulty": "easy",
+    "category": "Smishing"
+  }
+}

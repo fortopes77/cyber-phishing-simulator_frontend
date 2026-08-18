@@ -1,1 +1,19 @@
-/* You can add global styles to this file, and also import other style files */
+body {
+  margin: 0;
+  font-family: "Inter", sans-serif;
+  background-color: #f8f8f8;
+  color: #1b2b3a;
+}
+
+a {
+  font-size: 16px;
+}
+
+app-nav {
+  display: block;
+}
+
+app-nav + .app-container {
+  margin-left: 250px;
+  padding: 2rem;
+}
