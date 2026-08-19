@@ -14,10 +14,10 @@ export class ScenarioService {
     // If your mock folder is served from the web root as /mock/... use an absolute path
     // that starts with a leading slash so it resolves from the server root.
     // return this.http.get('/mock/scenarios/get/scenario-list.mock.json');
+    const authData = localStorage.getItem('auth');
+    const token = authData ? JSON.parse(authData).token : null;
     return this.http.get(`${this.apiEndpoint}scenarios`, {
-      headers: {
-        Authorization: 'Bearer ' + localStorage.getItem('token') || '',
-      },
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
   }
 
