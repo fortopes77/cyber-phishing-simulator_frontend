@@ -7,7 +7,7 @@ export interface User {
   id: string;
   username: string;
   email: string;
-  role: 'admin' | 'user';
+  role: 'trainer' | 'user';
 }
 
 @Injectable({
@@ -24,7 +24,7 @@ export class AuthService {
       username: 'admin',
       email: 'admin@example.com',
       password: 'admin',
-      role: 'admin' as const,
+      role: 'trainer' as const,
     },
     {
       username: 'user',
@@ -110,7 +110,7 @@ export class AuthService {
    * Check if user is admin
    */
   isAdmin(): boolean {
-    return this.hasRole('admin');
+    return this.hasRole('trainer');
   }
 
   /**

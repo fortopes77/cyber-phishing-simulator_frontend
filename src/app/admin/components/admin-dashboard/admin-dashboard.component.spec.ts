@@ -25,7 +25,7 @@ describe('AdminDashboardComponent', () => {
                   id: '1',
                   username: 'test-user',
                   email: 'test@example.com',
-                  role: 'admin',
+                  role: 'trainer',
                 },
               },
             },

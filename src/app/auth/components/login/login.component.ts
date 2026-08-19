@@ -40,7 +40,7 @@ export class LoginComponent {
       }
 
       this.isLoading = false;
-      if (authState.user?.role === 'admin') {
+      if (authState.user?.role === 'trainer') {
         this.router.navigate(['/trainer/dashboard']);
       } else if (authState.user?.role) {
         this.router.navigate(['/learner/dashboard']);
