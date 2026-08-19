@@ -7,6 +7,7 @@ import { environment } from 'src/environments/environment';
 })
 export class ScenarioService {
   private apiEndpoint = environment.apiUrl || 'http://localhost:3000/';
+  private aiApiEndpoint = environment.aiApiUrl || 'http://localhost:8000/';
 
   constructor(private http: HttpClient) {}
 
@@ -45,17 +46,23 @@ export class ScenarioService {
   }
 
   createScenarioWithAI() {
-    return this.http.get('http://localhost:8000/simple-scenario');
+    return this.http.get(this.aiApiEndpoint + 'simple-scenario');
   }
 
   updateScenario(scenarioId: string, updatedScenario: any) {
-    return this.http.patch(
-      `${this.apiEndpoint}scenarios/${scenarioId}`,
-      updatedScenario,
-    );
+    const authData = localStorage.getItem('auth');
+    const token = authData ? JSON.parse(authData).token : null;
+    return this.http.patch(`${this.apiEndpoint}scenarios/${scenarioId}`, {
+      body: updatedScenario,
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
   }
 
   deleteScenario(scenarioId: string) {
-    return this.http.delete(`${this.apiEndpoint}scenarios/${scenarioId}`);
+    const authData = localStorage.getItem('auth');
+    const token = authData ? JSON.parse(authData).token : null;
+    return this.http.delete(`${this.apiEndpoint}scenarios/${scenarioId}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
   }
 }
