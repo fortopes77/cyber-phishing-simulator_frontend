@@ -30,6 +30,8 @@ export class ScenarioService {
   }
 
   createScenario(scenario: any) {
+    const authData = localStorage.getItem('auth');
+    const token = authData ? JSON.parse(authData).token : null;
     const newScenario = {
       moduleId: 2,
       title: scenario.title,
@@ -42,7 +44,10 @@ export class ScenarioService {
       recipient: scenario.recipient,
       subject: scenario.subject,
     };
-    return this.http.post(`${this.apiEndpoint}scenarios`, newScenario);
+    return this.http.post(`${this.apiEndpoint}scenarios`, {
+      body: newScenario,
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
   }
 
   createScenarioWithAI() {
