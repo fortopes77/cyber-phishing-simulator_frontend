@@ -44,8 +44,7 @@ export class ScenarioService {
       recipient: scenario.recipient,
       subject: scenario.subject,
     };
-    return this.http.post(`${this.apiEndpoint}scenarios`, {
-      body: newScenario,
+    return this.http.post(`${this.apiEndpoint}scenarios`, newScenario, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
   }
@@ -57,10 +56,13 @@ export class ScenarioService {
   updateScenario(scenarioId: string, updatedScenario: any) {
     const authData = localStorage.getItem('auth');
     const token = authData ? JSON.parse(authData).token : null;
-    return this.http.patch(`${this.apiEndpoint}scenarios/${scenarioId}`, {
-      body: updatedScenario,
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
+    return this.http.patch(
+      `${this.apiEndpoint}scenarios/${scenarioId}`,
+      updatedScenario,
+      {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      },
+    );
   }
 
   deleteScenario(scenarioId: string) {
