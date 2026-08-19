@@ -28,6 +28,14 @@ export const authReducer = createReducer(
     user,
     isAuthenticated: true,
     token,
+    loading: false,
+    error: undefined,
+  })),
+
+  on(AuthActions.loginFailure, (state, { error }) => ({
+    ...state,
+    loading: false,
+    error,
   })),
   on(AuthActions.logoutSuccess, (state) => ({
     ...state,

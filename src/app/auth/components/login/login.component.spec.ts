@@ -98,6 +98,22 @@ describe('LoginComponent', () => {
     expect(component.isLoading).toBe(true);
   });
 
+  it('should show the login error and stop loading after a failed login', () => {
+    component.credential = 'admin@example.com';
+    component.password = 'wrong-password';
+    component.onLogin();
+
+    store.overrideSelector(selectAuthState, {
+      isAuthenticated: false,
+      loading: false,
+      error: 'Invalid credentials',
+    });
+    store.refreshState();
+
+    expect(component.isLoading).toBe(false);
+    expect(component.errorMessage).toBe('Invalid credentials');
+  });
+
   it('should navigate to trainer dashboard for admin role when authenticated', () => {
     component.credential = 'admin@example.com';
     component.password = 'admin';

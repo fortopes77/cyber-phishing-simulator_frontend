@@ -35,11 +35,20 @@ export class LoginComponent {
 
   subscribeToLoginSuccess() {
     this.store.select(selectAuthState).subscribe((authState) => {
-      if (!authState || !authState.isAuthenticated) {
+      if (!authState) {
+        this.isLoading = false;
         return;
       }
 
-      this.isLoading = false;
+      this.isLoading = authState.loading;
+      this.errorMessage = authState.error || '';
+
+      if (!authState.isAuthenticated) {
+        this.isLoading = false;
+        this.errorMessage = authState.error || '';
+        return;
+      }
+
       if (authState.user?.role === 'trainer') {
         this.router.navigate(['/trainer/dashboard']);
       } else if (authState.user?.role) {
