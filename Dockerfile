@@ -6,6 +6,6 @@ COPY . .
 RUN npm run build -- --configuration=production
 
 FROM nginx:alpine
-# Replace <project-name> with the name in angular.json / dist output folder
-COPY --from=build /app/dist/phishing-frontend/browser /usr/share/nginx/html
+COPY --from=build /app/dist/<project-name>/browser /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
