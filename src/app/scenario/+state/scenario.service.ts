@@ -22,18 +22,34 @@ export class ScenarioService {
     });
   }
 
+  getScenariosByModule(moduleId: number) {
+    // ASSUMPTION: the scenarios endpoint accepts a moduleId query param to
+    // scope the list to a single module. Update this if your NestJS
+    // controller uses a different route (e.g. modules/:id/scenarios).
+    const authData = localStorage.getItem('auth');
+    const token = authData ? JSON.parse(authData).token : null;
+    return this.http.get(`${this.apiEndpoint}scenarios`, {
+      params: { moduleId },
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+  }
+
   getScenarioDetails(scenarioId: string) {
     // If your mock folder is served from the web root as /mock/... use an absolute path
     // that starts with a leading slash so it resolves from the server root.
     // return this.http.get(`/mock/scenarios/get/scenario-details-${scenarioId}.mock.json`);
-    return this.http.get(`${this.apiEndpoint}scenarios/${scenarioId}`);
+    const authData = localStorage.getItem('auth');
+    const token = authData ? JSON.parse(authData).token : null;
+    return this.http.get(`${this.apiEndpoint}scenarios/${scenarioId}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
   }
 
   createScenario(scenario: any) {
     const authData = localStorage.getItem('auth');
     const token = authData ? JSON.parse(authData).token : null;
     const newScenario = {
-      moduleId: 2, //This is going to be matched based on what the user selects in the module dropdown. For now, we are hardcoding it to 2.
+      moduleId: 5, //This is going to be matched based on what the user selects in the module dropdown. For now, we are hardcoding it to 2.
       title: scenario.title,
       content: scenario.emailBody,
       category: scenario.category,

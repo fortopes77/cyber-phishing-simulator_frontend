@@ -33,7 +33,7 @@ export class UserDashboardComponent {
     totalScenarios: 2,
     progressPercentage: 50,
     icon: 'schedule',
-    route: '/learner/modules/email-phishing',
+    route: '/learner/modules/1',
   };
 
   assignedModules: AssignedModule[] = [
@@ -46,7 +46,7 @@ export class UserDashboardComponent {
       scenarios: 3,
       status: 'In progress',
       progressPercentage: 78,
-      route: '/learner/modules/email-phishing',
+      route: '/learner/modules/1',
     },
     {
       id: 'module-2',
@@ -57,7 +57,7 @@ export class UserDashboardComponent {
       scenarios: 3,
       status: 'Assigned',
       progressPercentage: 22,
-      route: '/learner/modules/social-engineering',
+      route: '/learner/modules/2',
     },
     {
       id: 'module-3',
@@ -68,7 +68,7 @@ export class UserDashboardComponent {
       scenarios: 3,
       status: 'Assigned',
       progressPercentage: 10,
-      route: '/learner/modules/credential-safety',
+      route: '/learner/modules/3',
     },
     {
       id: 'module-4',
@@ -79,7 +79,7 @@ export class UserDashboardComponent {
       scenarios: 3,
       status: 'Assigned',
       progressPercentage: 0,
-      route: '/learner/modules/link-recognition',
+      route: '/learner/modules/4',
     },
   ];
 

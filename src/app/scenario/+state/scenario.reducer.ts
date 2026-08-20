@@ -31,6 +31,20 @@ export const scenarioReducer = createReducer(
     loading: false,
     error,
   })),
+  on(ScenarioActions.fetchScenariosByModule, (state) => ({
+    ...state,
+    loading: true,
+  })),
+  on(ScenarioActions.fetchScenariosByModuleSuccess, (state, { scenarios }) => ({
+    ...state,
+    scenarioList: scenarios,
+    loading: false,
+  })),
+  on(ScenarioActions.fetchScenariosByModuleFailure, (state, { error }) => ({
+    ...state,
+    loading: false,
+    error,
+  })),
   on(ScenarioActions.fetchScenarioDetails, (state) => ({
     ...state,
     loading: true,

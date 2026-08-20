@@ -1,9 +1,16 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { Store } from '@ngrx/store';
+import { combineLatest } from 'rxjs';
+import { ScenarioActions } from '../../+state/scenario.actions';
+import {
+  selectScenario,
+  selectScenarioList,
+} from '../../+state/scenario.selectors';
 
 interface Scenario {
-  id: number;
+  id: number | string;
   title: string;
   type: string;
   difficulty: string;
@@ -31,88 +38,76 @@ interface InvoiceField {
   styleUrls: ['./scenario-page.component.scss'],
 })
 export class ScenarioPageComponent implements OnInit {
-  moduleTitle = 'Email Phishing Basics';
-  scenarioId = 1;
+  moduleTitle = 'Module';
+  scenarioId: number | string = '';
   scenarioNumber = 1;
-  totalScenarios = 2;
+  totalScenarios = 1;
   scenario: Scenario = {
-    id: 1,
-    title: 'Required: Software Update for All Employees',
-    type: 'Email',
-    difficulty: 'Medium',
-    from: 'it-support@yourcompany.com',
-    subject: 'Required: Software Update for All Employees',
-    body: `Hi Team,
-
-As part of our quarterly security updates, we need all employees to install the latest version of our VPN client.
-
-Please download the update from our internal portal:
-https://internal.yourcompany.com/downloads/vpn-client
-
-If you have any questions, contact the IT Help Desk at ext. 4500.
-
-Thanks,
-IT Support Team`,
-    cues: ['Urgent request', 'Unexpected link', 'Pressure to act quickly'],
+    id: '',
+    title: '',
+    type: 'generic',
+    difficulty: '',
+    from: '',
+    subject: '',
+    body: '',
+    cues: [],
   };
   selectedCues: string[] = [];
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
+    private store: Store,
   ) {}
 
   ngOnInit(): void {
     this.route.paramMap.subscribe((params) => {
-      const idValue = Number(params.get('id')) || 1;
+      const idParam = params.get('id') || '';
+      // Scenario ids from the API are strings (e.g. "s_001"), but some
+      // routes/tests still pass numeric ids - keep whichever was given.
+      const idValue = /^\d+$/.test(idParam) ? Number(idParam) : idParam;
       this.scenarioId = idValue;
-      this.scenarioNumber = idValue;
-      this.scenario = this.getScenarioById(idValue);
+      this.store.dispatch(
+        ScenarioActions.fetchScenarioDetails({ scenarioId: String(idValue) }),
+      );
+    });
+
+    combineLatest([
+      this.store.select(selectScenario),
+      this.store.select(selectScenarioList),
+    ]).subscribe(([scenario, scenarioList]) => {
+      if (scenario) {
+        this.scenario = this.mapScenario(scenario);
+      }
+
+      // The learner typically arrives here from the module page, which has
+      // already loaded the module's scenario list into the store - use it
+      // to show "Scenario X of Y" and the module name without a second
+      // round trip. Falls back gracefully if the list isn't loaded yet.
+      if (scenarioList?.length) {
+        this.totalScenarios = scenarioList.length;
+        const index = scenarioList.findIndex(
+          (item: any) => item.id === this.scenarioId,
+        );
+        this.scenarioNumber = index >= 0 ? index + 1 : 1;
+      }
     });
   }
 
-  getScenarioById(id: number): Scenario {
-    const scenarios: Scenario[] = [
-      {
-        id: 1,
-        title: 'Required: Software Update for All Employees',
-        type: 'Email',
-        difficulty: 'Medium',
-        from: 'it-support@yourcompany.com',
-        subject: 'Required: Software Update for All Employees',
-        body: `Hi Team,
-
-As part of our quarterly security updates, we need all employees to install the latest version of our VPN client.
-
-Please download the update from our internal portal:
-https://internal.yourcompany.com/downloads/vpn-client
-
-If you have any questions, contact the IT Help Desk at ext. 4500.
-
-Thanks,
-IT Support Team`,
-        cues: ['Urgent request', 'Unexpected link', 'Pressure to act quickly'],
-      },
-      {
-        id: 2,
-        title: 'Urgent Password Reset',
-        type: 'Email',
-        difficulty: 'Easy',
-        from: 'security@yourcompany.com',
-        subject: 'Urgent Password Reset Required',
-        body: `Hi Team,
-
-Your account has been flagged for suspicious activity. Please reset your password immediately using the secure link below.
-
-https://secure.yourcompany.com/reset-password
-
-Thank you,
-Security Team`,
-        cues: ['Urgent language', 'Suspicious link', 'Threatening tone'],
-      },
-    ];
-
-    return scenarios.find((scenario) => scenario.id === id) ?? scenarios[0];
+  private mapScenario(raw: any): Scenario {
+    return {
+      id: raw.id ?? this.scenarioId,
+      title: raw.title ?? '',
+      // Backend field is `interactionType` (see scenario.service.ts
+      // createScenario) - values are expected to align with the
+      // email/phone/text/invoice switch below.
+      type: raw.interactionType ?? raw.type ?? 'generic',
+      difficulty: raw.difficulty ?? '',
+      from: raw.sender ?? raw.from ?? '',
+      subject: raw.subject ?? raw.title ?? '',
+      body: raw.content ?? raw.body ?? '',
+      cues: raw.cues ?? [],
+    };
   }
 
   getScenarioTypeKey(): string {
