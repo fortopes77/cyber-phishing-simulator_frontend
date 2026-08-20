@@ -33,7 +33,7 @@ export class ScenarioService {
     const authData = localStorage.getItem('auth');
     const token = authData ? JSON.parse(authData).token : null;
     const newScenario = {
-      moduleId: 2,
+      moduleId: 2, //This is going to be matched based on what the user selects in the module dropdown. For now, we are hardcoding it to 2.
       title: scenario.title,
       content: scenario.emailBody,
       category: scenario.category,
@@ -43,6 +43,9 @@ export class ScenarioService {
       sender: scenario.sender,
       recipient: scenario.recipient,
       subject: scenario.subject,
+      correctActionExplanation: scenario.correctAnswer,
+      choices: [{ text: 'test', isCorrect: true, feedback: 'yes' }], //This is going to be matched based on the AI API response. For now, we are hardcoding it to a single choice.
+      cues: [{ text: 'test', isCorrect: true }], //This is going to be matched based on the AI API response. For now, we are hardcoding it to a single cue.
     };
     return this.http.post(`${this.apiEndpoint}scenarios`, newScenario, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
