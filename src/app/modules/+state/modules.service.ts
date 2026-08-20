@@ -17,8 +17,14 @@ export class ModulesService {
   // Update the path/mapping in modules.effects.ts if your real endpoint
   // differs.
   getModules() {
+    const authData = localStorage.getItem('auth');
+    const token = authData ? JSON.parse(authData).token : null;
     return this.http.get<LearnerModule[] | { modules: LearnerModule[] }>(
-      `${this.apiEndpoint}modules`,
+      `${this.apiEndpoint}training-modules`,
+      {
+        params: { organisationId: 1 },
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      },
     );
   }
 }
