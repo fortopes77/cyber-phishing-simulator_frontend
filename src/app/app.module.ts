@@ -29,6 +29,7 @@ import { LearningProgressCardComponent } from './learner/components/learning-pro
 import { AssignedModuleCardComponent } from './learner/components/assigned-module-card/assigned-module-card.component';
 import { ScenarioModule } from './scenario/scenario.module';
 import { AttemptsModule } from './attempts/attempts.module';
+import { LearnerModulesModule } from './modules/modules.module';
 import { BreadcrumbsComponent } from './shared/components/breadcrumbs/breadcrumbs.component';
 
 @NgModule({
@@ -49,6 +50,7 @@ import { BreadcrumbsComponent } from './shared/components/breadcrumbs/breadcrumb
     AuthModule,
     ScenarioModule,
     AttemptsModule,
+    LearnerModulesModule,
     StoreModule.forRoot({}),
     EffectsModule.forRoot([]),
     DataCardComponent,

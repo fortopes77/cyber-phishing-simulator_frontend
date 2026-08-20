@@ -11,6 +11,14 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { iconLibrary } from 'src/app/shared/constants/font-awesome-icons.const';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { Store } from '@ngrx/store';
+import { combineLatest } from 'rxjs';
+import { ModulesActions } from 'src/app/modules/+state/modules.actions';
+import { selectModuleList } from 'src/app/modules/+state/modules.selectors';
+import { ScenarioActions } from 'src/app/scenario/+state/scenario.actions';
+import { selectScenarioList } from 'src/app/scenario/+state/scenario.selectors';
+import { AttemptsActions } from 'src/app/attempts/+state/attempts.actions';
+import { selectAttempts } from 'src/app/attempts/+state/attempts.selectors';
 
 interface ModuleCard {
   id: string;
@@ -42,48 +50,71 @@ export class LearnerModulesListComponent implements OnInit {
   modules: ModuleCard[] = [];
   filteredModules: ModuleCard[] = [];
 
-  ngOnInit(): void {
-    // Sample data — replace with real data fetch when available
-    this.modules = [
-      {
-        id: 'm1',
-        title: 'Email Phishing Basics',
-        description:
-          'Learn to identify common email phishing tactics and protect yourself from credential theft.',
-        difficulty: 'beginner',
-        scenarios: 2,
-        progress: 0.5,
-      },
-      {
-        id: 'm2',
-        title: 'Business Email Compromise',
-        description:
-          'Recognize sophisticated BEC attacks targeting employees and executives.',
-        difficulty: 'intermediate',
-        scenarios: 1,
-        progress: 0,
-      },
-      {
-        id: 'm3',
-        title: 'SMS & Text Phishing',
-        description:
-          'Identify smishing attacks and protect your mobile communications.',
-        difficulty: 'beginner',
-        scenarios: 1,
-        progress: 0,
-      },
-      {
-        id: 'm4',
-        title: 'Internal Communications Security',
-        description:
-          'Learn to verify legitimate internal communications from spoofed attempts.',
-        difficulty: 'advanced',
-        scenarios: 1,
-        progress: 1,
-      },
-    ];
+  constructor(private store: Store) {}
 
-    this.applyFilters();
+  ngOnInit(): void {
+    this.store.dispatch(ModulesActions.fetchList());
+    // Scenarios carry a moduleId (see scenario.service.ts createScenario
+    // payload), so fetching the full list lets us group by module to work
+    // out scenario counts, difficulty, and progress without a dedicated
+    // "module scenarios" endpoint.
+    this.store.dispatch(ScenarioActions.fetchList());
+    this.store.dispatch(AttemptsActions.fetchUserAttempts());
+
+    combineLatest([
+      this.store.select(selectModuleList),
+      this.store.select(selectScenarioList),
+      this.store.select(selectAttempts),
+    ]).subscribe(([moduleList, scenarioList, attempts]) => {
+      const completedScenarioIds = new Set(
+        attempts.map((attempt) => attempt.scenarioId),
+      );
+
+      this.modules = (moduleList ?? []).map((module: any) => {
+        const moduleScenarios = (scenarioList ?? []).filter(
+          (scenario: any) => scenario.moduleId === module.moduleId,
+        );
+
+        const completedCount = moduleScenarios.filter((scenario: any) =>
+          completedScenarioIds.has(scenario.id),
+        ).length;
+
+        return {
+          id: module.moduleId,
+          title: module.moduleName,
+          description: module.description,
+          // No per-module difficulty field exists on the module list
+          // endpoint - approximate it from the module's scenarios until
+          // the backend exposes one directly.
+          difficulty: this.deriveDifficulty(moduleScenarios),
+          scenarios: moduleScenarios.length,
+          progress: moduleScenarios.length
+            ? completedCount / moduleScenarios.length
+            : 0,
+        };
+      });
+
+      this.applyFilters();
+    });
+  }
+
+  private deriveDifficulty(
+    scenarios: any[],
+  ): 'beginner' | 'intermediate' | 'advanced' {
+    const difficultyMap: Record<string, 'beginner' | 'intermediate' | 'advanced'> = {
+      easy: 'beginner',
+      medium: 'intermediate',
+      hard: 'advanced',
+    };
+
+    const counts: Record<string, number> = {};
+    for (const scenario of scenarios) {
+      const key = (scenario.difficulty ?? '').toLowerCase();
+      counts[key] = (counts[key] ?? 0) + 1;
+    }
+
+    const mostCommon = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+    return difficultyMap[mostCommon?.[0]] ?? 'beginner';
   }
 
   applyFilters(): void {
