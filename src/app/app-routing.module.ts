@@ -14,7 +14,7 @@ import { ScenarioEditComponent } from './scenario/components/scenario-edit/scena
 import { ScenarioListComponent } from './scenario/components/scenario-list/scenario-list.component';
 import { LearnerListComponent } from './learner/components/learner-list/learner-list.component';
 import { CohortsListComponent } from './cohorts/components/cohorts-list/cohorts-list.component';
-import { LearnerModulesListComponent } from './modules/components/learner-modules-list/learner-modules-list.component';
+import { ModulesListComponent } from './modules/components/modules-list/modules-list.component';
 
 const routes: Routes = [
   // Public routes
@@ -38,7 +38,7 @@ const routes: Routes = [
       },
       {
         path: 'modules',
-        component: LearnerModulesListComponent,
+        component: ModulesListComponent,
         data: { breadcrumb: 'Modules' },
       },
       {
@@ -86,10 +86,15 @@ const routes: Routes = [
         data: { breadcrumb: 'Learners' },
       },
       {
-        path: 'cohorts',
-        component: CohortsListComponent,
-        data: { breadcrumb: 'Cohorts' },
+        path: 'modules',
+        component: ModulesListComponent,
+        data: { breadcrumb: 'Modules' },
       },
+      // {
+      //   path: 'cohorts',
+      //   component: CohortsListComponent,
+      //   data: { breadcrumb: 'Cohorts' },
+      // },
       {
         path: 'scenarios',
         component: ScenarioListComponent,

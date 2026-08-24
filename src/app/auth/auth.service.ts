@@ -7,7 +7,7 @@ export interface User {
   id: string;
   username: string;
   email: string;
-  role: 'trainer' | 'user';
+  role: 'TRAINER' | 'user';
 }
 
 @Injectable({
@@ -17,22 +17,6 @@ export class AuthService {
   private readonly STORAGE_KEY = 'auth_token';
   private readonly USER_STORAGE_KEY = 'current_user';
   private apiEndpoint = environment.apiUrl || 'http://localhost:3000/';
-
-  // Mock user database - username and email can be used interchangeably
-  private readonly mockUsers = [
-    {
-      username: 'admin',
-      email: 'admin@example.com',
-      password: 'admin',
-      role: 'trainer' as const,
-    },
-    {
-      username: 'user',
-      email: 'user@example.com',
-      password: 'user',
-      role: 'user' as const,
-    },
-  ];
 
   private currentUserSubject = new BehaviorSubject<User | null>(
     this.loadUserFromStorage(),
@@ -110,7 +94,7 @@ export class AuthService {
    * Check if user is admin
    */
   isAdmin(): boolean {
-    return this.hasRole('trainer');
+    return this.hasRole('TRAINER');
   }
 
   /**

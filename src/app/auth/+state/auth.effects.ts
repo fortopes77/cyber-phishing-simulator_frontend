@@ -25,7 +25,8 @@ export class AuthEffects {
           catchError((error) =>
             of(
               AuthActions.loginFailure({
-                error: error.message || 'Login failed',
+                error:
+                  'Unable to login, please contact your organisation admin.',
               }),
             ),
           ),

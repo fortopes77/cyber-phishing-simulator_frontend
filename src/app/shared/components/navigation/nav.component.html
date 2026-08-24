@@ -6,7 +6,7 @@
   </div>
 
   <nav class="sidebar-nav">
-    @if (currentUser?.role === "trainer") {
+    @if (currentUser?.role === "TRAINER") {
       <ul>
         <li>
           <fa-icon [icon]="fontAwesomeIcons.progressBarsIcon"></fa-icon>
@@ -21,15 +21,13 @@
           >
         </li>
         <!-- TODO PHISH-133: Implement Cohorts feature -->
-        <li>
+        <!-- <li>
           <fa-icon [icon]="fontAwesomeIcons.userGroupIcon"></fa-icon>
           <a routerLink="/trainer/cohorts" routerLinkActive="active">Cohorts</a>
-        </li>
+        </li> -->
         <li>
           <fa-icon [icon]="fontAwesomeIcons.openBookIcon"></fa-icon>
-          <a routerLink="/trainer/analytics" routerLinkActive="active"
-            >Modules</a
-          >
+          <a routerLink="/trainer/modules" routerLinkActive="active">Modules</a>
         </li>
         <li>
           <fa-icon [icon]="fontAwesomeIcons.groupLayerIcon"></fa-icon>
