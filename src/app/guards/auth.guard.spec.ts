@@ -67,6 +67,63 @@ describe('AuthGuard', () => {
       });
   });
 
+  it('should redirect a trainer to the trainer dashboard when the route is learner-only', (done) => {
+    store.overrideSelector(selectAuthState, {
+      isAuthenticated: true,
+      token: 'abc',
+      tokenExpiresAt: Date.now() + 60000,
+      loading: false,
+      user: { id: '1', username: 'u', email: 'u@u.com', role: 'trainer' },
+    });
+    store.refreshState();
+
+    guard
+      .canActivate(buildRoute({ roles: ['user'] }), {} as any)
+      .subscribe((result) => {
+        expect(result).toBeFalse();
+        expect(router.navigate).toHaveBeenCalledWith(['/trainer/dashboard']);
+        done();
+      });
+  });
+
+  it('should redirect to login when the role is unrecognised', (done) => {
+    store.overrideSelector(selectAuthState, {
+      isAuthenticated: true,
+      token: 'abc',
+      tokenExpiresAt: Date.now() + 60000,
+      loading: false,
+      user: { id: '1', username: 'u', email: 'u@u.com', role: '' as any },
+    });
+    store.refreshState();
+
+    guard
+      .canActivate(buildRoute({ roles: ['trainer'] }), {} as any)
+      .subscribe((result) => {
+        expect(result).toBeFalse();
+        expect(router.navigate).toHaveBeenCalledWith(['/login']);
+        done();
+      });
+  });
+
+  it('should allow access when the user role is in the routes roles list', (done) => {
+    store.overrideSelector(selectAuthState, {
+      isAuthenticated: true,
+      token: 'abc',
+      tokenExpiresAt: Date.now() + 60000,
+      loading: false,
+      user: { id: '1', username: 'u', email: 'u@u.com', role: 'trainer' },
+    });
+    store.refreshState();
+
+    guard
+      .canActivate(buildRoute({ roles: ['user', 'trainer'] }), {} as any)
+      .subscribe((result) => {
+        expect(result).toBeTrue();
+        expect(router.navigate).not.toHaveBeenCalled();
+        done();
+      });
+  });
+
   it('should allow access when authenticated and the role matches', (done) => {
     store.overrideSelector(selectAuthState, {
       isAuthenticated: true,

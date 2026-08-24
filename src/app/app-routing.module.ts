@@ -17,6 +17,17 @@ import { CohortsListComponent } from './cohorts/components/cohorts-list/cohorts-
 import { LearnerModulesListComponent } from './modules/components/learner-modules-list/learner-modules-list.component';
 import { TrainerModulesListComponent } from './modules/components/trainer-modules-list/trainer-modules-list.component';
 
+/**
+ * Route-level access control. Every protected route declares the roles that
+ * may enter it via `data.roles`, and AuthGuard turns away anyone else (sending
+ * them to their own landing page). Learner-facing routes accept trainers too so
+ * a trainer can walk through the same content their learners see; the trainer
+ * section is trainer-only.
+ */
+const LEARNER_ROLES = ['user', 'trainer'];
+const TRAINER_ROLES = ['trainer'];
+const ANY_ROLE = ['user', 'trainer'];
+
 const routes: Routes = [
   // Public routes
   { path: 'login', component: LoginComponent, data: { breadcrumb: 'Login' } },
@@ -30,38 +41,43 @@ const routes: Routes = [
   {
     path: 'learner',
     canActivate: [AuthGuard],
-    data: { breadcrumb: 'Learner' },
+    data: { breadcrumb: 'Learner', roles: LEARNER_ROLES },
     children: [
       {
         path: 'dashboard',
         component: UserDashboardComponent,
-        data: { breadcrumb: 'Dashboard' },
+        canActivate: [AuthGuard],
+        data: { breadcrumb: 'Dashboard', roles: LEARNER_ROLES },
       },
       {
         path: 'modules',
         component: LearnerModulesListComponent,
-        data: { breadcrumb: 'Modules' },
+        canActivate: [AuthGuard],
+        data: { breadcrumb: 'Modules', roles: LEARNER_ROLES },
       },
       {
         path: 'modules/:id',
         component: ModulePageComponent,
         canActivate: [AuthGuard],
-        data: { breadcrumb: 'Module' },
+        data: { breadcrumb: 'Module', roles: LEARNER_ROLES },
       },
       {
         path: 'scenarios/:id',
         component: ScenarioPageComponent,
-        data: { breadcrumb: 'Scenario' },
+        canActivate: [AuthGuard],
+        data: { breadcrumb: 'Scenario', roles: LEARNER_ROLES },
       },
       {
         path: 'scenarios/:id/feedback',
         component: ScenarioChoiceComponent,
-        data: { breadcrumb: 'Feedback' },
+        canActivate: [AuthGuard],
+        data: { breadcrumb: 'Feedback', roles: LEARNER_ROLES },
       },
       {
         path: 'results',
         component: ModuleResultsComponent,
-        data: { breadcrumb: 'Results' },
+        canActivate: [AuthGuard],
+        data: { breadcrumb: 'Results', roles: LEARNER_ROLES },
       },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
@@ -69,48 +85,55 @@ const routes: Routes = [
   {
     path: 'trainer',
     canActivate: [AuthGuard],
-    data: { breadcrumb: 'Trainer' },
+    data: { breadcrumb: 'Trainer', roles: TRAINER_ROLES },
     children: [
       {
         path: 'dashboard',
         component: AdminDashboardComponent,
-        data: { breadcrumb: 'Dashboard' },
+        canActivate: [AuthGuard],
+        data: { breadcrumb: 'Dashboard', roles: TRAINER_ROLES },
       },
       {
         path: 'trainer/users/:id',
         component: AdminDashboardComponent,
-        data: { breadcrumb: 'User' },
+        canActivate: [AuthGuard],
+        data: { breadcrumb: 'User', roles: TRAINER_ROLES },
       },
       {
         path: 'learners',
         component: LearnerListComponent,
-        data: { breadcrumb: 'Learners' },
+        canActivate: [AuthGuard],
+        data: { breadcrumb: 'Learners', roles: TRAINER_ROLES },
       },
       {
         path: 'modules',
         component: TrainerModulesListComponent,
         canActivate: [AuthGuard],
-        data: { breadcrumb: 'Modules', role: 'trainer' },
+        data: { breadcrumb: 'Modules', roles: TRAINER_ROLES },
       },
       {
         path: 'cohorts',
         component: CohortsListComponent,
-        data: { breadcrumb: 'Cohorts' },
+        canActivate: [AuthGuard],
+        data: { breadcrumb: 'Cohorts', roles: TRAINER_ROLES },
       },
       {
         path: 'scenarios',
         component: ScenarioListComponent,
-        data: { breadcrumb: 'Scenarios' },
+        canActivate: [AuthGuard],
+        data: { breadcrumb: 'Scenarios', roles: TRAINER_ROLES },
       },
       {
         path: 'scenarios/:id/edit',
         component: ScenarioEditComponent,
-        data: { breadcrumb: 'Edit Scenario' },
+        canActivate: [AuthGuard],
+        data: { breadcrumb: 'Edit Scenario', roles: TRAINER_ROLES },
       },
       {
         path: 'scenarios/create',
         component: ScenarioEditComponent,
-        data: { breadcrumb: 'Create Scenario' },
+        canActivate: [AuthGuard],
+        data: { breadcrumb: 'Create Scenario', roles: TRAINER_ROLES },
       },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
@@ -120,9 +143,10 @@ const routes: Routes = [
     path: 'settings',
     component: UserSettingsComponent,
     canActivate: [AuthGuard],
-    data: { breadcrumb: 'Settings' },
+    data: { breadcrumb: 'Settings', roles: ANY_ROLE },
   },
-  // Wildcard route - redirect to user dashboard if authenticated, login if not
+  // Wildcard route - redirect to the learner dashboard; AuthGuard then bounces
+  // an unauthenticated visitor to login and a trainer on to /trainer/dashboard.
   { path: '**', redirectTo: '/learner/dashboard' },
 ];
 

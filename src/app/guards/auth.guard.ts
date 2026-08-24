@@ -11,6 +11,15 @@ import { selectAuthState } from '../auth/+state/auth.selectors';
 import { AuthActions } from '../auth/+state/auth.actions';
 import { isTokenExpired } from '../auth/token.utils';
 
+/**
+ * Where each role gets sent when it is turned away from a route it is not
+ * allowed to see. Keyed by the lowercase role values normalizeUser() produces.
+ */
+const ROLE_HOME: Record<string, string> = {
+  trainer: '/trainer/dashboard',
+  user: '/learner/dashboard',
+};
+
 @Injectable({
   providedIn: 'root',
 })
@@ -31,18 +40,22 @@ export class AuthGuard implements CanActivate {
           return false;
         }
 
-        // 2. Role check (if required)
-        const requiredRole = route.data['role'];
+        // 2. Role check. Routes declare either `roles: ['a', 'b']` for a set
+        // of allowed roles or `role: 'a'` for a single one; a route with
+        // neither is open to any authenticated user.
+        const userRole = auth?.user?.role;
+        const allowedRoles = this.allowedRoles(route);
 
-        if (requiredRole) {
-          const userRole = auth?.user?.role;
+        if (allowedRoles.length && !allowedRoles.includes(userRole ?? '')) {
+          console.log(
+            `Access denied - requires one of [${allowedRoles.join(', ')}] role`,
+          );
 
-          if (userRole !== requiredRole) {
-            console.log(`Access denied - requires ${requiredRole} role`);
-
-            this.router.navigate(['/learner/dashboard']);
-            return false;
-          }
+          // Send them to their own landing page rather than a fixed one, so a
+          // trainer bounced off a learner-only route does not get redirected
+          // straight back into another route they are not allowed to see.
+          this.router.navigate([this.homeFor(userRole)]);
+          return false;
         }
 
         // 3. Token expiry (matters most right after a page refresh, since
@@ -59,5 +72,25 @@ export class AuthGuard implements CanActivate {
         return true;
       }),
     );
+  }
+
+  /** Normalises the `roles`/`role` route data into a single list. */
+  private allowedRoles(route: ActivatedRouteSnapshot): string[] {
+    const roles = route.data?.['roles'];
+    const role = route.data?.['role'];
+
+    if (Array.isArray(roles)) {
+      return roles;
+    }
+
+    return role ? [role] : [];
+  }
+
+  /**
+   * An unrecognised (or missing) role has nowhere safe to land, so it goes
+   * back to login instead of into a redirect loop.
+   */
+  private homeFor(role: string | undefined): string {
+    return (role && ROLE_HOME[role]) || '/login';
   }
 }

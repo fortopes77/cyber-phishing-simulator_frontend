@@ -108,3 +108,9 @@
     </button>
   </div>
 </aside>
+
+<app-sign-out-confirmation-modal
+  [isOpen]="signOutModalOpen"
+  (confirmed)="confirmSignOut()"
+  (cancelled)="cancelSignOut()"
+></app-sign-out-confirmation-modal>

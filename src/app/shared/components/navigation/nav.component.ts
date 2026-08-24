@@ -7,10 +7,11 @@ import { Subscription } from 'rxjs';
 import { selectAuthState } from '../../../auth/+state/auth.selectors';
 import { AuthService, User } from '../../../auth/auth.service';
 import { iconLibrary } from '../../constants/font-awesome-icons.const';
+import { SignOutConfirmationModalComponent } from '../sign-out-confirmation-modal/sign-out-confirmation-modal.component';
 
 @Component({
   selector: 'app-nav',
-  imports: [RouterModule, FaIconComponent],
+  imports: [RouterModule, FaIconComponent, SignOutConfirmationModalComponent],
   templateUrl: './nav.component.html',
   styleUrls: ['./nav.component.scss'],
   standalone: true,
@@ -23,6 +24,7 @@ export class NavComponent implements OnInit, OnDestroy {
   isAuthenticated = false;
   sidebarHidden = false;
   profileOpen = false;
+  signOutModalOpen = false;
   fontAwesomeIcons = iconLibrary;
 
   constructor(
@@ -85,6 +87,15 @@ export class NavComponent implements OnInit, OnDestroy {
 
   logout() {
     this.profileOpen = false;
+    this.signOutModalOpen = true;
+  }
+
+  confirmSignOut() {
+    this.signOutModalOpen = false;
     this.router.navigate(['/sign-out']);
+  }
+
+  cancelSignOut() {
+    this.signOutModalOpen = false;
   }
 }
