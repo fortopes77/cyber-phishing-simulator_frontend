@@ -52,6 +52,7 @@ export class ScenarioListComponent implements OnInit {
   isDeleteModalOpen = false;
   selectedScenarioTitle = '';
   selectedScenarioRow: Record<string, unknown> | null = null;
+  isCreatingWithAi = false;
 
   constructor(
     private store: Store,
@@ -77,7 +78,9 @@ export class ScenarioListComponent implements OnInit {
 
     this.subscribeToScenarioList();
     this.subscribeToAIScenarioCreateSuccess();
+    this.subscribeToAIScenarioCreateFailure();
     this.subscribeToCreateScenarioSuccess();
+    this.subscribeToCreateScenarioFailure();
     this.store.dispatch(ScenarioActions.fetchList());
   }
 
@@ -97,10 +100,17 @@ export class ScenarioListComponent implements OnInit {
     this.actions$
       .pipe(ofType(ScenarioActions.createAIScenarioSuccess))
       .subscribe((scenario: any) => {
-        console.log(scenario);
         this.store.dispatch(
           ScenarioActions.createScenario({ scenario: scenario['scenario'] }),
         );
+      });
+  }
+
+  subscribeToAIScenarioCreateFailure(): void {
+    this.actions$
+      .pipe(ofType(ScenarioActions.createAIScenarioFailure))
+      .subscribe(() => {
+        this.isCreatingWithAi = false;
       });
   }
 
@@ -108,7 +118,16 @@ export class ScenarioListComponent implements OnInit {
     this.actions$
       .pipe(ofType(ScenarioActions.createScenarioSuccess))
       .subscribe(() => {
+        this.isCreatingWithAi = false;
         this.store.dispatch(ScenarioActions.fetchList());
+      });
+  }
+
+  subscribeToCreateScenarioFailure(): void {
+    this.actions$
+      .pipe(ofType(ScenarioActions.createScenarioFailure))
+      .subscribe(() => {
+        this.isCreatingWithAi = false;
       });
   }
 
@@ -244,6 +263,11 @@ export class ScenarioListComponent implements OnInit {
   }
 
   private handleCreateWithAi(): void {
+    if (this.isCreatingWithAi) {
+      return;
+    }
+
+    this.isCreatingWithAi = true;
     this.store.dispatch(ScenarioActions.createAIScenario());
   }
 

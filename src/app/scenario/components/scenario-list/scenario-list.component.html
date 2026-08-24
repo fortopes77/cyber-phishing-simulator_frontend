@@ -4,6 +4,13 @@
   [showCreateAction]="true"
   [createActions]="createActions"
 ></app-header>
+@if (isCreatingWithAi) {
+  <div class="ai-creating-banner" role="status" aria-live="polite">
+    <span class="spinner" aria-hidden="true"></span>
+    Generating scenario with AI…
+  </div>
+}
+
 <app-dashboard-card>
   <app-search-filter-bar
     [searchPlaceholder]="'Search scenarios'"
