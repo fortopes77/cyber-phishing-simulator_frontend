@@ -1,0 +1,23 @@
+<app-header
+  title="Modules"
+  subtitle="All training modules available to your learners."
+></app-header>
+
+<app-dashboard-card>
+  <app-search-filter-bar
+    [searchPlaceholder]="'Search modules'"
+    [filterLabel]="'Status'"
+    [filterOptions]="filterOptions"
+    [searchValue]="searchValue"
+    [filterValue]="filterValue"
+    (searchChange)="onSearchChange($event)"
+    (filterChange)="onFilterChange($event)"
+  ></app-search-filter-bar>
+
+  <app-list
+    [columns]="columns"
+    [rows]="rows"
+    [actions]="actions"
+    emptyMessage="No modules found."
+  ></app-list>
+</app-dashboard-card>

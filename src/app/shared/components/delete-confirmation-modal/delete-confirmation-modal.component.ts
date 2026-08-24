@@ -1,10 +1,10 @@
-
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { ModalComponent } from '../modal/modal.component';
 
 @Component({
   selector: 'app-delete-confirmation-modal',
   standalone: true,
-  imports: [],
+  imports: [ModalComponent],
   templateUrl: './delete-confirmation-modal.component.html',
   styleUrl: './delete-confirmation-modal.component.scss',
 })

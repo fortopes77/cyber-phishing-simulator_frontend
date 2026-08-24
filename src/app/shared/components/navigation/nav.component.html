@@ -27,7 +27,7 @@
         </li>
         <li>
           <fa-icon [icon]="fontAwesomeIcons.openBookIcon"></fa-icon>
-          <a routerLink="/trainer/analytics" routerLinkActive="active"
+          <a routerLink="/trainer/modules" routerLinkActive="active"
             >Modules</a
           >
         </li>
@@ -108,3 +108,9 @@
     </button>
   </div>
 </aside>
+
+<app-sign-out-confirmation-modal
+  [isOpen]="signOutModalOpen"
+  (confirmed)="confirmSignOut()"
+  (cancelled)="cancelSignOut()"
+></app-sign-out-confirmation-modal>

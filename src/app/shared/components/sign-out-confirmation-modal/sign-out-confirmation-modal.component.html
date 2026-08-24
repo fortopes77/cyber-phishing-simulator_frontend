@@ -1,0 +1,11 @@
+<app-modal [isOpen]="isOpen" title="Sign out" (closed)="onCancel()">
+  <p>Are you sure you want to sign out?</p>
+  <div modal-footer class="modal-actions">
+    <button type="button" class="btn btn-secondary" (click)="onCancel()">
+      Cancel
+    </button>
+    <button type="button" class="btn btn-danger" (click)="onConfirm()">
+      Sign out
+    </button>
+  </div>
+</app-modal>

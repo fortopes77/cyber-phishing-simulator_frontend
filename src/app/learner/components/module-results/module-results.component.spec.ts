@@ -33,8 +33,6 @@ describe('ModuleResultsComponent', () => {
   it('should navigate to retry module when retry button is clicked', () => {
     spyOn(router, 'navigate');
     component.retryModule();
-    expect(router.navigate).toHaveBeenCalledWith([
-      '/learner/modules/email-phishing',
-    ]);
+    expect(router.navigate).toHaveBeenCalledWith(['/learner/modules/1']);
   });
 });

@@ -30,6 +30,27 @@ export class ScenarioEffects {
       ),
     ),
   );
+  fetchScenariosByModule$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(ScenarioActions.fetchScenariosByModule),
+      mergeMap((action) =>
+        this.scenarioService.getScenariosByModule(action.moduleId).pipe(
+          map((list: any) =>
+            ScenarioActions.fetchScenariosByModuleSuccess({
+              scenarios: Array.isArray(list) ? list : (list?.scenarios ?? []),
+            }),
+          ),
+          catchError((error) =>
+            of(
+              ScenarioActions.fetchScenariosByModuleFailure({
+                error: error.message || 'Failed to fetch module scenarios',
+              }),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
   fetchScenarioDetails$ = createEffect(() =>
     this.actions$.pipe(
       ofType(ScenarioActions.fetchScenarioDetails),

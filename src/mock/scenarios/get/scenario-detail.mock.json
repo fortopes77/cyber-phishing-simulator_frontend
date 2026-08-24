@@ -4,5 +4,10 @@
   "content": "An email pretending to be from a supplier...",
   "difficulty": "medium",
   "category": "Invoice fraud",
-  "options": ["Report", "Ignore", "Open Link"]
+  "options": [
+    "Report",
+    "Ignore",
+    "Open Link"
+  ],
+  "moduleId": 1
 }

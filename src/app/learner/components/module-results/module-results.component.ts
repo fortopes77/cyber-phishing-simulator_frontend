@@ -39,7 +39,7 @@ export class ModuleResultsComponent {
   constructor(private router: Router) {}
 
   retryModule(): void {
-    this.router.navigate(['/learner/modules/email-phishing']);
+    this.router.navigate(['/learner/modules/1']);
   }
 
   backToModules(): void {

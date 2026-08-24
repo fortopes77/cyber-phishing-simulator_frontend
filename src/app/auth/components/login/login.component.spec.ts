@@ -122,7 +122,7 @@ describe('LoginComponent', () => {
     store.overrideSelector(selectAuthState, {
       isAuthenticated: true,
       loading: false,
-      user: { role: 'admin', id: '', username: 'admin', email: '' },
+      user: { role: 'trainer', id: '', username: 'admin', email: '' },
     });
     store.refreshState();
 

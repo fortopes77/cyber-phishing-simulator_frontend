@@ -1,9 +1,16 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { Store } from '@ngrx/store';
+import { combineLatest } from 'rxjs';
+import { ScenarioActions } from '../../+state/scenario.actions';
+import {
+  selectScenario,
+  selectScenarioList,
+} from '../../+state/scenario.selectors';
 
 interface Scenario {
-  id: number;
+  id: number | string;
   title: string;
   type: string;
   difficulty: string;
@@ -11,6 +18,7 @@ interface Scenario {
   subject: string;
   body: string;
   cues?: string[];
+  moduleId?: number;
 }
 
 interface MessageEntry {
@@ -31,88 +39,99 @@ interface InvoiceField {
   styleUrls: ['./scenario-page.component.scss'],
 })
 export class ScenarioPageComponent implements OnInit {
-  moduleTitle = 'Email Phishing Basics';
-  scenarioId = 1;
+  moduleTitle = 'Module';
+  scenarioId: number | string = '';
   scenarioNumber = 1;
-  totalScenarios = 2;
+  totalScenarios = 1;
   scenario: Scenario = {
-    id: 1,
-    title: 'Required: Software Update for All Employees',
-    type: 'Email',
-    difficulty: 'Medium',
-    from: 'it-support@yourcompany.com',
-    subject: 'Required: Software Update for All Employees',
-    body: `Hi Team,
-
-As part of our quarterly security updates, we need all employees to install the latest version of our VPN client.
-
-Please download the update from our internal portal:
-https://internal.yourcompany.com/downloads/vpn-client
-
-If you have any questions, contact the IT Help Desk at ext. 4500.
-
-Thanks,
-IT Support Team`,
-    cues: ['Urgent request', 'Unexpected link', 'Pressure to act quickly'],
+    id: '',
+    title: '',
+    type: 'generic',
+    difficulty: '',
+    from: '',
+    subject: '',
+    body: '',
+    cues: [],
   };
   selectedCues: string[] = [];
+
+  // Tracks the moduleId we last asked the store for, so we only dispatch
+  // fetchScenariosByModule once per module rather than on every store
+  // emission.
+  private lastRequestedModuleId: number | null = null;
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
+    private store: Store,
   ) {}
 
   ngOnInit(): void {
     this.route.paramMap.subscribe((params) => {
-      const idValue = Number(params.get('id')) || 1;
+      const idParam = params.get('id') || '';
+      // Scenario ids from the API are strings (e.g. "s_001"), but some
+      // routes/tests still pass numeric ids - keep whichever was given.
+      const idValue = /^\d+$/.test(idParam) ? Number(idParam) : idParam;
       this.scenarioId = idValue;
-      this.scenarioNumber = idValue;
-      this.scenario = this.getScenarioById(idValue);
+      this.selectedCues = [];
+      this.store.dispatch(
+        ScenarioActions.fetchScenarioDetails({ scenarioId: String(idValue) }),
+      );
+    });
+
+    combineLatest([
+      this.store.select(selectScenario),
+      this.store.select(selectScenarioList),
+    ]).subscribe(([scenario, scenarioList]) => {
+      if (scenario) {
+        this.scenario = this.mapScenario(scenario);
+
+        // Load the full ordered scenario list for this module so "Scenario
+        // X of Y" and the next-scenario routing on the feedback screen work
+        // regardless of how the learner arrived at this page (deep link,
+        // refresh, etc.), not just when navigating from the module page.
+        if (
+          this.scenario.moduleId != null &&
+          this.scenario.moduleId !== this.lastRequestedModuleId
+        ) {
+          this.lastRequestedModuleId = this.scenario.moduleId;
+          this.store.dispatch(
+            ScenarioActions.fetchScenariosByModule({
+              moduleId: this.scenario.moduleId,
+            }),
+          );
+        }
+      }
+
+      // The learner typically arrives here from the module page, which has
+      // already loaded the module's scenario list into the store - use it
+      // to show "Scenario X of Y" and the module name without a second
+      // round trip. Falls back gracefully if the list isn't loaded yet.
+      if (scenarioList?.length) {
+        this.totalScenarios = scenarioList.length;
+        const index = scenarioList.findIndex(
+          (item: any) => item.id === this.scenarioId,
+        );
+        this.scenarioNumber = index >= 0 ? index + 1 : 1;
+      }
     });
   }
 
-  getScenarioById(id: number): Scenario {
-    const scenarios: Scenario[] = [
-      {
-        id: 1,
-        title: 'Required: Software Update for All Employees',
-        type: 'Email',
-        difficulty: 'Medium',
-        from: 'it-support@yourcompany.com',
-        subject: 'Required: Software Update for All Employees',
-        body: `Hi Team,
-
-As part of our quarterly security updates, we need all employees to install the latest version of our VPN client.
-
-Please download the update from our internal portal:
-https://internal.yourcompany.com/downloads/vpn-client
-
-If you have any questions, contact the IT Help Desk at ext. 4500.
-
-Thanks,
-IT Support Team`,
-        cues: ['Urgent request', 'Unexpected link', 'Pressure to act quickly'],
-      },
-      {
-        id: 2,
-        title: 'Urgent Password Reset',
-        type: 'Email',
-        difficulty: 'Easy',
-        from: 'security@yourcompany.com',
-        subject: 'Urgent Password Reset Required',
-        body: `Hi Team,
-
-Your account has been flagged for suspicious activity. Please reset your password immediately using the secure link below.
-
-https://secure.yourcompany.com/reset-password
-
-Thank you,
-Security Team`,
-        cues: ['Urgent language', 'Suspicious link', 'Threatening tone'],
-      },
-    ];
-
-    return scenarios.find((scenario) => scenario.id === id) ?? scenarios[0];
+  private mapScenario(raw: any): Scenario {
+    return {
+      id: raw.id ?? this.scenarioId,
+      title: raw.title ?? '',
+      // Backend field is `interactionType` (see scenario.service.ts
+      // createScenario) - values are expected to align with the
+      // email/phone/text/invoice switch below.
+      type: raw.interactionType ?? raw.type ?? 'generic',
+      difficulty: raw.difficulty ?? '',
+      from: raw.sender ?? raw.from ?? '',
+      subject: raw.subject ?? raw.title ?? '',
+      body: raw.content ?? raw.body ?? '',
+      cues: raw.cues ?? [],
+      moduleId: raw.moduleId != null ? Number(raw.moduleId) : undefined,
+    };
   }
 
   getScenarioTypeKey(): string {
@@ -200,7 +219,43 @@ Security Team`,
     return this.selectedCues.includes(cue);
   }
 
+  removeSelectedCue(cue: string): void {
+    this.selectedCues = this.selectedCues.filter(
+      (selectedCue) => selectedCue !== cue,
+    );
+  }
+
+  /**
+   * Captures free-text highlighted by the learner inside the scenario
+   * content (email body, phone transcript, text thread, invoice fields)
+   * and adds it to the selected cues, the same list populated by the
+   * predefined cue chips below. Bound to (mouseup) on the wrapper around
+   * the switchable content so it works for every scenario type.
+   */
+  onContentMouseUp(): void {
+    const selection = window.getSelection ? window.getSelection() : null;
+    const text = selection?.toString().trim();
+
+    if (text) {
+      this.addSelectedCue(text);
+    }
+
+    selection?.removeAllRanges();
+  }
+
+  addSelectedCue(cue: string): void {
+    if (!this.selectedCues.includes(cue)) {
+      this.selectedCues = [...this.selectedCues, cue];
+    }
+  }
+
   makeDecision(): void {
-    this.router.navigate(['/learner/scenarios', this.scenarioId, 'feedback']);
+    // Pass the learner's selected cues to the decision/feedback screen via
+    // router navigation state rather than a new store slice - it's only
+    // needed for the single upcoming navigation and is read from
+    // history.state in ScenarioChoiceComponent.
+    this.router.navigate(['/learner/scenarios', this.scenarioId, 'feedback'], {
+      state: { selectedCues: this.selectedCues },
+    });
   }
 }

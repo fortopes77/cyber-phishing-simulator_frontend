@@ -4,28 +4,19 @@
       <a class="module-header__back" routerLink="/learner/modules">← Back to Modules</a>
 
       <div class="module-header__tags">
-        <div class="tag tag--gray">Beginner</div>
-        <div class="tag tag--green">In Progress</div>
+        <div class="tag tag--gray">{{ level }}</div>
+        <div class="tag tag--green" *ngIf="isModuleComplete">Completed</div>
+        <div class="tag tag--green" *ngIf="!isModuleComplete && completedCount > 0">In Progress</div>
+        <div class="tag tag--green" *ngIf="!isModuleComplete && completedCount === 0">Not Started</div>
       </div>
 
-      <h1 class="module-header__title">Email Phishing Basics</h1>
-
-      <div class="module-header__description">
-        Learn to identify common email phishing tactics and protect yourself
-        from credential theft.
-      </div>
+      <h1 class="module-header__title">{{ title }}</h1>
     </div>
 
     <div class="module-header__right">
       <button class="primary-button" (click)="continueModule()">
         Continue Module
       </button>
-
-      <div class="score-card">
-        <div class="score-card__label">Your Score</div>
-
-        <div class="score-card__value">75%</div>
-      </div>
     </div>
   </div>
 
@@ -36,11 +27,16 @@
       <div class="module-progress__top">
         <div class="module-progress__label">Module Progress</div>
 
-        <div class="module-progress__stats">1 of 2 scenarios completed</div>
+        <div class="module-progress__stats">
+          {{ completedCount }} of {{ scenarios.length }} scenarios completed
+        </div>
       </div>
 
       <div class="module-progress__track">
-        <div class="module-progress__fill" style="width: 50%"></div>
+        <div
+          class="module-progress__fill"
+          [style.width.%]="progressPercentage"
+        ></div>
       </div>
     </div>
   </div>
@@ -55,22 +51,33 @@
     </div>
 
     <div class="scenario-list">
-      <div class="scenario-item">
+      <div
+        class="scenario-item"
+        *ngFor="let scenario of scenarios; let i = index"
+        [routerLink]="['/learner/scenarios', scenario.id]"
+      >
         <div class="scenario-item__left">
-          <div class="scenario-item__number">1</div>
+          <div class="scenario-item__number">{{ i + 1 }}</div>
 
           <div class="scenario-item__content">
-            <div class="scenario-item__title">Urgent Password Reset</div>
+            <div class="scenario-item__title">{{ scenario.title }}</div>
 
             <div class="scenario-item__meta">
-              <div class="pill">Email</div>
-              <div class="pill">Easy</div>
+              <div class="pill">{{ scenario.type }}</div>
+              <div class="pill">{{ scenario.difficulty }}</div>
             </div>
           </div>
         </div>
 
-        <div class="scenario-item__status scenario-item__status--completed">
-          ✓ Completed
+        <div
+          class="scenario-item__status"
+          [ngClass]="{
+            'scenario-item__status--completed':
+              scenario.status === 'Completed',
+            'scenario-item__status--progress': scenario.status !== 'Completed'
+          }"
+        >
+          {{ scenario.status === 'Completed' ? '✓ Completed' : scenario.status }}
         </div>
       </div>
     </div>

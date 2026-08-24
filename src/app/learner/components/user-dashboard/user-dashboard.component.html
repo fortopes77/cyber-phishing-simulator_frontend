@@ -12,7 +12,7 @@
       <app-data-card
         [icon]="fontAwesomeIcon.openBookIcon"
         label="Modules Completed"
-        [statistic]="{ topValue: 3, bottomValue: 5 }"
+        [statistic]="{ topValue: stats.modulesCompleted, bottomValue: stats.totalModules }"
         dataType="module"
       >
       </app-data-card>
@@ -20,7 +20,7 @@
       <app-data-card
         [icon]="fontAwesomeIcon.targetIcon"
         label="Scenarios Completed"
-        [statistic]="{ topValue: 1, bottomValue: 2 }"
+        [statistic]="{ topValue: stats.scenariosCompleted, bottomValue: stats.totalScenarios }"
         dataType="scenario"
       >
       </app-data-card>
@@ -28,13 +28,13 @@
       <app-data-card
         [icon]="fontAwesomeIcon.awardIcon"
         label="Average Score"
-        [statistic]="{ percentage: 75 }"
+        [statistic]="{ percentage: stats.averageScore }"
         dataType="average"
       >
       </app-data-card>
     </div>
 
-    <div>
+    <div *ngIf="continueLearning">
       <app-dashboard-card
         title="Continue Learning"
         description="Pick up where you left off"

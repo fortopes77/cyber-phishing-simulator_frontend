@@ -7,7 +7,7 @@ import { AppComponent } from './app.component';
 import { LoginComponent } from './auth/components/login/login.component';
 
 import { CommonModule, UpperCasePipe } from '@angular/common';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { EffectsModule } from '@ngrx/effects';
 import { provideStore, StoreModule } from '@ngrx/store';
@@ -28,7 +28,11 @@ import { ProgressRowComponent } from './shared/components/progress-row/progress-
 import { LearningProgressCardComponent } from './learner/components/learning-progress-card/learning-progress-card.component';
 import { AssignedModuleCardComponent } from './learner/components/assigned-module-card/assigned-module-card.component';
 import { ScenarioModule } from './scenario/scenario.module';
+import { AttemptsModule } from './attempts/attempts.module';
+import { LearnerModulesModule } from './modules/modules.module';
 import { BreadcrumbsComponent } from './shared/components/breadcrumbs/breadcrumbs.component';
+import { FeedbackModule } from './feedback/feedback.module';
+import { authInterceptor } from './auth/auth.interceptor';
 
 @NgModule({
   declarations: [
@@ -47,6 +51,9 @@ import { BreadcrumbsComponent } from './shared/components/breadcrumbs/breadcrumb
     NavComponent,
     AuthModule,
     ScenarioModule,
+    AttemptsModule,
+    LearnerModulesModule,
+    FeedbackModule,
     StoreModule.forRoot({}),
     EffectsModule.forRoot([]),
     DataCardComponent,
@@ -63,7 +70,7 @@ import { BreadcrumbsComponent } from './shared/components/breadcrumbs/breadcrumb
   ],
   providers: [
     AuthGuard,
-    provideHttpClient(),
+    provideHttpClient(withInterceptors([authInterceptor])),
     provideStore({}, { metaReducers }),
   ],
   bootstrap: [AppComponent],
