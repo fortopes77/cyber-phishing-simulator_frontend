@@ -10,15 +10,15 @@
     <strong>This is a training scenario</strong>
   </div>
 
-  <div class="scenario-choice-card">
+  <div class="scenario-choice-card" *ngIf="phase === 'deciding'">
     <div class="scenario-choice-card__title">What do you think?</div>
     <div class="scenario-choice-card__subtitle">
-      Based on the message you just reviewed, is it safe or suspicious?
+      Based on the message you just reviewed, what would you do?
     </div>
 
     <div class="scenario-choice-card__scenario-info">
       <div class="scenario-choice-card__scenario-title">
-        “{{ scenario.title }}”
+        "{{ scenario.title }}"
       </div>
       <div class="scenario-choice-card__scenario-from">
         From: {{ scenario.from }}
@@ -27,27 +27,62 @@
 
     <div class="scenario-choice-card__options">
       <button
-        class="decision-button decision-button--safe"
-        [class.selected]="selectedDecision === 'safe'"
-        (click)="selectDecision('safe')"
+        *ngFor="let option of scenario.options"
+        type="button"
+        class="decision-button"
+        [class.selected]="selectedDecision === option"
+        [disabled]="submitting"
+        (click)="selectDecision(option)"
       >
-        <div class="decision-button__icon">✔</div>
-        <div class="decision-button__label">Safe</div>
-        <div class="decision-button__description">
-          This is a legitimate message
-        </div>
+        <div class="decision-button__icon">{{ option.charAt(0) }}</div>
+        <div class="decision-button__label">{{ option }}</div>
       </button>
+    </div>
 
-      <button
-        class="decision-button decision-button--suspicious"
-        [class.selected]="selectedDecision === 'suspicious'"
-        (click)="selectDecision('suspicious')"
-      >
-        <div class="decision-button__icon">⚠</div>
-        <div class="decision-button__label">Suspicious</div>
-        <div class="decision-button__description">
-          This looks like a phishing attempt
+    <p class="scenario-choice-card__submitting" *ngIf="submitting">
+      Submitting your decision…
+    </p>
+  </div>
+
+  <div class="scenario-choice-card result-card" *ngIf="phase === 'result'">
+    <div
+      class="result-banner"
+      [ngClass]="isCorrect ? 'result-banner--correct' : 'result-banner--incorrect'"
+    >
+      <div class="result-banner__icon">{{ isCorrect ? '✔' : '✕' }}</div>
+      <div>
+        <div class="result-banner__title">
+          {{ isCorrect ? 'Correct!' : 'Not quite right' }}
         </div>
+        <div class="result-banner__subtitle">
+          You chose "{{ selectedDecision }}"
+        </div>
+      </div>
+    </div>
+
+    <div class="cues-summary" *ngIf="selectedCues.length">
+      <div class="cues-summary__title">Cues you flagged</div>
+      <div class="cues-summary__list">
+        <span class="cue-chip" *ngFor="let cue of selectedCues">{{ cue }}</span>
+      </div>
+    </div>
+
+    <div class="feedback-panel">
+      <div class="feedback-panel__title">AI Feedback</div>
+      <p *ngIf="feedbackLoading" class="feedback-panel__loading">
+        Generating feedback…
+      </p>
+      <p *ngIf="!feedbackLoading && feedbackContent" class="feedback-panel__content">
+        {{ feedbackContent }}
+      </p>
+      <p *ngIf="!feedbackLoading && !feedbackContent" class="feedback-panel__content">
+        No additional feedback is available for this attempt.
+      </p>
+    </div>
+
+    <div class="result-actions">
+      <button class="primary-button" type="button" (click)="continueToNext()">
+        Next Scenario
       </button>
     </div>
   </div>

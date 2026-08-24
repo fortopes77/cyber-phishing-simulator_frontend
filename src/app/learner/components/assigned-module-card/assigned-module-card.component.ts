@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 
 export interface AssignedModule {
-  id: string;
+  id: number;
   title: string;
   description: string;
   level: 'Beginner' | 'Intermediate' | 'Advanced';

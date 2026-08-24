@@ -15,7 +15,7 @@ describe('LearningProgressCardComponent', () => {
     fixture = TestBed.createComponent(LearningProgressCardComponent);
     component = fixture.componentInstance;
     component.item = {
-      id: '1',
+      id: 1,
       title: 'Test Progress',
       completedScenarios: 1,
       totalScenarios: 2,

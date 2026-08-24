@@ -14,7 +14,8 @@ import { ScenarioEditComponent } from './scenario/components/scenario-edit/scena
 import { ScenarioListComponent } from './scenario/components/scenario-list/scenario-list.component';
 import { LearnerListComponent } from './learner/components/learner-list/learner-list.component';
 import { CohortsListComponent } from './cohorts/components/cohorts-list/cohorts-list.component';
-import { ModulesListComponent } from './modules/components/modules-list/modules-list.component';
+import { LearnerModulesListComponent } from './modules/components/learner-modules-list/learner-modules-list.component';
+import { TrainerModulesListComponent } from './modules/components/trainer-modules-list/trainer-modules-list.component';
 
 const routes: Routes = [
   // Public routes
@@ -38,7 +39,7 @@ const routes: Routes = [
       },
       {
         path: 'modules',
-        component: ModulesListComponent,
+        component: LearnerModulesListComponent,
         data: { breadcrumb: 'Modules' },
       },
       {
@@ -87,14 +88,15 @@ const routes: Routes = [
       },
       {
         path: 'modules',
-        component: ModulesListComponent,
-        data: { breadcrumb: 'Modules' },
+        component: TrainerModulesListComponent,
+        canActivate: [AuthGuard],
+        data: { breadcrumb: 'Modules', role: 'trainer' },
       },
-      // {
-      //   path: 'cohorts',
-      //   component: CohortsListComponent,
-      //   data: { breadcrumb: 'Cohorts' },
-      // },
+      {
+        path: 'cohorts',
+        component: CohortsListComponent,
+        data: { breadcrumb: 'Cohorts' },
+      },
       {
         path: 'scenarios',
         component: ScenarioListComponent,
@@ -130,6 +132,7 @@ const routes: Routes = [
     ScenarioEditComponent,
     LearnerListComponent,
     CohortsListComponent,
+    TrainerModulesListComponent,
   ],
   exports: [RouterModule],
   providers: [AuthGuard],

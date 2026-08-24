@@ -26,6 +26,8 @@ export class ScenarioService {
     // ASSUMPTION: the scenarios endpoint accepts a moduleId query param to
     // scope the list to a single module. Update this if your NestJS
     // controller uses a different route (e.g. modules/:id/scenarios).
+    // moduleId is numeric throughout the app (see LearnerModule and
+    // ScenariosService.createScenario), matching the backend's module PK.
     const authData = localStorage.getItem('auth');
     const token = authData ? JSON.parse(authData).token : null;
     return this.http.get(`${this.apiEndpoint}scenarios`, {

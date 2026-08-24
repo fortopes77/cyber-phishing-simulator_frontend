@@ -18,6 +18,7 @@ interface Scenario {
   subject: string;
   body: string;
   cues?: string[];
+  moduleId?: number;
 }
 
 interface MessageEntry {
@@ -54,6 +55,11 @@ export class ScenarioPageComponent implements OnInit {
   };
   selectedCues: string[] = [];
 
+  // Tracks the moduleId we last asked the store for, so we only dispatch
+  // fetchScenariosByModule once per module rather than on every store
+  // emission.
+  private lastRequestedModuleId: number | null = null;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -67,6 +73,7 @@ export class ScenarioPageComponent implements OnInit {
       // routes/tests still pass numeric ids - keep whichever was given.
       const idValue = /^\d+$/.test(idParam) ? Number(idParam) : idParam;
       this.scenarioId = idValue;
+      this.selectedCues = [];
       this.store.dispatch(
         ScenarioActions.fetchScenarioDetails({ scenarioId: String(idValue) }),
       );
@@ -78,6 +85,22 @@ export class ScenarioPageComponent implements OnInit {
     ]).subscribe(([scenario, scenarioList]) => {
       if (scenario) {
         this.scenario = this.mapScenario(scenario);
+
+        // Load the full ordered scenario list for this module so "Scenario
+        // X of Y" and the next-scenario routing on the feedback screen work
+        // regardless of how the learner arrived at this page (deep link,
+        // refresh, etc.), not just when navigating from the module page.
+        if (
+          this.scenario.moduleId != null &&
+          this.scenario.moduleId !== this.lastRequestedModuleId
+        ) {
+          this.lastRequestedModuleId = this.scenario.moduleId;
+          this.store.dispatch(
+            ScenarioActions.fetchScenariosByModule({
+              moduleId: this.scenario.moduleId,
+            }),
+          );
+        }
       }
 
       // The learner typically arrives here from the module page, which has
@@ -107,6 +130,7 @@ export class ScenarioPageComponent implements OnInit {
       subject: raw.subject ?? raw.title ?? '',
       body: raw.content ?? raw.body ?? '',
       cues: raw.cues ?? [],
+      moduleId: raw.moduleId != null ? Number(raw.moduleId) : undefined,
     };
   }
 
@@ -195,7 +219,43 @@ export class ScenarioPageComponent implements OnInit {
     return this.selectedCues.includes(cue);
   }
 
+  removeSelectedCue(cue: string): void {
+    this.selectedCues = this.selectedCues.filter(
+      (selectedCue) => selectedCue !== cue,
+    );
+  }
+
+  /**
+   * Captures free-text highlighted by the learner inside the scenario
+   * content (email body, phone transcript, text thread, invoice fields)
+   * and adds it to the selected cues, the same list populated by the
+   * predefined cue chips below. Bound to (mouseup) on the wrapper around
+   * the switchable content so it works for every scenario type.
+   */
+  onContentMouseUp(): void {
+    const selection = window.getSelection ? window.getSelection() : null;
+    const text = selection?.toString().trim();
+
+    if (text) {
+      this.addSelectedCue(text);
+    }
+
+    selection?.removeAllRanges();
+  }
+
+  addSelectedCue(cue: string): void {
+    if (!this.selectedCues.includes(cue)) {
+      this.selectedCues = [...this.selectedCues, cue];
+    }
+  }
+
   makeDecision(): void {
-    this.router.navigate(['/learner/scenarios', this.scenarioId, 'feedback']);
+    // Pass the learner's selected cues to the decision/feedback screen via
+    // router navigation state rather than a new store slice - it's only
+    // needed for the single upcoming navigation and is read from
+    // history.state in ScenarioChoiceComponent.
+    this.router.navigate(['/learner/scenarios', this.scenarioId, 'feedback'], {
+      state: { selectedCues: this.selectedCues },
+    });
   }
 }

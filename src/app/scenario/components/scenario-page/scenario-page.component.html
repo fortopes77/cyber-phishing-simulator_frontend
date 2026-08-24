@@ -26,7 +26,11 @@
       <div class="scenario-card__subject">{{ scenario.subject }}</div>
     </div>
 
-    <div class="scenario-card__body" [ngSwitch]="getScenarioTypeKey()">
+    <div
+      class="scenario-card__body"
+      [ngSwitch]="getScenarioTypeKey()"
+      (mouseup)="onContentMouseUp()"
+    >
       <div *ngSwitchCase="'email'" class="message-shell message-shell--email">
         <div class="message-shell__meta">
           <span class="message-shell__label">From</span>
@@ -105,8 +109,8 @@
       </div>
     </div>
 
-    <div class="cue-selector">
-      <div class="cue-selector__title">Select suspicious cues</div>
+    <div class="cue-selector" *ngIf="getSuspiciousCues().length">
+      <div class="cue-selector__title">Suggested cues</div>
       <div class="cue-selector__hint">
         Choose the signals you notice in this message.
       </div>
@@ -121,6 +125,27 @@
           {{ cue }}
         </button>
       </div>
+    </div>
+
+    <div class="cue-selector">
+      <div class="cue-selector__title">Your selected cues</div>
+      <div class="cue-selector__hint">
+        Highlight any suspicious text in the message above to add it here.
+      </div>
+      <div class="cue-selector__list" *ngIf="selectedCues.length; else noCues">
+        <button
+          type="button"
+          *ngFor="let cue of selectedCues"
+          class="cue-chip cue-chip--selected"
+          (click)="removeSelectedCue(cue)"
+          [attr.aria-label]="'Remove selected cue: ' + cue"
+        >
+          {{ cue }} ✕
+        </button>
+      </div>
+      <ng-template #noCues>
+        <p class="cue-selector__empty">No cues selected yet.</p>
+      </ng-template>
     </div>
   </div>
 

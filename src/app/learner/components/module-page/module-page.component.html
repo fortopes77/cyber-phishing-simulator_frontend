@@ -4,8 +4,10 @@
       <a class="module-header__back" routerLink="/learner/modules">← Back to Modules</a>
 
       <div class="module-header__tags">
-        <div class="tag tag--gray">Beginner</div>
-        <div class="tag tag--green">In Progress</div>
+        <div class="tag tag--gray">{{ level }}</div>
+        <div class="tag tag--green" *ngIf="isModuleComplete">Completed</div>
+        <div class="tag tag--green" *ngIf="!isModuleComplete && completedCount > 0">In Progress</div>
+        <div class="tag tag--green" *ngIf="!isModuleComplete && completedCount === 0">Not Started</div>
       </div>
 
       <h1 class="module-header__title">{{ title }}</h1>

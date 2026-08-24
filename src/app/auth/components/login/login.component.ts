@@ -19,7 +19,7 @@ export class LoginComponent {
 
   // Mock credentials info for users
   mockCredentials = {
-    admin: { credential: 'admin@example.com or admin', password: 'trainer' },
+    admin: { credential: 'admin@example.com or admin', password: 'admin' },
     user: { credential: 'user@example.com or user', password: 'user' },
   };
 
@@ -49,7 +49,7 @@ export class LoginComponent {
         return;
       }
 
-      if (authState.user?.role === 'TRAINER') {
+      if (authState.user?.role === 'trainer') {
         this.router.navigate(['/trainer/dashboard']);
       } else if (authState.user?.role) {
         this.router.navigate(['/learner/dashboard']);

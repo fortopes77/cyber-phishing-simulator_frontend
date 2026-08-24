@@ -8,6 +8,8 @@ import {
 import { Store } from '@ngrx/store';
 import { map, take } from 'rxjs/operators';
 import { selectAuthState } from '../auth/+state/auth.selectors';
+import { AuthActions } from '../auth/+state/auth.actions';
+import { isTokenExpired } from '../auth/token.utils';
 
 @Injectable({
   providedIn: 'root',
@@ -41,6 +43,17 @@ export class AuthGuard implements CanActivate {
             this.router.navigate(['/learner/dashboard']);
             return false;
           }
+        }
+
+        // 3. Token expiry (matters most right after a page refresh, since
+        // the meta.reducer rehydrates the auth slice - including a
+        // possibly stale token - straight from localStorage). Let the
+        // navigation through optimistically and kick off a refresh in the
+        // background; the auth HTTP interceptor will also catch and
+        // refresh on any 401 the stale token causes in the meantime.
+        if (isTokenExpired(auth.tokenExpiresAt)) {
+          console.log('Token expired - requesting a refresh');
+          this.store.dispatch(AuthActions.refreshToken());
         }
 
         return true;

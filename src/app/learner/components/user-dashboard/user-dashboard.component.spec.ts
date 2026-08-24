@@ -18,11 +18,11 @@ describe('UserDashboardComponent', () => {
   let store: MockStore;
 
   const modules = [
-    { moduleId: 'module1', moduleName: 'Phishing Awareness', description: 'Learn to spot phishing' },
+    { moduleId: 1, moduleName: 'Phishing Awareness', description: 'Learn to spot phishing' },
   ];
   const scenarios = [
-    { id: 's_001', moduleId: 'module1', difficulty: 'easy' },
-    { id: 's_002', moduleId: 'module1', difficulty: 'easy' },
+    { id: 's_001', moduleId: 1, difficulty: 'easy' },
+    { id: 's_002', moduleId: 1, difficulty: 'easy' },
   ];
   const attempts = [{ id: 'a1', scenarioId: 's_001', decision: 'Report', correct: true }];
 
@@ -68,7 +68,7 @@ describe('UserDashboardComponent', () => {
   });
 
   it('should surface the in-progress module as continueLearning', () => {
-    expect(component.continueLearning?.id).toBe('module1');
+    expect(component.continueLearning?.id).toBe(1);
     expect(component.continueLearning?.progressPercentage).toBe(50);
   });
 

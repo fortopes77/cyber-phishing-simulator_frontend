@@ -1,5 +1,5 @@
 export interface LearnerModule {
-  moduleId: string;
+  moduleId: number;
   moduleName: string;
   description: string;
   version?: string;

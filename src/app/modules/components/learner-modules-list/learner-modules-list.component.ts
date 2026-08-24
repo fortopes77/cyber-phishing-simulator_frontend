@@ -1,33 +1,36 @@
-import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import { HeaderComponent } from 'src/app/shared/components/header/header.component';
+import {
+  faCircle,
+  faCircleCheck,
+  faClock,
+  IconDefinition,
+} from '@fortawesome/free-solid-svg-icons';
+import { iconLibrary } from 'src/app/shared/constants/font-awesome-icons.const';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { IconDefinition } from '@fortawesome/free-solid-svg-icons';
 import { Store } from '@ngrx/store';
 import { combineLatest } from 'rxjs';
-import { AttemptsActions } from 'src/app/attempts/+state/attempts.actions';
-import { selectAttempts } from 'src/app/attempts/+state/attempts.selectors';
-import { selectAuthState } from 'src/app/auth/+state/auth.selectors';
-import { User } from 'src/app/auth/auth.service';
 import { ModulesActions } from 'src/app/modules/+state/modules.actions';
 import { selectModuleList } from 'src/app/modules/+state/modules.selectors';
 import { ScenarioActions } from 'src/app/scenario/+state/scenario.actions';
 import { selectScenarioList } from 'src/app/scenario/+state/scenario.selectors';
-import { HeaderComponent } from 'src/app/shared/components/header/header.component';
-import { iconLibrary } from 'src/app/shared/constants/font-awesome-icons.const';
+import { AttemptsActions } from 'src/app/attempts/+state/attempts.actions';
+import { selectAttempts } from 'src/app/attempts/+state/attempts.selectors';
 
 interface ModuleCard {
-  id: string;
+  id: number;
   title: string;
   description: string;
-  difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
+  difficulty: 'beginner' | 'intermediate' | 'advanced';
   scenarios: number;
   progress: number; // 0..1
 }
 
 @Component({
-  selector: 'app-modules-list',
+  selector: 'app-learner-modules-list',
   standalone: true,
   imports: [
     CommonModule,
@@ -36,18 +39,16 @@ interface ModuleCard {
     HeaderComponent,
     FaIconComponent,
   ],
-  templateUrl: './modules-list.component.html',
-  styleUrls: ['./modules-list.component.scss'],
+  templateUrl: './learner-modules-list.component.html',
+  styleUrls: ['./learner-modules-list.component.scss'],
 })
-export class ModulesListComponent implements OnInit {
+export class LearnerModulesListComponent implements OnInit {
   search = '';
   showFilters = false;
-  difficultyFilter: '' | 'Beginner' | 'Intermediate' | 'Advanced' = '';
+  difficultyFilter: '' | 'beginner' | 'intermediate' | 'advanced' = '';
 
   modules: ModuleCard[] = [];
   filteredModules: ModuleCard[] = [];
-  activeUser: User | null = null;
-  fontAwesomeIcons = iconLibrary;
 
   constructor(private store: Store) {}
 
@@ -59,7 +60,6 @@ export class ModulesListComponent implements OnInit {
     // "module scenarios" endpoint.
     this.store.dispatch(ScenarioActions.fetchList());
     this.store.dispatch(AttemptsActions.fetchUserAttempts());
-    this.subscribeToActiveUser();
 
     combineLatest([
       this.store.select(selectModuleList),
@@ -81,7 +81,7 @@ export class ModulesListComponent implements OnInit {
 
         return {
           id: module.moduleId,
-          title: module.title,
+          title: module.moduleName,
           description: module.description,
           // No per-module difficulty field exists on the module list
           // endpoint - approximate it from the module's scenarios until
@@ -98,24 +98,13 @@ export class ModulesListComponent implements OnInit {
     });
   }
 
-  private subscribeToActiveUser(): void {
-    this.store.select(selectAuthState).subscribe((authState) => {
-      if (authState && authState.user) {
-        this.activeUser = authState.user!;
-      }
-    });
-  }
-
   private deriveDifficulty(
     scenarios: any[],
-  ): 'Beginner' | 'Intermediate' | 'Advanced' {
-    const difficultyMap: Record<
-      string,
-      'Beginner' | 'Intermediate' | 'Advanced'
-    > = {
-      easy: 'Beginner',
-      medium: 'Intermediate',
-      hard: 'Advanced',
+  ): 'beginner' | 'intermediate' | 'advanced' {
+    const difficultyMap: Record<string, 'beginner' | 'intermediate' | 'advanced'> = {
+      easy: 'beginner',
+      medium: 'intermediate',
+      hard: 'advanced',
     };
 
     const counts: Record<string, number> = {};
@@ -125,11 +114,11 @@ export class ModulesListComponent implements OnInit {
     }
 
     const mostCommon = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
-    return difficultyMap[mostCommon?.[0]] ?? 'Beginner';
+    return difficultyMap[mostCommon?.[0]] ?? 'beginner';
   }
 
   applyFilters(): void {
-    const searchLower = this.search.trim()?.toLowerCase();
+    const searchLower = this.search.trim().toLowerCase();
     this.filteredModules = this.modules.filter((m) => {
       if (this.difficultyFilter && m.difficulty !== this.difficultyFilter) {
         return false;

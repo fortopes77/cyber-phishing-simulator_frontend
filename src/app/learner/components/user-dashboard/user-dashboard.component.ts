@@ -13,7 +13,7 @@ import { AttemptsActions } from 'src/app/attempts/+state/attempts.actions';
 import { selectAttempts } from 'src/app/attempts/+state/attempts.selectors';
 
 interface AssignedModule {
-  id: string;
+  id: number;
   title: string;
   description: string;
   level: 'Beginner' | 'Intermediate' | 'Advanced';

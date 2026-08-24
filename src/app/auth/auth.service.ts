@@ -7,7 +7,21 @@ export interface User {
   id: string;
   username: string;
   email: string;
-  role: 'TRAINER' | 'user';
+  role: 'trainer' | 'user';
+}
+
+/**
+ * The backend returns role as "TRAINER"/"USER" (all caps) rather than the
+ * lowercase values used throughout the app for role checks (AuthGuard,
+ * nav.component, login redirect, hasRole/isAdmin below). Normalize once
+ * here, right where the raw API response is turned into a User, so every
+ * downstream comparison can keep using the lowercase literal.
+ */
+export function normalizeUser(raw: any): User {
+  return {
+    ...raw,
+    role: (raw?.role ?? '').toString().toLowerCase(),
+  };
 }
 
 @Injectable({
@@ -17,6 +31,22 @@ export class AuthService {
   private readonly STORAGE_KEY = 'auth_token';
   private readonly USER_STORAGE_KEY = 'current_user';
   private apiEndpoint = environment.apiUrl || 'http://localhost:3000/';
+
+  // Mock user database - username and email can be used interchangeably
+  private readonly mockUsers = [
+    {
+      username: 'admin',
+      email: 'admin@example.com',
+      password: 'admin',
+      role: 'trainer' as const,
+    },
+    {
+      username: 'user',
+      email: 'user@example.com',
+      password: 'user',
+      role: 'user' as const,
+    },
+  ];
 
   private currentUserSubject = new BehaviorSubject<User | null>(
     this.loadUserFromStorage(),
@@ -50,6 +80,23 @@ export class AuthService {
       credential,
       password,
     });
+  }
+
+  /**
+   * Requests a fresh token for the current session.
+   * ASSUMPTION: backend exposes POST /auth/refresh accepting the current
+   * (possibly expired) token and returning a new one in the same shape as
+   * login - update the payload/response mapping if your NestJS route
+   * differs (e.g. a separate refresh token rather than reusing the access
+   * token).
+   */
+  refreshToken() {
+    const authData = localStorage.getItem('auth');
+    const token = authData ? JSON.parse(authData).token : null;
+    return this.http.post<{ token: string }>(
+      `${this.apiEndpoint}auth/refresh`,
+      { token },
+    );
   }
 
   getFeedback(payload: any) {
@@ -94,7 +141,7 @@ export class AuthService {
    * Check if user is admin
    */
   isAdmin(): boolean {
-    return this.hasRole('TRAINER');
+    return this.hasRole('trainer');
   }
 
   /**

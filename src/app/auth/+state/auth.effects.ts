@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { AuthService } from 'src/app/auth/auth.service';
+import { AuthService, normalizeUser } from 'src/app/auth/auth.service';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { AuthActions } from './auth.actions';
 import { catchError, map, mergeMap, of } from 'rxjs';
@@ -18,15 +18,14 @@ export class AuthEffects {
         this.authService.login(credential, password).pipe(
           map((response: any) =>
             AuthActions.loginSuccess({
-              user: response.user,
+              user: normalizeUser(response.user),
               token: response.token,
             }),
           ),
           catchError((error) =>
             of(
               AuthActions.loginFailure({
-                error:
-                  'Unable to login, please contact your organisation admin.',
+                error: error.message || 'Login failed',
               }),
             ),
           ),
@@ -45,5 +44,25 @@ export class AuthEffects {
         }),
       ),
     { dispatch: true },
+  );
+
+  refreshToken$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(AuthActions.refreshToken),
+      mergeMap(() =>
+        this.authService.refreshToken().pipe(
+          map((response) =>
+            AuthActions.refreshTokenSuccess({ token: response.token }),
+          ),
+          catchError((error) =>
+            of(
+              AuthActions.refreshTokenFailure({
+                error: error.message || 'Failed to refresh token',
+              }),
+            ),
+          ),
+        ),
+      ),
+    ),
   );
 }

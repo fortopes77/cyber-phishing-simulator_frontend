@@ -6,6 +6,7 @@ import { of } from 'rxjs';
 import { ModulePageComponent } from './module-page.component';
 import { selectScenarioList } from 'src/app/scenario/+state/scenario.selectors';
 import { selectAttempts } from 'src/app/attempts/+state/attempts.selectors';
+import { selectModuleList } from 'src/app/modules/+state/modules.selectors';
 
 describe('ModulePageComponent', () => {
   let component: ModulePageComponent;
@@ -13,12 +14,15 @@ describe('ModulePageComponent', () => {
   let router: Router;
   let store: MockStore;
 
+  const modules = [
+    { moduleId: 1, moduleName: 'Phishing Awareness', description: 'Learn to spot phishing' },
+  ];
   const scenarios = [
-    { id: 1, title: 'Urgent Password Reset', difficulty: 'Easy' },
-    { id: 2, title: 'IT Department Software Update', difficulty: 'Medium' },
+    { id: 's_001', moduleId: 1, title: 'Urgent Password Reset', difficulty: 'easy' },
+    { id: 's_002', moduleId: 1, title: 'IT Department Software Update', difficulty: 'medium' },
   ];
   const attempts = [
-    { id: 'a1', scenarioId: 1, decision: 'Report', correct: true },
+    { id: 'a1', scenarioId: 's_001', decision: 'Report', correct: true },
   ];
 
   beforeEach(async () => {
@@ -28,11 +32,12 @@ describe('ModulePageComponent', () => {
         {
           provide: ActivatedRoute,
           useValue: {
-            paramMap: of(convertToParamMap({ id: 1 })),
+            paramMap: of(convertToParamMap({ id: '1' })),
           },
         },
         provideMockStore({
           selectors: [
+            { selector: selectModuleList, value: modules },
             { selector: selectScenarioList, value: scenarios },
             { selector: selectAttempts, value: attempts },
           ],
@@ -54,23 +59,33 @@ describe('ModulePageComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should read the module id from the route params', () => {
+  it('should read the module id from the route params as a number', () => {
     expect(component.moduleId).toBe(1);
   });
 
-  it('should generate a formatted title from the id', () => {
-    expect(component.title).toBe('Email Phishing');
+  it('should derive the module title from the modules feature store', () => {
+    expect(component.title).toBe('Phishing Awareness');
   });
 
-  it('should dispatch actions to load the module scenarios and attempts', () => {
+  it('should dispatch actions to load the module, its scenarios, and attempts', () => {
     expect(store.dispatch).toHaveBeenCalledWith(
       jasmine.objectContaining({ moduleId: 1 }),
     );
   });
 
+  it('should compute progress from completed attempts scoped to the module', () => {
+    expect(component.scenarios.length).toBe(2);
+    expect(component.completedCount).toBe(1);
+    expect(component.progressPercentage).toBe(50);
+    expect(component.isModuleComplete).toBeFalse();
+  });
+
   it('should navigate to the next incomplete scenario on continue', () => {
     component.continueModule();
 
-    expect(router.navigate).toHaveBeenCalledWith(['/learner/scenarios', 2]);
+    expect(router.navigate).toHaveBeenCalledWith([
+      '/learner/scenarios',
+      's_002',
+    ]);
   });
 });

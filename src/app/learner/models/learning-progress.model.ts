@@ -1,5 +1,5 @@
 export interface LearningProgress {
-  id: string;
+  id: number;
   title: string;
   level?: 'Beginner' | 'Intermediate' | 'Advanced';
   completedScenarios: number;
