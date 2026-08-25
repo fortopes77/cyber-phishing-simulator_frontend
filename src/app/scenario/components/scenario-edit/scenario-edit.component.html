@@ -49,9 +49,9 @@
             <span>Category</span>
             <select formControlName="category">
               <option value="" disabled>Select a category</option>
-              @for (option of categoryOptions; track option) {
-                <option [value]="option">
-                  {{ option }}
+              @for (option of categoryOptions; track option.value) {
+                <option [value]="option.value">
+                  {{ option.label }}
                 </option>
               }
             </select>
@@ -61,9 +61,9 @@
             <span>Difficulty</span>
             <select formControlName="difficulty">
               <option value="" disabled>Select a difficulty</option>
-              @for (option of difficultyOptions; track option) {
-                <option [value]="option">
-                  {{ option }}
+              @for (option of difficultyOptions; track option.value) {
+                <option [value]="option.value">
+                  {{ option.label }}
                 </option>
               }
             </select>
@@ -73,9 +73,9 @@
             <span>Interaction type</span>
             <select formControlName="interactionType">
               <option value="" disabled>Select interaction type</option>
-              @for (option of interactionTypeOptions; track option) {
-                <option [value]="option">
-                  {{ option }}
+              @for (option of interactionTypeOptions; track option.value) {
+                <option [value]="option.value">
+                  {{ option.label }}
                 </option>
               }
             </select>
@@ -89,6 +89,60 @@
               placeholder="Describe the scenario"
             ></textarea>
           </label>
+
+          <div class="field field-full">
+            <span>Answer type</span>
+            <div class="answer-mode-toggle">
+              <label class="radio-option">
+                <input type="radio" formControlName="answerMode" value="simple" />
+                Simple (single correct answer)
+              </label>
+              <label class="radio-option">
+                <input
+                  type="radio"
+                  formControlName="answerMode"
+                  value="detailed"
+                />
+                Detailed (correct cue phrases)
+              </label>
+            </div>
+          </div>
+
+          @if (answerMode === 'simple') {
+            <label class="field field-full">
+              <span>Correct answer</span>
+              <input
+                type="text"
+                formControlName="correctAnswer"
+                placeholder="e.g. suspicious"
+              />
+            </label>
+          } @else {
+            <div class="field field-full">
+              <span>Correct cue phrases</span>
+              <div class="cue-list" formArrayName="correctCues">
+                @for (cue of correctCuesArray.controls; track $index) {
+                  <div class="cue-row">
+                    <input
+                      type="text"
+                      [formControlName]="$index"
+                      placeholder="Phrase learners should flag as suspicious"
+                    />
+                    <button
+                      type="button"
+                      class="btn btn-secondary"
+                      (click)="removeCue($index)"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                }
+              </div>
+              <button type="button" class="btn btn-secondary" (click)="addCue()">
+                Add cue
+              </button>
+            </div>
+          }
         </div>
 
         <div class="actions">

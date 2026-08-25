@@ -1,6 +1,8 @@
 import { Component, inject, OnInit } from '@angular/core';
 import {
+  FormArray,
   FormBuilder,
+  FormControl,
   FormGroup,
   ReactiveFormsModule,
   Validators,
@@ -11,6 +13,22 @@ import { Store } from '@ngrx/store';
 import { selectScenario } from '../../+state/scenario.selectors';
 import { HeaderComponent } from 'src/app/shared/components/header/header.component';
 import { DashboardCardComponent } from 'src/app/shared/components/dashboard-card/dashboard-card.component';
+import {
+  CATEGORY_OPTIONS,
+  DIFFICULTY_OPTIONS,
+  INTERACTION_TYPE_OPTIONS,
+  getScenarioOptionLabel,
+} from '../../models/scenario.model';
+
+// The API length limits aren't published, so these mirror the ticket's
+// "regex/length validation on title, description, content" note with
+// generous ceilings - real enforcement (and injection protection) happens
+// server-side; this is just fast feedback before a round trip.
+const TITLE_MAX_LENGTH = 200;
+const DESCRIPTION_MAX_LENGTH = 1000;
+const CONTENT_MAX_LENGTH = 5000;
+
+type AnswerMode = 'simple' | 'detailed';
 
 @Component({
   selector: 'app-scenario-edit',
@@ -27,23 +45,48 @@ export class ScenarioEditComponent implements OnInit {
 
   readonly scenarioForm: FormGroup = this.fb.group({
     moduleId: ['', Validators.required],
-    title: ['', Validators.required],
-    content: ['', Validators.required],
+    title: ['', [Validators.required, Validators.maxLength(TITLE_MAX_LENGTH)]],
+    scenarioDescription: [
+      '',
+      [Validators.required, Validators.maxLength(DESCRIPTION_MAX_LENGTH)],
+    ],
+    content: [
+      '',
+      [Validators.required, Validators.maxLength(CONTENT_MAX_LENGTH)],
+    ],
     category: ['', Validators.required],
     difficulty: ['', Validators.required],
     interactionType: ['', Validators.required],
-    scenarioDescription: ['', Validators.required],
+    // A scenario is either "simple" (a single correct answer) or "detailed"
+    // (a list of correct cue phrases) - the API only accepts one or the
+    // other, never both (see the ticket's create/update notes).
+    answerMode: this.fb.nonNullable.control<AnswerMode>('simple'),
+    correctAnswer: [''],
+    correctCues: this.fb.array<FormControl<string>>([]),
   });
 
   readonly moduleOptions = [1, 2, 3];
-  readonly categoryOptions = [
-    'Phishing',
-    'Social Engineering',
-    'Training',
-    'Credential Theft',
-  ];
-  readonly difficultyOptions = ['Easy', 'Medium', 'Hard'];
-  readonly interactionTypeOptions = ['Email', 'SMS', 'Call'];
+  readonly categoryOptions = CATEGORY_OPTIONS;
+  readonly difficultyOptions = DIFFICULTY_OPTIONS;
+  readonly interactionTypeOptions = INTERACTION_TYPE_OPTIONS;
+
+  get correctCuesArray(): FormArray<FormControl<string>> {
+    return this.scenarioForm.get('correctCues') as FormArray<
+      FormControl<string>
+    >;
+  }
+
+  get answerMode(): AnswerMode {
+    return this.scenarioForm.get('answerMode')?.value ?? 'simple';
+  }
+
+  addCue(): void {
+    this.correctCuesArray.push(this.fb.nonNullable.control(''));
+  }
+
+  removeCue(index: number): void {
+    this.correctCuesArray.removeAt(index);
+  }
 
   get previewModuleTitle(): string {
     const moduleId = this.scenarioForm.get('moduleId')?.value;
@@ -57,11 +100,13 @@ export class ScenarioEditComponent implements OnInit {
   }
 
   get previewType(): string {
-    return this.scenarioForm.get('category')?.value || 'Email';
+    const category = this.scenarioForm.get('category')?.value;
+    return category ? getScenarioOptionLabel(category) : 'Email';
   }
 
   get previewDifficulty(): string {
-    return this.scenarioForm.get('difficulty')?.value || 'Easy';
+    const difficulty = this.scenarioForm.get('difficulty')?.value;
+    return difficulty ? getScenarioOptionLabel(difficulty) : 'Easy';
   }
 
   get previewSubject(): string {
@@ -120,6 +165,9 @@ export class ScenarioEditComponent implements OnInit {
       }
 
       if (scenario) {
+        const hasCues = Array.isArray(scenario.correctCues)
+          && scenario.correctCues.length > 0;
+
         this.scenarioForm.patchValue({
           moduleId: scenario.moduleId || '',
           title: scenario.title || '',
@@ -127,8 +175,18 @@ export class ScenarioEditComponent implements OnInit {
           category: scenario.category || '',
           difficulty: scenario.difficulty || '',
           interactionType: scenario.interactionType || '',
-          scenarioDescription: scenario.scenarioDescription || '',
+          scenarioDescription:
+            scenario.scenarioDescription || scenario.description || '',
+          answerMode: hasCues ? 'detailed' : 'simple',
+          correctAnswer: scenario.correctAnswer || '',
         });
+
+        this.correctCuesArray.clear();
+        if (hasCues) {
+          scenario.correctCues.forEach((cue: string) =>
+            this.correctCuesArray.push(this.fb.nonNullable.control(cue)),
+          );
+        }
       }
     });
   }
@@ -142,32 +200,51 @@ export class ScenarioEditComponent implements OnInit {
       difficulty: '',
       interactionType: '',
       scenarioDescription: '',
+      answerMode: 'simple',
+      correctAnswer: '',
     });
+    this.correctCuesArray.clear();
     this.scenarioForm.markAsPristine();
     this.scenarioForm.markAsUntouched();
   }
 
+  private isAnswerSectionValid(): boolean {
+    if (this.answerMode === 'simple') {
+      return !!this.scenarioForm.get('correctAnswer')?.value?.trim();
+    }
+
+    return this.correctCuesArray.controls.some((control) =>
+      control.value?.trim(),
+    );
+  }
+
   onSubmit(): void {
-    if (this.scenarioForm.invalid) {
+    if (this.scenarioForm.invalid || !this.isAnswerSectionValid()) {
       this.scenarioForm.markAllAsTouched();
       return;
-    } else {
-      if (this.isCreateMode) {
-        this.store.dispatch(
-          ScenarioActions.createScenario({
-            scenario: this.scenarioForm.value,
-          }),
-        );
-      } else {
-        if (this.scenarioId) {
-          this.store.dispatch(
-            ScenarioActions.updateScenario({
-              scenarioId: this.scenarioId,
-              updatedScenario: this.scenarioForm.value,
-            }),
-          );
-        }
-      }
+    }
+
+    const formValue = this.scenarioForm.value;
+    // Only the field matching the chosen answer mode should reach the API -
+    // stale values left in the other field (e.g. cues typed before
+    // switching back to "simple") must not be sent alongside it.
+    const scenario = {
+      ...formValue,
+      correctAnswer:
+        formValue.answerMode === 'simple' ? formValue.correctAnswer : undefined,
+      correctCues:
+        formValue.answerMode === 'detailed' ? formValue.correctCues : undefined,
+    };
+
+    if (this.isCreateMode) {
+      this.store.dispatch(ScenarioActions.createScenario({ scenario }));
+    } else if (this.scenarioId) {
+      this.store.dispatch(
+        ScenarioActions.updateScenario({
+          scenarioId: this.scenarioId,
+          updatedScenario: scenario,
+        }),
+      );
     }
   }
 

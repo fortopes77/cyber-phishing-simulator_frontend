@@ -26,13 +26,13 @@ describe('ScenarioChoiceComponent', () => {
   // effect completing after the initial ngOnInit subscription is set up.
   let actionsSubject: Subject<any>;
 
+  // Matches the shape a learner actually receives (see scenario.model.ts) -
+  // the scenarios API has no `options` field.
   const scenario = {
     id: 's_002',
     moduleId: 1,
     title: 'IT Department Software Update',
-    sender: 'it-support@yourcompany.com',
     content: 'Please install the attached update immediately.',
-    options: ['Report', 'Ignore', 'Open Link'],
   };
   const scenarioList = [{ id: 's_001' }, scenario];
 
@@ -80,32 +80,48 @@ describe('ScenarioChoiceComponent', () => {
     expect(component.totalScenarios).toBe(2);
   });
 
-  it('should use the scenario-provided decision options', () => {
-    expect(component.scenario.options).toEqual([
-      'Report',
-      'Ignore',
-      'Open Link',
-    ]);
+  it('should always offer the fixed Safe/Suspicious decision options', () => {
+    expect(component.decisionOptions).toEqual(['Safe', 'Suspicious']);
   });
 
   it('should dispatch createAttempt when a decision is selected', () => {
-    component.selectDecision('Report');
+    component.selectDecision('Suspicious');
 
     expect(component.submitting).toBeTrue();
     expect(store.dispatch).toHaveBeenCalledWith(
       AttemptsActions.createAttempt({
-        attempt: { scenarioId: 's_002', decision: 'Report' },
+        attempt: {
+          scenarioId: 's_002',
+          decision: 'Suspicious',
+          selectedCues: undefined,
+        },
+      }),
+    );
+  });
+
+  it('should forward the cues highlighted on the scenario page as selectedCues', () => {
+    component.selectedCues = ['Urgent language', 'Suspicious link'];
+
+    component.selectDecision('Suspicious');
+
+    expect(store.dispatch).toHaveBeenCalledWith(
+      AttemptsActions.createAttempt({
+        attempt: {
+          scenarioId: 's_002',
+          decision: 'Suspicious',
+          selectedCues: ['Urgent language', 'Suspicious link'],
+        },
       }),
     );
   });
 
   it('should switch to the result phase and request feedback on createAttemptSuccess', () => {
-    component.selectDecision('Report');
+    component.selectDecision('Suspicious');
 
     const attempt = {
       id: 'a_1',
       scenarioId: 's_002',
-      decision: 'Report',
+      decision: 'Suspicious',
       correct: true,
     };
     actionsSubject.next(AttemptsActions.createAttemptSuccess({ attempt }));
@@ -120,14 +136,14 @@ describe('ScenarioChoiceComponent', () => {
   });
 
   it('should show incorrect result when the attempt was wrong', () => {
-    component.selectDecision('Open Link');
+    component.selectDecision('Safe');
 
     actionsSubject.next(
       AttemptsActions.createAttemptSuccess({
         attempt: {
           id: 'a_2',
           scenarioId: 's_002',
-          decision: 'Open Link',
+          decision: 'Safe',
           correct: false,
         },
       }),
@@ -137,7 +153,7 @@ describe('ScenarioChoiceComponent', () => {
   });
 
   it('should stop submitting on createAttemptFailure', () => {
-    component.selectDecision('Report');
+    component.selectDecision('Suspicious');
     actionsSubject.next(
       AttemptsActions.createAttemptFailure({ error: 'Network error' }),
     );

@@ -21,12 +21,20 @@ interface Scenario {
   id: number | string;
   moduleId?: number;
   title: string;
-  from: string;
   content: string;
-  options: string[];
+  // Not part of the scenarios API response (see scenario.model.ts) - kept
+  // optional so the UI degrades gracefully rather than showing "From: "
+  // with nothing after it.
+  from?: string;
 }
 
-const DEFAULT_OPTIONS = ['Safe', 'Suspicious'];
+// The scenarios API has no `options` field - a scenario's correctAnswer is
+// free text a trainer enters (see ScenarioEditComponent), and a learner
+// never receives it, so there's no way to derive scenario-specific choices
+// on this end. Safe/Suspicious is the fixed decision every scenario is
+// judged against; trainers should set correctAnswer to one of these two
+// values for a "simple" scenario.
+const DECISION_OPTIONS = ['Safe', 'Suspicious'];
 
 @Component({
   selector: 'app-scenario-choice',
@@ -42,10 +50,9 @@ export class ScenarioChoiceComponent implements OnInit, OnDestroy {
   scenario: Scenario = {
     id: '',
     title: '',
-    from: '',
     content: '',
-    options: DEFAULT_OPTIONS,
   };
+  readonly decisionOptions = DECISION_OPTIONS;
 
   // The learner's suspicious-text selections carried over from the
   // scenario page via router navigation state.
@@ -166,12 +173,8 @@ export class ScenarioChoiceComponent implements OnInit, OnDestroy {
       id: raw.id ?? this.scenarioId,
       moduleId: raw.moduleId != null ? Number(raw.moduleId) : undefined,
       title: raw.title ?? '',
-      from: raw.sender ?? raw.from ?? '',
+      from: raw.sender ?? raw.from ?? undefined,
       content: raw.content ?? raw.body ?? '',
-      options:
-        Array.isArray(raw.options) && raw.options.length
-          ? raw.options
-          : DEFAULT_OPTIONS,
     };
   }
 
@@ -188,6 +191,10 @@ export class ScenarioChoiceComponent implements OnInit, OnDestroy {
         attempt: {
           scenarioId: String(this.scenarioId),
           decision,
+          // Only sent for a "detailed" scenario (scored against
+          // correctCues) - omitted entirely when the learner selected no
+          // text, which is the normal case for a "simple" scenario.
+          selectedCues: this.selectedCues.length ? this.selectedCues : undefined,
         },
       }),
     );
@@ -198,14 +205,14 @@ export class ScenarioChoiceComponent implements OnInit, OnDestroy {
       FeedbackActions.requestFeedback({
         request: {
           scenario_content: this.scenario.content,
-          scenarioChoices: this.scenario.options.map((option, index) => ({
+          scenarioChoices: this.decisionOptions.map((option, index) => ({
             id: index + 1,
             text: option,
             isCorrect: option === this.selectedDecision && attempt.correct,
             scenarioId: this.scenario.id,
           })),
           selectedChoiceId:
-            this.scenario.options.indexOf(this.selectedDecision ?? '') + 1,
+            this.decisionOptions.indexOf(this.selectedDecision ?? '') + 1,
           attemptId: attempt.id,
         },
       }),

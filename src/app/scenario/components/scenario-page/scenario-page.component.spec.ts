@@ -16,17 +16,16 @@ describe('ScenarioPageComponent', () => {
   let router: Router;
   let store: MockStore;
 
+  // Matches the shape a learner actually receives from the Read endpoint
+  // per the scenarios ticket: scenarioId, moduleId, title, content,
+  // interactionType only - no difficulty/sender/subject/correctCues.
   const scenario = {
     id: 2,
     moduleId: 1,
     title: 'Urgent Password Reset',
-    interactionType: 'Email',
-    difficulty: 'Easy',
-    sender: 'security@yourcompany.com',
-    subject: 'Urgent Password Reset Required',
+    interactionType: 'EMAIL',
     content:
       'Please reset your password immediately using the secure link below.',
-    cues: ['Urgent language', 'Suspicious link'],
   };
 
   beforeEach(async () => {
@@ -71,9 +70,23 @@ describe('ScenarioPageComponent', () => {
   it('should map the store scenario onto the local view model', () => {
     expect(component.scenarioId).toBe(2);
     expect(component.scenario.title).toContain('Urgent Password Reset');
-    expect(component.scenario.from).toBe('security@yourcompany.com');
-    expect(component.scenario.type).toBe('Email');
+    expect(component.scenario.type).toBe('EMAIL');
     expect(component.scenario.moduleId).toBe(1);
+  });
+
+  it('should leave difficulty/from/subject undefined when the API omits them', () => {
+    expect(component.scenario.difficulty).toBeUndefined();
+    expect(component.scenario.from).toBeUndefined();
+  });
+
+  it('should map the interactionType enum onto a message-shell key', () => {
+    expect(component.getScenarioTypeKey()).toBe('email');
+
+    component.scenario = { ...component.scenario, type: 'SMS' };
+    expect(component.getScenarioTypeKey()).toBe('text');
+
+    component.scenario = { ...component.scenario, type: 'CALL' };
+    expect(component.getScenarioTypeKey()).toBe('phone');
   });
 
   it('should dispatch fetchScenariosByModule once the scenario moduleId is known', () => {
@@ -85,19 +98,6 @@ describe('ScenarioPageComponent', () => {
   it('should derive scenario position from the loaded module scenario list', () => {
     expect(component.scenarioNumber).toBe(2);
     expect(component.totalScenarios).toBe(2);
-  });
-
-  it('should expose scenario cues and allow toggling selection', () => {
-    expect(component.getSuspiciousCues()).toEqual([
-      'Urgent language',
-      'Suspicious link',
-    ]);
-
-    component.toggleCue('Urgent language');
-    expect(component.selectedCues).toContain('Urgent language');
-
-    component.toggleCue('Urgent language');
-    expect(component.selectedCues).not.toContain('Urgent language');
   });
 
   it('should add highlighted content text to selected cues on mouseup', () => {

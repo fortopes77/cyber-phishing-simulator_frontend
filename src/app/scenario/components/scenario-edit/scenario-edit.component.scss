@@ -124,6 +124,40 @@
   grid-column: 1 / -1;
 }
 
+.answer-mode-toggle {
+  display: flex;
+  gap: 1.5rem;
+  font-weight: 400;
+}
+
+.radio-option {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 400;
+  cursor: pointer;
+}
+
+.cue-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.cue-row {
+  display: flex;
+  gap: 0.5rem;
+
+  input {
+    flex: 1;
+  }
+
+  .btn {
+    flex: 0 0 auto;
+  }
+}
+
 .actions {
   display: flex;
   justify-content: flex-end;

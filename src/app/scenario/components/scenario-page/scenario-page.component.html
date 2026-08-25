@@ -19,10 +19,14 @@
   >
     <div class="scenario-card__top">
       <span class="scenario-card__tag">{{ scenario.type }}</span>
-      <span class="scenario-card__tag scenario-card__tag--difficulty">{{
-        scenario.difficulty
-      }}</span>
-      <div class="scenario-card__from">From: {{ scenario.from }}</div>
+      <span
+        *ngIf="scenario.difficulty"
+        class="scenario-card__tag scenario-card__tag--difficulty"
+        >{{ scenario.difficulty }}</span
+      >
+      <div *ngIf="scenario.from" class="scenario-card__from">
+        From: {{ scenario.from }}
+      </div>
       <div class="scenario-card__subject">{{ scenario.subject }}</div>
     </div>
 
@@ -32,7 +36,7 @@
       (mouseup)="onContentMouseUp()"
     >
       <div *ngSwitchCase="'email'" class="message-shell message-shell--email">
-        <div class="message-shell__meta">
+        <div *ngIf="scenario.from" class="message-shell__meta">
           <span class="message-shell__label">From</span>
           <span>{{ scenario.from }}</span>
         </div>
@@ -46,7 +50,9 @@
       <div *ngSwitchCase="'phone'" class="message-shell message-shell--phone">
         <div class="message-shell__header">
           <div class="message-shell__pill">Phone Transcript</div>
-          <div class="message-shell__subtle">{{ scenario.from }}</div>
+          <div *ngIf="scenario.from" class="message-shell__subtle">
+            {{ scenario.from }}
+          </div>
         </div>
         <div class="message-shell__transcript">
           <div
@@ -67,7 +73,9 @@
       <div *ngSwitchCase="'text'" class="message-shell message-shell--text">
         <div class="message-shell__header">
           <div class="message-shell__pill">Text Thread</div>
-          <div class="message-shell__subtle">{{ scenario.from }}</div>
+          <div *ngIf="scenario.from" class="message-shell__subtle">
+            {{ scenario.from }}
+          </div>
         </div>
         <div class="message-shell__chat">
           <div
@@ -106,24 +114,6 @@
 
       <div *ngSwitchDefault class="message-shell">
         <div class="message-shell__content">{{ scenario.body }}</div>
-      </div>
-    </div>
-
-    <div class="cue-selector" *ngIf="getSuspiciousCues().length">
-      <div class="cue-selector__title">Suggested cues</div>
-      <div class="cue-selector__hint">
-        Choose the signals you notice in this message.
-      </div>
-      <div class="cue-selector__list">
-        <button
-          type="button"
-          *ngFor="let cue of getSuspiciousCues()"
-          class="cue-chip"
-          [ngClass]="{ 'cue-chip--selected': isCueSelected(cue) }"
-          (click)="toggleCue(cue)"
-        >
-          {{ cue }}
-        </button>
       </div>
     </div>
 

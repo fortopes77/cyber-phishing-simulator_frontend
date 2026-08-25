@@ -13,12 +13,15 @@ interface Scenario {
   id: number | string;
   title: string;
   type: string;
-  difficulty: string;
-  from: string;
-  subject: string;
   body: string;
-  cues?: string[];
   moduleId?: number;
+  // Not part of the scenarios API response for learners (the Read endpoint
+  // only returns scenarioId/moduleId/title/content/interactionType to
+  // them - see the scenarios ticket) - kept optional so the UI degrades
+  // gracefully rather than showing "From: " with nothing after it.
+  difficulty?: string;
+  from?: string;
+  subject?: string;
 }
 
 interface MessageEntry {
@@ -47,11 +50,7 @@ export class ScenarioPageComponent implements OnInit {
     id: '',
     title: '',
     type: 'generic',
-    difficulty: '',
-    from: '',
-    subject: '',
     body: '',
-    cues: [],
   };
   selectedCues: string[] = [];
 
@@ -121,21 +120,36 @@ export class ScenarioPageComponent implements OnInit {
     return {
       id: raw.id ?? this.scenarioId,
       title: raw.title ?? '',
-      // Backend field is `interactionType` (see scenario.service.ts
-      // createScenario) - values are expected to align with the
-      // email/phone/text/invoice switch below.
       type: raw.interactionType ?? raw.type ?? 'generic',
-      difficulty: raw.difficulty ?? '',
-      from: raw.sender ?? raw.from ?? '',
-      subject: raw.subject ?? raw.title ?? '',
+      // difficulty/from/subject aren't part of the scenarios API response a
+      // learner receives - these fallbacks only surface something if a
+      // future/trainer-scoped response happens to include them.
+      difficulty: raw.difficulty || undefined,
+      from: raw.sender ?? raw.from ?? undefined,
+      subject: raw.subject ?? raw.title ?? undefined,
       body: raw.content ?? raw.body ?? '',
-      cues: raw.cues ?? [],
       moduleId: raw.moduleId != null ? Number(raw.moduleId) : undefined,
     };
   }
 
+  /**
+   * Maps the `interactionType` enum (EMAIL/SMS/CALL - see scenario.model.ts)
+   * onto the message-shell keys the template switches on. Falls back to a
+   * lowercase pass-through so older/free-text values ("Phone", "Text")
+   * still resolve to something sensible.
+   */
   getScenarioTypeKey(): string {
-    return this.scenario?.type?.toLowerCase() ?? 'generic';
+    const type = (this.scenario?.type ?? '').toUpperCase();
+    const typeMap: Record<string, string> = {
+      EMAIL: 'email',
+      SMS: 'text',
+      TEXT: 'text',
+      CALL: 'phone',
+      PHONE: 'phone',
+      VOICE: 'phone',
+    };
+
+    return typeMap[type] ?? this.scenario?.type?.toLowerCase() ?? 'generic';
   }
 
   getTranscriptEntries(): MessageEntry[] {
@@ -189,7 +203,7 @@ export class ScenarioPageComponent implements OnInit {
     }
 
     return [
-      { label: 'Invoice', value: this.scenario.subject },
+      { label: 'Invoice', value: this.scenario.subject ?? '' },
       { label: 'Amount', value: '$149.99' },
       { label: 'Due', value: '2026-08-15' },
     ];
@@ -200,25 +214,6 @@ export class ScenarioPageComponent implements OnInit {
     return amountMatch ? amountMatch[0] : '$149.99';
   }
 
-  getSuspiciousCues(): string[] {
-    return this.scenario?.cues ?? [];
-  }
-
-  toggleCue(cue: string): void {
-    if (this.selectedCues.includes(cue)) {
-      this.selectedCues = this.selectedCues.filter(
-        (selectedCue) => selectedCue !== cue,
-      );
-      return;
-    }
-
-    this.selectedCues = [...this.selectedCues, cue];
-  }
-
-  isCueSelected(cue: string): boolean {
-    return this.selectedCues.includes(cue);
-  }
-
   removeSelectedCue(cue: string): void {
     this.selectedCues = this.selectedCues.filter(
       (selectedCue) => selectedCue !== cue,
@@ -227,10 +222,12 @@ export class ScenarioPageComponent implements OnInit {
 
   /**
    * Captures free-text highlighted by the learner inside the scenario
-   * content (email body, phone transcript, text thread, invoice fields)
-   * and adds it to the selected cues, the same list populated by the
-   * predefined cue chips below. Bound to (mouseup) on the wrapper around
-   * the switchable content so it works for every scenario type.
+   * content (email body, phone transcript, text thread, invoice fields) and
+   * adds it to the selected cues. This is the learner's only source of
+   * cues - the backend never sends the scenario's correctCues to them, so
+   * there's nothing to show as a predefined hint. Bound to (mouseup) on the
+   * wrapper around the switchable content so it works for every scenario
+   * type.
    */
   onContentMouseUp(): void {
     const selection = window.getSelection ? window.getSelection() : null;

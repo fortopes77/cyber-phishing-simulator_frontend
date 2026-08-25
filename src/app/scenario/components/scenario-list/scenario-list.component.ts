@@ -17,6 +17,7 @@ import { Actions, ofType } from '@ngrx/effects';
 import { DeleteConfirmationModalComponent } from 'src/app/shared/components/delete-confirmation-modal/delete-confirmation-modal.component';
 import { SearchFilterBarComponent } from 'src/app/shared/components/search-filter-bar/search-filter-bar.component';
 import { iconLibrary } from 'src/app/shared/constants/font-awesome-icons.const';
+import { getScenarioOptionLabel } from '../../models/scenario.model';
 
 @Component({
   selector: 'app-scenario-list',
@@ -81,6 +82,7 @@ export class ScenarioListComponent implements OnInit {
     this.subscribeToAIScenarioCreateFailure();
     this.subscribeToCreateScenarioSuccess();
     this.subscribeToCreateScenarioFailure();
+    this.subscribeToDeleteScenarioSuccess();
     this.store.dispatch(ScenarioActions.fetchList());
   }
 
@@ -128,6 +130,14 @@ export class ScenarioListComponent implements OnInit {
       .pipe(ofType(ScenarioActions.createScenarioFailure))
       .subscribe(() => {
         this.isCreatingWithAi = false;
+      });
+  }
+
+  subscribeToDeleteScenarioSuccess(): void {
+    this.actions$
+      .pipe(ofType(ScenarioActions.deleteScenarioSuccess))
+      .subscribe(() => {
+        this.store.dispatch(ScenarioActions.fetchList());
       });
   }
 
@@ -203,22 +213,40 @@ export class ScenarioListComponent implements OnInit {
     return Array.from(values).sort((a, b) => a.localeCompare(b));
   }
 
+  /**
+   * The scenarios API returns `content`/`scenarioDescription` alongside the
+   * fields below, but those are long free text and don't belong in a table row -
+   * they're only shown in the edit form. Columns are a fixed set matching
+   * the Scenario resource rather than derived from whatever keys happen to
+   * be on the first row, so the table doesn't shift shape (or grow a
+   * `correctCues` array column) if the API response changes.
+   */
+  private static readonly COLUMNS: ListColumn[] = [
+    { key: 'title', label: 'Title' },
+    {
+      key: 'category',
+      label: 'Category',
+      valueFormatter: (value) => getScenarioOptionLabel(value),
+    },
+    {
+      key: 'difficulty',
+      label: 'Difficulty',
+      valueFormatter: (value) => getScenarioOptionLabel(value),
+    },
+    {
+      key: 'interactionType',
+      label: 'Interaction Type',
+      valueFormatter: (value) => getScenarioOptionLabel(value),
+    },
+    { key: 'moduleId', label: 'Module' },
+  ];
+
   private buildColumns(rows: Record<string, unknown>[]): ListColumn[] {
     if (!rows.length) {
       return [];
     }
 
-    return Object.keys(rows[0]).map((key) => ({
-      key,
-      label: this.formatColumnLabel(key),
-    }));
-  }
-
-  private formatColumnLabel(key: string): string {
-    return key
-      .replace(/([a-z])([A-Z])/g, '$1 $2')
-      .replace(/[_-]+/g, ' ')
-      .replace(/\b\w/g, (char) => char.toUpperCase());
+    return ScenarioListComponent.COLUMNS;
   }
 
   private handleEdit(row: Record<string, unknown>): void {
@@ -251,7 +279,6 @@ export class ScenarioListComponent implements OnInit {
         ),
       }),
     );
-    this.store.dispatch(ScenarioActions.fetchList());
     this.selectedScenarioRow = null;
     this.selectedScenarioTitle = '';
   }

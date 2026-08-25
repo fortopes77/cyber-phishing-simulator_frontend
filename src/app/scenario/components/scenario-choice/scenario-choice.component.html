@@ -20,14 +20,14 @@
       <div class="scenario-choice-card__scenario-title">
         "{{ scenario.title }}"
       </div>
-      <div class="scenario-choice-card__scenario-from">
+      <div *ngIf="scenario.from" class="scenario-choice-card__scenario-from">
         From: {{ scenario.from }}
       </div>
     </div>
 
     <div class="scenario-choice-card__options">
       <button
-        *ngFor="let option of scenario.options"
+        *ngFor="let option of decisionOptions"
         type="button"
         class="decision-button"
         [class.selected]="selectedDecision === option"
