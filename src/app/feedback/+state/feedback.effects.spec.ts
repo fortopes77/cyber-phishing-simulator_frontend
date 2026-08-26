@@ -12,9 +12,9 @@ describe('FeedbackEffects', () => {
   let feedbackService: jasmine.SpyObj<FeedbackService>;
 
   const request: FeedbackRequest = {
-    scenario_content: 'content',
-    scenarioChoices: [],
-    selectedChoiceId: 1,
+    scenarioContent: 'content',
+    decision: 'Safe',
+    correct: false,
   };
 
   beforeEach(() => {

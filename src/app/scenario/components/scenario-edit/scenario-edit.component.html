@@ -162,39 +162,12 @@
           <span class="preview-tag">Scenario Page</span>
         </div>
 
-        <div class="scenario-page preview-card">
-          <div class="scenario-page__header">
-            <div class="scenario-page__info">
-              <div class="scenario-page__module">{{ previewModuleTitle }}</div>
-              <div class="scenario-page__counter">
-                Scenario {{ previewScenarioNumber }} of
-                {{ previewTotalScenarios }}
-              </div>
-            </div>
-          </div>
-
-          <div class="scenario-alert">
-            <strong>This is a training scenario</strong>
-            <p>
-              Review this message carefully and decide if it’s safe or
-              suspicious
-            </p>
-          </div>
-
-          <div class="scenario-card">
-            <div class="scenario-card__top">
-              <span class="scenario-card__tag">{{ previewType }}</span>
-              <span class="scenario-card__tag scenario-card__tag--difficulty">
-                {{ previewDifficulty }}
-              </span>
-              <div class="scenario-card__from">From: {{ previewFrom }}</div>
-              <div class="scenario-card__subject">{{ previewSubject }}</div>
-            </div>
-
-            <div class="scenario-card__body">
-              <p>{{ previewBody }}</p>
-            </div>
-          </div>
+        <div class="preview-card">
+          <app-scenario-page
+            [previewMode]="true"
+            [previewData]="previewScenarioData"
+            [moduleTitle]="previewModuleTitle"
+          ></app-scenario-page>
         </div>
       </aside>
     </div>

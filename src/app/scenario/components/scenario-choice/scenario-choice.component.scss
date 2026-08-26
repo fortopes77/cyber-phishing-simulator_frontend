@@ -6,17 +6,82 @@
 
 .scenario-choice-page__header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.icon-button {
+  background: transparent;
+  border: none;
+  color: #586475;
+  cursor: pointer;
+  font-size: 1.1rem;
+  padding: 8px;
+  line-height: 1;
+}
+
+.icon-button:hover {
+  color: #1f3d64;
+}
+
+.scenario-choice-page__title-block {
+  flex: 1;
+  min-width: 0;
+}
+
+.scenario-choice-page__title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #17324d;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.scenario-choice-page__subtitle {
+  font-size: 0.85rem;
+  color: #7d8a9b;
+}
+
+.scenario-choice-page__pager {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  color: #45536a;
+  white-space: nowrap;
+}
+
+.pager-arrow {
+  background: transparent;
+  border: none;
+  color: #1177ee;
+  cursor: pointer;
+  font-size: 0.95rem;
+  padding: 4px;
+  line-height: 1;
+}
+
+.pager-arrow:disabled {
+  color: #c3cdd9;
+  cursor: default;
+}
+
+.scenario-choice-page__progress {
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: #dbeafe;
+  overflow: hidden;
   margin-bottom: 24px;
 }
 
-.scenario-choice-page__nav {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-  font-size: 0.95rem;
-  color: #1f3d64;
+.scenario-choice-page__progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: #1177ee;
+  transition: width 300ms ease;
 }
 
 .link-button {
@@ -29,10 +94,13 @@
 }
 
 .scenario-alert {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   border: 1px solid #f5c76a;
   background: #fff4e5;
   color: #8b5e00;
-  padding: 18px 20px;
+  padding: 14px 20px;
   border-radius: 12px;
   margin-bottom: 24px;
 }
@@ -42,6 +110,19 @@
   border-radius: 16px;
   box-shadow: 0 9px 24px rgba(52, 72, 98, 0.08);
   padding: 32px;
+}
+
+.scenario-choice-card__icon {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  background: #e6f0fe;
+  color: #1177ee;
+  font-size: 1.4rem;
 }
 
 .scenario-choice-card__title {
@@ -82,13 +163,15 @@
   border-radius: 16px;
   background: #f8f9fb;
   color: #1f3d64;
-  text-align: left;
-  padding: 24px;
+  text-align: center;
+  padding: 28px 20px;
   cursor: pointer;
-  min-height: 180px;
+  min-height: 140px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
 }
 
 .decision-button.selected {
@@ -97,22 +180,8 @@
 }
 
 .decision-button__icon {
-  width: 44px;
-  height: 44px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: #e6efff;
-  border-radius: 50%;
-  font-size: 1.2rem;
-}
-
-.decision-button--safe .decision-button__icon {
-  background: #e9f4ee;
-}
-
-.decision-button--suspicious .decision-button__icon {
-  background: #fff2e6;
+  font-size: 1.4rem;
+  color: #1f3d64;
 }
 
 .decision-button__label {
@@ -122,7 +191,7 @@
 
 .decision-button__description {
   color: #6f7b8b;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 
 .decision-button:disabled {
@@ -199,6 +268,27 @@
   font-size: 0.85rem;
   background: #f8f9fb;
   color: #1f3d64;
+}
+
+.cues-summary .cue-chip--missed {
+  border-color: #f3c6c6;
+  background: #fdecec;
+  color: #b3261e;
+}
+
+.correct-answer-summary {
+  background: #f8f9fb;
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 24px;
+  font-size: 0.9rem;
+  color: #45536a;
+}
+
+.correct-answer-summary__label {
+  font-weight: 700;
+  color: #1f3d64;
+  margin-right: 6px;
 }
 
 .feedback-panel {

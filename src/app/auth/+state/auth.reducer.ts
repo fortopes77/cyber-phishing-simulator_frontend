@@ -20,6 +20,22 @@ export const initialAuthState: AuthState = {
   isAuthenticated: false,
 };
 
+// Shared by loginSuccess and sessionRestored - a rehydrated session (see
+// session-bootstrap.ts) puts the store in exactly the same state a fresh
+// login would, just without a loading phase.
+const applyAuthenticatedSession = (
+  state: AuthState,
+  { user, token }: { user: User; token: string },
+): AuthState => ({
+  ...state,
+  user,
+  isAuthenticated: true,
+  token,
+  tokenExpiresAt: decodeTokenExpiry(token),
+  loading: false,
+  error: undefined,
+});
+
 export const authReducer = createReducer(
   initialAuthState,
 
@@ -28,15 +44,8 @@ export const authReducer = createReducer(
     loading: true,
   })),
 
-  on(AuthActions.loginSuccess, (state, { user, token }) => ({
-    ...state,
-    user,
-    isAuthenticated: true,
-    token,
-    tokenExpiresAt: decodeTokenExpiry(token),
-    loading: false,
-    error: undefined,
-  })),
+  on(AuthActions.loginSuccess, applyAuthenticatedSession),
+  on(AuthActions.sessionRestored, applyAuthenticatedSession),
 
   on(AuthActions.loginFailure, (state, { error }) => ({
     ...state,

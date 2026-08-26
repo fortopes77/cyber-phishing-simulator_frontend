@@ -3,7 +3,6 @@ import {
   HttpErrorResponse,
   HttpInterceptorFn,
 } from '@angular/common/http';
-import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { catchError, switchMap, take, throwError } from 'rxjs';
 import { AuthService } from './auth.service';
@@ -19,19 +18,17 @@ function isAuthEndpoint(url: string): boolean {
 }
 
 /**
- * Attaches the current token to every outgoing request (replacing the
- * per-service `localStorage.getItem('auth')` reads that were previously
- * duplicated across ModulesService/ScenarioService/etc - those reads still
- * work as a fallback, this just keeps the header in sync with the store).
- * On a 401 from a non-auth endpoint, it calls AuthService.refreshToken()
- * once, updates the store, and retries the original request with the new
- * token. If the refresh itself fails, the session is cleared and the user
- * is sent back to login.
+ * Attaches the current token (read from the store - nothing is persisted to
+ * localStorage) to every outgoing request. On a 401 from a non-auth
+ * endpoint, it calls AuthService.refreshToken() once, updates the store,
+ * and retries the original request with the new token. If the refresh
+ * itself fails, refreshTokenFailure clears the session in the reducer and
+ * AuthEffects.refreshTokenFailureRedirect$ sends the user back to login -
+ * this interceptor only needs to dispatch the failure, not navigate itself.
  */
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const store = inject(Store);
   const authService = inject(AuthService);
-  const router = inject(Router);
 
   let token: string | undefined;
   store
@@ -52,7 +49,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         return throwError(() => error);
       }
 
-      return authService.refreshToken().pipe(
+      return authService.refreshToken(token).pipe(
         switchMap((response) => {
           store.dispatch(
             AuthActions.refreshTokenSuccess({ token: response.token }),
@@ -67,7 +64,6 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
           store.dispatch(
             AuthActions.refreshTokenFailure({ error: 'Session expired' }),
           );
-          router.navigate(['/login']);
           return throwError(() => refreshError);
         }),
       );

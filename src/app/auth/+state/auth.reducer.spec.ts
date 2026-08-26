@@ -32,6 +32,23 @@ describe('authReducer', () => {
     expect(state.loading).toBeFalse();
   });
 
+  it('should restore the session on sessionRestored, same as loginSuccess', () => {
+    const expSeconds = Math.floor(Date.now() / 1000) + 3600;
+    const header = btoa(JSON.stringify({ alg: 'HS256' }));
+    const payload = btoa(JSON.stringify({ exp: expSeconds }));
+    const token = `${header}.${payload}.sig`;
+
+    const state = authReducer(
+      initialAuthState,
+      AuthActions.sessionRestored({ user: { id: '1' } as any, token }),
+    );
+
+    expect(state.isAuthenticated).toBeTrue();
+    expect(state.token).toBe(token);
+    expect(state.tokenExpiresAt).toBe(expSeconds * 1000);
+    expect(state.loading).toBeFalse();
+  });
+
   it('should store the error on loginFailure', () => {
     const state = authReducer(
       { ...initialAuthState, loading: true },

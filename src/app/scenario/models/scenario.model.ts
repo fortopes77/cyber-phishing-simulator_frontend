@@ -29,14 +29,16 @@ export enum ScenarioDifficulty {
 /**
  * ASSUMPTION: unlike category/difficulty (confirmed from a real 400
  * response), the backend hasn't told us its exact interactionType enum
- * values yet. EMAIL/SMS/CALL mirrors the category enum's channels
- * (phishing/smishing/vishing) and the form's previous free-text options -
- * verify against the backend once that validation is confirmed.
+ * values yet. EMAIL/SMS/CALL/SOCIAL_MEDIA mirrors the category enum's
+ * channels (phishing/smishing/vishing/social engineering) and the form's
+ * previous free-text options - verify against the backend once that
+ * validation is confirmed.
  */
 export enum ScenarioInteractionType {
   Email = 'EMAIL',
   Sms = 'SMS',
   Call = 'CALL',
+  SocialMedia = 'SOCIAL_MEDIA',
 }
 
 export interface ScenarioOption<T extends string> {
@@ -68,8 +70,9 @@ export const DIFFICULTY_OPTIONS: ScenarioOption<ScenarioDifficulty>[] = [
 export const INTERACTION_TYPE_OPTIONS: ScenarioOption<ScenarioInteractionType>[] =
   [
     { value: ScenarioInteractionType.Email, label: 'Email' },
-    { value: ScenarioInteractionType.Sms, label: 'SMS' },
+    { value: ScenarioInteractionType.Sms, label: 'Text Message' },
     { value: ScenarioInteractionType.Call, label: 'Phone Call' },
+    { value: ScenarioInteractionType.SocialMedia, label: 'Social Media' },
   ];
 
 /** Aliases free text (any case/spacing, common misspellings) onto the exact enum value the backend validates against. */
@@ -97,9 +100,12 @@ const INTERACTION_TYPE_ALIASES: Record<string, ScenarioInteractionType> = {
   EMAIL: ScenarioInteractionType.Email,
   SMS: ScenarioInteractionType.Sms,
   TEXT: ScenarioInteractionType.Sms,
+  TEXT_MESSAGE: ScenarioInteractionType.Sms,
   CALL: ScenarioInteractionType.Call,
   PHONE_CALL: ScenarioInteractionType.Call,
   VOICE: ScenarioInteractionType.Call,
+  SOCIAL_MEDIA: ScenarioInteractionType.SocialMedia,
+  SOCIAL: ScenarioInteractionType.SocialMedia,
 };
 
 export const DEFAULT_CATEGORY = ScenarioCategory.Phishing;

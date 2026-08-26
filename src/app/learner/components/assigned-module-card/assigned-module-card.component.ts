@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 
 export interface AssignedModule {
   id: number;
@@ -16,7 +17,7 @@ export interface AssignedModule {
 @Component({
   selector: 'app-assigned-module-card',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, StatusBadgeComponent],
   templateUrl: './assigned-module-card.component.html',
   styleUrls: ['./assigned-module-card.component.scss'],
 })

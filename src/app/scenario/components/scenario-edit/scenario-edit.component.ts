@@ -13,11 +13,11 @@ import { Store } from '@ngrx/store';
 import { selectScenario } from '../../+state/scenario.selectors';
 import { HeaderComponent } from 'src/app/shared/components/header/header.component';
 import { DashboardCardComponent } from 'src/app/shared/components/dashboard-card/dashboard-card.component';
+import { ScenarioPageComponent } from '../scenario-page/scenario-page.component';
 import {
   CATEGORY_OPTIONS,
   DIFFICULTY_OPTIONS,
   INTERACTION_TYPE_OPTIONS,
-  getScenarioOptionLabel,
 } from '../../models/scenario.model';
 
 // The API length limits aren't published, so these mirror the ticket's
@@ -33,7 +33,12 @@ type AnswerMode = 'simple' | 'detailed';
 @Component({
   selector: 'app-scenario-edit',
   standalone: true,
-  imports: [ReactiveFormsModule, HeaderComponent, DashboardCardComponent],
+  imports: [
+    ReactiveFormsModule,
+    HeaderComponent,
+    DashboardCardComponent,
+    ScenarioPageComponent,
+  ],
   templateUrl: './scenario-edit.component.html',
   styleUrl: './scenario-edit.component.scss',
 })
@@ -99,40 +104,21 @@ export class ScenarioEditComponent implements OnInit {
     return moduleTitles[moduleId] || 'Scenario Preview';
   }
 
-  get previewType(): string {
-    const category = this.scenarioForm.get('category')?.value;
-    return category ? getScenarioOptionLabel(category) : 'Email';
-  }
-
-  get previewDifficulty(): string {
-    const difficulty = this.scenarioForm.get('difficulty')?.value;
-    return difficulty ? getScenarioOptionLabel(difficulty) : 'Easy';
-  }
-
-  get previewSubject(): string {
-    return (
-      this.scenarioForm.get('title')?.value ||
-      'Example subject line for the scenario'
-    );
-  }
-
-  get previewBody(): string {
-    return (
-      this.scenarioForm.get('content')?.value ||
-      'The scenario body will display here as learners read the message.'
-    );
-  }
-
-  get previewFrom(): string {
-    return 'security@company.com';
-  }
-
-  get previewScenarioNumber(): number {
-    return 1;
-  }
-
-  get previewTotalScenarios(): number {
-    return 1;
+  // Feeds the embedded <app-scenario-page [previewMode]="true"> so the live
+  // preview is rendered by the exact same component (and interaction-type
+  // switch: email/text/phone/social) a learner will see - rather than a
+  // hand-rolled copy of that markup that can drift out of sync with it.
+  get previewScenarioData(): Record<string, any> {
+    const value = this.scenarioForm.value;
+    return {
+      title: value.title || 'Example subject line for the scenario',
+      content:
+        value.content ||
+        'The scenario body will display here as learners read the message.',
+      interactionType: value.interactionType,
+      difficulty: value.difficulty,
+      moduleId: value.moduleId,
+    };
   }
 
   scenarioId: string | null = null;

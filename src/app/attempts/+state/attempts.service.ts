@@ -16,25 +16,16 @@ export class AttemptsService {
   // ASSUMPTION: backend exposes GET /attempts for the logged-in user's own
   // attempts - adjust the path here if your NestJS route differs.
   getUserAttempts() {
-    const authData = localStorage.getItem('auth');
-    const token = authData ? JSON.parse(authData).token : null;
+    // Authorization header is attached by authInterceptor from the store.
     return this.http.get<{ attempts: Attempt[] } | Attempt[]>(
       `${this.apiEndpoint}attempts`,
-      {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      },
     );
   }
 
   createAttempt(attempt: Partial<Attempt>) {
-    const authData = localStorage.getItem('auth');
-    const token = authData ? JSON.parse(authData).token : null;
     return this.http.post<{ success: boolean; attempt: Attempt }>(
       `${this.apiEndpoint}attempts`,
       attempt,
-      {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      },
     );
   }
 }

@@ -1,9 +1,8 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
-import { Observable } from 'rxjs';
 import { selectAuthState } from './auth/+state/auth.selectors';
-import { AuthService, User } from './auth/auth.service';
+import { User } from './auth/auth.service';
 
 @Component({
   selector: 'app-root',
@@ -14,15 +13,11 @@ import { AuthService, User } from './auth/auth.service';
 export class AppComponent {
   title = 'phishing-frontend';
   currentUser?: User;
-  isAuthenticated$: Observable<boolean>;
 
   constructor(
-    private authService: AuthService,
     private router: Router,
     private store: Store,
-  ) {
-    this.isAuthenticated$ = this.authService.isAuthenticated$;
-  }
+  ) {}
 
   ngOnInit() {
     this.subscribeToAuthUser();

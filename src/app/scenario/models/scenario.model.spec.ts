@@ -49,6 +49,15 @@ describe('scenario.model', () => {
         ScenarioInteractionType.Email,
       );
     });
+
+    it('should map Social Media aliases onto the SOCIAL_MEDIA enum', () => {
+      expect(normalizeInteractionType('Social Media')).toBe(
+        ScenarioInteractionType.SocialMedia,
+      );
+      expect(normalizeInteractionType('social')).toBe(
+        ScenarioInteractionType.SocialMedia,
+      );
+    });
   });
 
   describe('toScenarioPayload', () => {

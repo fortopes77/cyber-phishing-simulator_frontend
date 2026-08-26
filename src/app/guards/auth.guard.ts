@@ -6,7 +6,9 @@ import {
   Router,
 } from '@angular/router';
 import { Store } from '@ngrx/store';
-import { map, take } from 'rxjs/operators';
+import { Actions, ofType } from '@ngrx/effects';
+import { map, switchMap, take } from 'rxjs/operators';
+import { of } from 'rxjs';
 import { selectAuthState } from '../auth/+state/auth.selectors';
 import { AuthActions } from '../auth/+state/auth.actions';
 import { isTokenExpired } from '../auth/token.utils';
@@ -27,17 +29,18 @@ export class AuthGuard implements CanActivate {
   constructor(
     private store: Store,
     private router: Router,
+    private actions$: Actions,
   ) {}
 
   canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
     return this.store.select(selectAuthState).pipe(
       take(1),
-      map((auth) => {
+      switchMap((auth) => {
         // 1. Not logged in
         if (!auth?.isAuthenticated && !auth?.token) {
           console.log('Access denied - not authenticated');
           this.router.navigate(['/login']);
-          return false;
+          return of(false);
         }
 
         // 2. Role check. Routes declare either `roles: ['a', 'b']` for a set
@@ -55,21 +58,32 @@ export class AuthGuard implements CanActivate {
           // trainer bounced off a learner-only route does not get redirected
           // straight back into another route they are not allowed to see.
           this.router.navigate([this.homeFor(userRole)]);
-          return false;
+          return of(false);
         }
 
-        // 3. Token expiry (matters most right after a page refresh, since
-        // the meta.reducer rehydrates the auth slice - including a
-        // possibly stale token - straight from localStorage). Let the
-        // navigation through optimistically and kick off a refresh in the
-        // background; the auth HTTP interceptor will also catch and
-        // refresh on any 401 the stale token causes in the meantime.
-        if (isTokenExpired(auth.tokenExpiresAt)) {
-          console.log('Token expired - requesting a refresh');
-          this.store.dispatch(AuthActions.refreshToken());
+        // 3. Token expiry. Auth state lives only in the NgRx store now (no
+        // localStorage persistence), so an expired token here means the
+        // session genuinely needs refreshing before this navigation can be
+        // trusted - dispatch the refresh and wait for its outcome rather
+        // than optimistically letting the route through. A failed refresh
+        // clears the session (auth.reducer) and is redirected to /login by
+        // AuthEffects.refreshTokenFailureRedirect$, so this guard only
+        // needs to report the resulting canActivate decision.
+        if (!isTokenExpired(auth.tokenExpiresAt)) {
+          return of(true);
         }
 
-        return true;
+        console.log('Token expired - requesting a refresh');
+        this.store.dispatch(AuthActions.refreshToken({ token: auth.token }));
+
+        return this.actions$.pipe(
+          ofType(
+            AuthActions.refreshTokenSuccess,
+            AuthActions.refreshTokenFailure,
+          ),
+          take(1),
+          map((action) => action.type === AuthActions.refreshTokenSuccess.type),
+        );
       }),
     );
   }

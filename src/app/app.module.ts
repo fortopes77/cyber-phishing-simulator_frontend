@@ -1,4 +1,4 @@
-import { NgModule } from '@angular/core';
+import { APP_INITIALIZER, NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { BrowserModule } from '@angular/platform-browser';
 
@@ -10,7 +10,8 @@ import { CommonModule, UpperCasePipe } from '@angular/common';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { EffectsModule } from '@ngrx/effects';
-import { provideStore, StoreModule } from '@ngrx/store';
+import { provideStore, Store, StoreModule } from '@ngrx/store';
+import { rehydrateSessionOnBootstrap } from './auth/session-bootstrap';
 import { ActionCardComponent } from 'src/app/shared/components/action-card/action-card.component';
 import { DataCardComponent } from 'src/app/shared/components/data-card/data-card.component';
 import { ActivityItemComponent } from './admin/components/activity-item/activity-item.component';
@@ -19,7 +20,6 @@ import { AdminDashboardComponent } from './admin/components/admin-dashboard/admi
 import { AuthModule } from './auth/auth.module';
 import { AuthGuard } from './guards/auth.guard';
 import { UserDashboardComponent } from './learner/components/user-dashboard/user-dashboard.component';
-import { metaReducers } from './meta.reducer';
 import { DashboardCardComponent } from './shared/components/dashboard-card/dashboard-card.component';
 import { HeaderComponent } from './shared/components/header/header.component';
 import { ListComponent } from './shared/components/list/list.component';
@@ -71,7 +71,17 @@ import { authInterceptor } from './auth/auth.interceptor';
   providers: [
     AuthGuard,
     provideHttpClient(withInterceptors([authInterceptor])),
-    provideStore({}, { metaReducers }),
+    provideStore({}),
+    // Restores a persisted session (just user + token - see
+    // session-storage.util.ts) into the store before the router's initial
+    // navigation, so a reload doesn't get bounced to /login by AuthGuard
+    // racing an empty store.
+    {
+      provide: APP_INITIALIZER,
+      useFactory: rehydrateSessionOnBootstrap,
+      deps: [Store],
+      multi: true,
+    },
   ],
   bootstrap: [AppComponent],
 })

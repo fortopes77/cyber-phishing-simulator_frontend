@@ -1,19 +1,63 @@
 <div class="scenario-choice-page">
   <div class="scenario-choice-page__header">
-    <div class="scenario-choice-page__nav">
-      <button class="link-button" (click)="backToScenario()">← Back</button>
-      <div>Scenario {{ scenarioNumber }} of {{ totalScenarios }}</div>
+    <button
+      type="button"
+      class="icon-button"
+      (click)="closeSession()"
+      aria-label="Close"
+    >
+      <fa-icon [icon]="fontAwesomeIcons.closeIcon"></fa-icon>
+    </button>
+
+    <div class="scenario-choice-page__title-block">
+      <div class="scenario-choice-page__title">{{ scenario.title }}</div>
+      <div class="scenario-choice-page__subtitle">
+        Scenario {{ scenarioNumber }} of {{ totalScenarios }}
+      </div>
+    </div>
+
+    <div class="scenario-choice-page__pager">
+      <button
+        type="button"
+        class="pager-arrow"
+        [disabled]="!hasPrevious"
+        (click)="goToPrevious()"
+        aria-label="Previous scenario"
+      >
+        <fa-icon [icon]="fontAwesomeIcons.chevronLeftIcon"></fa-icon>
+      </button>
+      <span>Scenario {{ scenarioNumber }}</span>
+      <button
+        type="button"
+        class="pager-arrow"
+        [disabled]="!hasNext"
+        (click)="goToNext()"
+        aria-label="Next scenario"
+      >
+        <fa-icon [icon]="fontAwesomeIcons.chevronRightIcon"></fa-icon>
+      </button>
     </div>
   </div>
 
+  <div class="scenario-choice-page__progress">
+    <div
+      class="scenario-choice-page__progress-fill"
+      [style.width.%]="progressPercentage"
+    ></div>
+  </div>
+
   <div class="scenario-alert">
+    <fa-icon [icon]="fontAwesomeIcons.warningIcon"></fa-icon>
     <strong>This is a training scenario</strong>
   </div>
 
   <div class="scenario-choice-card" *ngIf="phase === 'deciding'">
+    <div class="scenario-choice-card__icon">
+      <fa-icon [icon]="fontAwesomeIcons.questionCircleIcon"></fa-icon>
+    </div>
     <div class="scenario-choice-card__title">What do you think?</div>
     <div class="scenario-choice-card__subtitle">
-      Based on the message you just reviewed, what would you do?
+      Based on the message you just reviewed, is it safe or suspicious?
     </div>
 
     <div class="scenario-choice-card__scenario-info">
@@ -34,8 +78,13 @@
         [disabled]="submitting"
         (click)="selectDecision(option)"
       >
-        <div class="decision-button__icon">{{ option.charAt(0) }}</div>
+        <div class="decision-button__icon">
+          <fa-icon [icon]="getDecisionIcon(option)"></fa-icon>
+        </div>
         <div class="decision-button__label">{{ option }}</div>
+        <div class="decision-button__description">
+          {{ getDecisionDescription(option) }}
+        </div>
       </button>
     </div>
 
@@ -65,6 +114,20 @@
       <div class="cues-summary__list">
         <span class="cue-chip" *ngFor="let cue of selectedCues">{{ cue }}</span>
       </div>
+    </div>
+
+    <div class="cues-summary" *ngIf="!isCorrect && attempt?.missedCues?.length">
+      <div class="cues-summary__title">Cues you missed</div>
+      <div class="cues-summary__list">
+        <span class="cue-chip cue-chip--missed" *ngFor="let cue of attempt?.missedCues">{{
+          cue
+        }}</span>
+      </div>
+    </div>
+
+    <div class="correct-answer-summary" *ngIf="!isCorrect && attempt?.correctAnswer">
+      <span class="correct-answer-summary__label">Correct answer:</span>
+      {{ attempt?.correctAnswer }}
     </div>
 
     <div class="feedback-panel">

@@ -1,7 +1,10 @@
 <button class="assigned-module-card" type="button" (click)="onClick()">
   <div class="assigned-module-card__top">
     <div>
-      <span class="assigned-module-card__status">{{ module.status }}</span>
+      <app-status-badge
+        class="assigned-module-card__status"
+        [status]="module.status"
+      ></app-status-badge>
       <h3>{{ module.title }}</h3>
     </div>
 

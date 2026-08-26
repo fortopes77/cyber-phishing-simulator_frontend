@@ -12,10 +12,6 @@ describe('AuthService', () => {
   let httpMock: HttpTestingController;
 
   beforeEach(() => {
-    localStorage.removeItem('auth');
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('current_user');
-
     TestBed.configureTestingModule({
       providers: [provideHttpClient(), provideHttpClientTesting()],
     });
@@ -25,9 +21,6 @@ describe('AuthService', () => {
 
   afterEach(() => {
     httpMock.verify();
-    localStorage.removeItem('auth');
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('current_user');
   });
 
   it('should be created', () => {
@@ -46,10 +39,8 @@ describe('AuthService', () => {
     req.flush({ user: { id: '1' }, token: 'abc' });
   });
 
-  it('should POST the current token to the refresh endpoint', () => {
-    localStorage.setItem('auth', JSON.stringify({ token: 'stale-token' }));
-
-    service.refreshToken().subscribe();
+  it('should POST the given token to the refresh endpoint', () => {
+    service.refreshToken('stale-token').subscribe();
 
     const req = httpMock.expectOne(`${environment.apiUrl}auth/refresh`);
     expect(req.request.method).toBe('POST');
@@ -57,37 +48,12 @@ describe('AuthService', () => {
     req.flush({ token: 'fresh-token' });
   });
 
-  it('should send a null token to refresh when nothing is stored', () => {
-    service.refreshToken().subscribe();
+  it('should send a null token to refresh when none is supplied', () => {
+    service.refreshToken(undefined).subscribe();
 
     const req = httpMock.expectOne(`${environment.apiUrl}auth/refresh`);
     expect(req.request.body).toEqual({ token: null });
     req.flush({ token: 'fresh-token' });
-  });
-
-  it('should report hasRole/isAdmin based on the current user', () => {
-    localStorage.setItem(
-      'current_user',
-      JSON.stringify({ id: '1', username: 'admin', email: 'a@a.com', role: 'trainer' }),
-    );
-    localStorage.setItem('auth_token', 'some-token');
-
-    const trainerService = TestBed.inject(AuthService);
-
-    expect(trainerService.hasRole('trainer')).toBeTrue();
-    expect(trainerService.isAdmin()).toBeTrue();
-  });
-
-  it('should clear storage and auth subjects on logout', () => {
-    localStorage.setItem('auth_token', 'some-token');
-    localStorage.setItem('current_user', JSON.stringify({ id: '1' }));
-
-    const result = service.logout();
-
-    expect(result).toBeTrue();
-    expect(localStorage.getItem('auth_token')).toBeNull();
-    expect(localStorage.getItem('current_user')).toBeNull();
-    expect(service.getCurrentUser()).toBeNull();
   });
 });
 

@@ -8,8 +8,6 @@ import {
   HttpTestingController,
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
-import { Router } from '@angular/router';
-import { RouterTestingModule } from '@angular/router/testing';
 import { provideMockStore, MockStore } from '@ngrx/store/testing';
 import { of, throwError } from 'rxjs';
 import { authInterceptor } from './auth.interceptor';
@@ -21,7 +19,6 @@ describe('authInterceptor', () => {
   let http: HttpClient;
   let httpMock: HttpTestingController;
   let store: MockStore;
-  let router: Router;
   let authService: jasmine.SpyObj<AuthService>;
 
   beforeEach(() => {
@@ -30,7 +27,6 @@ describe('authInterceptor', () => {
     ]);
 
     TestBed.configureTestingModule({
-      imports: [RouterTestingModule],
       providers: [
         provideHttpClient(withInterceptors([authInterceptor])),
         provideHttpClientTesting(),
@@ -44,10 +40,8 @@ describe('authInterceptor', () => {
     http = TestBed.inject(HttpClient);
     httpMock = TestBed.inject(HttpTestingController);
     store = TestBed.inject(MockStore);
-    router = TestBed.inject(Router);
     authService = TestBed.inject(AuthService) as jasmine.SpyObj<AuthService>;
     spyOn(store, 'dispatch');
-    spyOn(router, 'navigate');
   });
 
   afterEach(() => {
@@ -80,6 +74,9 @@ describe('authInterceptor', () => {
 
     http.get('/api/scenarios').subscribe({
       next: () => {
+        expect(authService.refreshToken).toHaveBeenCalledWith(
+          'initial-token',
+        );
         expect(store.dispatch).toHaveBeenCalledWith(
           AuthActions.refreshTokenSuccess({ token: 'fresh-token' }),
         );
@@ -97,7 +94,11 @@ describe('authInterceptor', () => {
     retryReq.flush({ ok: true });
   });
 
-  it('should log out and redirect to login when the refresh itself fails', (done) => {
+  it('should dispatch refreshTokenFailure when the refresh itself fails', (done) => {
+    // Redirecting to /login on a failed refresh is handled centrally by
+    // AuthEffects.refreshTokenFailureRedirect$ (see auth.effects.spec.ts),
+    // triggered by the same refreshTokenFailure action dispatched here -
+    // the interceptor's job stops at dispatching it.
     authService.refreshToken.and.returnValue(
       throwError(() => new Error('refresh failed')),
     );
@@ -107,7 +108,6 @@ describe('authInterceptor', () => {
         expect(store.dispatch).toHaveBeenCalledWith(
           AuthActions.refreshTokenFailure({ error: 'Session expired' }),
         );
-        expect(router.navigate).toHaveBeenCalledWith(['/login']);
         done();
       },
     });

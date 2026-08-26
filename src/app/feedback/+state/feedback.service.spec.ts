@@ -13,17 +13,16 @@ describe('FeedbackService', () => {
   let httpMock: HttpTestingController;
 
   const request: FeedbackRequest = {
-    scenario_content: 'Fake Microsoft password reset email',
-    scenarioChoices: [
-      { id: 1, text: 'Clicked the link', isCorrect: false, scenarioId: 's_001' },
-      { id: 2, text: 'Reported the email', isCorrect: true, scenarioId: 's_001' },
-    ],
-    selectedChoiceId: 1,
+    scenarioContent: 'Fake Microsoft password reset email',
+    decision: 'Safe',
+    correct: false,
+    correctAnswer: 'Suspicious',
+    selectedCues: ['Urgent language'],
+    missedCues: ['Mismatched sender domain'],
     attemptId: 'a_123',
   };
 
   beforeEach(() => {
-    localStorage.removeItem('auth');
     TestBed.configureTestingModule({
       providers: [provideHttpClient(), provideHttpClientTesting()],
     });
@@ -33,7 +32,6 @@ describe('FeedbackService', () => {
 
   afterEach(() => {
     httpMock.verify();
-    localStorage.removeItem('auth');
   });
 
   it('should be created', () => {
@@ -55,15 +53,5 @@ describe('FeedbackService', () => {
         content: 'Great job spotting the phishing attempt.',
       },
     });
-  });
-
-  it('should attach the Authorization header when a token is stored', () => {
-    localStorage.setItem('auth', JSON.stringify({ token: 'abc123' }));
-
-    service.getFeedback(request).subscribe();
-
-    const req = httpMock.expectOne(`${environment.apiUrl}feedback`);
-    expect(req.request.headers.get('Authorization')).toBe('Bearer abc123');
-    req.flush({ success: true, feedback: {} });
   });
 });

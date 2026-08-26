@@ -6,16 +6,22 @@ import {
   faBookOpen,
   faBullseye,
   faChartColumn,
+  faChevronLeft,
+  faChevronRight,
   faCircleCheck,
+  faCircleQuestion,
   faClock,
   faCog,
   faLayerGroup,
   faLock,
   faPen,
+  faShieldHalved,
   faTrash,
+  faTriangleExclamation,
   faUser,
   faUserGroup,
   faUserSlash,
+  faXmark,
 } from '@fortawesome/free-solid-svg-icons';
 import { faCircle } from '@fortawesome/free-regular-svg-icons';
 
@@ -44,4 +50,10 @@ export const iconLibrary = {
   exchangeIcon: faArrowRight,
   checkCircleIcon: faCircleCheck,
   circleRegularIcon: faCircle,
+  closeIcon: faXmark,
+  chevronLeftIcon: faChevronLeft,
+  chevronRightIcon: faChevronRight,
+  warningIcon: faTriangleExclamation,
+  questionCircleIcon: faCircleQuestion,
+  shieldIcon: faShieldHalved,
 };

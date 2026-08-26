@@ -4,6 +4,8 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { Actions, ofType } from '@ngrx/effects';
 import { Subject, combineLatest, takeUntil } from 'rxjs';
+import { IconDefinition } from '@fortawesome/free-solid-svg-icons';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ScenarioActions } from '../../+state/scenario.actions';
 import {
   selectScenario,
@@ -16,6 +18,7 @@ import {
   selectFeedback,
   selectFeedbackLoading,
 } from 'src/app/feedback/+state/feedback.selectors';
+import { iconLibrary } from 'src/app/shared/constants/font-awesome-icons.const';
 
 interface Scenario {
   id: number | string;
@@ -36,10 +39,25 @@ interface Scenario {
 // values for a "simple" scenario.
 const DECISION_OPTIONS = ['Safe', 'Suspicious'];
 
+// Icon + supporting copy for each decision option, keyed off the option
+// label above - kept separate from DECISION_OPTIONS so the dispatched
+// decision value and the feedback-request mapping (both of which iterate
+// decisionOptions as plain strings) don't have to change shape.
+const DECISION_META: Record<string, { icon: IconDefinition; description: string }> = {
+  Safe: {
+    icon: iconLibrary.shieldIcon,
+    description: 'This is a legitimate message',
+  },
+  Suspicious: {
+    icon: iconLibrary.warningIcon,
+    description: 'This looks like a phishing attempt',
+  },
+};
+
 @Component({
   selector: 'app-scenario-choice',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, FaIconComponent],
   templateUrl: './scenario-choice.component.html',
   styleUrls: ['./scenario-choice.component.scss'],
 })
@@ -53,6 +71,7 @@ export class ScenarioChoiceComponent implements OnInit, OnDestroy {
     content: '',
   };
   readonly decisionOptions = DECISION_OPTIONS;
+  readonly fontAwesomeIcons = iconLibrary;
 
   // The learner's suspicious-text selections carried over from the
   // scenario page via router navigation state.
@@ -204,15 +223,16 @@ export class ScenarioChoiceComponent implements OnInit, OnDestroy {
     this.store.dispatch(
       FeedbackActions.requestFeedback({
         request: {
-          scenario_content: this.scenario.content,
-          scenarioChoices: this.decisionOptions.map((option, index) => ({
-            id: index + 1,
-            text: option,
-            isCorrect: option === this.selectedDecision && attempt.correct,
-            scenarioId: this.scenario.id,
-          })),
-          selectedChoiceId:
-            this.decisionOptions.indexOf(this.selectedDecision ?? '') + 1,
+          scenarioContent: this.scenario.content,
+          decision: this.selectedDecision ?? '',
+          correct: attempt.correct,
+          // correctAnswer/missedCues are mutually exclusive on the graded
+          // attempt (see attempt.model.ts) - only whichever the scenario's
+          // answer mode produced is sent, so the AI feedback can explain a
+          // wrong decision or point out exactly which cues were missed.
+          correctAnswer: attempt.correctAnswer,
+          selectedCues: this.selectedCues.length ? this.selectedCues : undefined,
+          missedCues: attempt.missedCues?.length ? attempt.missedCues : undefined,
           attemptId: attempt.id,
         },
       }),
@@ -223,16 +243,57 @@ export class ScenarioChoiceComponent implements OnInit, OnDestroy {
     return !!this.attempt?.correct;
   }
 
-  continueToNext(): void {
-    const currentIndex = this.orderedScenarioIds.findIndex(
-      (id) => id === this.scenarioId,
-    );
-    const hasNext =
-      currentIndex >= 0 && currentIndex < this.orderedScenarioIds.length - 1;
+  get progressPercentage(): number {
+    return this.totalScenarios > 0
+      ? (this.scenarioNumber / this.totalScenarios) * 100
+      : 0;
+  }
 
-    if (hasNext) {
-      const nextId = this.orderedScenarioIds[currentIndex + 1];
-      this.router.navigate(['/learner/scenarios', nextId]);
+  private get currentIndex(): number {
+    return this.orderedScenarioIds.findIndex((id) => id === this.scenarioId);
+  }
+
+  get hasPrevious(): boolean {
+    return this.currentIndex > 0;
+  }
+
+  get hasNext(): boolean {
+    const index = this.currentIndex;
+    return index >= 0 && index < this.orderedScenarioIds.length - 1;
+  }
+
+  getDecisionIcon(option: string): IconDefinition {
+    return DECISION_META[option]?.icon ?? this.fontAwesomeIcons.circleRegularIcon;
+  }
+
+  getDecisionDescription(option: string): string {
+    return DECISION_META[option]?.description ?? '';
+  }
+
+  goToPrevious(): void {
+    if (this.hasPrevious) {
+      this.router.navigate([
+        '/learner/scenarios',
+        this.orderedScenarioIds[this.currentIndex - 1],
+      ]);
+    }
+  }
+
+  goToNext(): void {
+    if (this.hasNext) {
+      this.router.navigate([
+        '/learner/scenarios',
+        this.orderedScenarioIds[this.currentIndex + 1],
+      ]);
+    }
+  }
+
+  continueToNext(): void {
+    if (this.hasNext) {
+      this.router.navigate([
+        '/learner/scenarios',
+        this.orderedScenarioIds[this.currentIndex + 1],
+      ]);
       return;
     }
 
@@ -243,5 +304,14 @@ export class ScenarioChoiceComponent implements OnInit, OnDestroy {
 
   backToScenario(): void {
     this.router.navigate(['/learner/scenarios', this.scenarioId]);
+  }
+
+  closeSession(): void {
+    if (this.scenario.moduleId != null) {
+      this.router.navigate(['/learner/modules', this.scenario.moduleId]);
+      return;
+    }
+
+    this.router.navigate(['/learner/dashboard']);
   }
 }

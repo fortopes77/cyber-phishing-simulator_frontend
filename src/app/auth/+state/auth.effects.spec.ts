@@ -1,32 +1,42 @@
 import { TestBed } from '@angular/core/testing';
+import { Router } from '@angular/router';
+import { RouterTestingModule } from '@angular/router/testing';
 import { provideMockActions } from '@ngrx/effects/testing';
+import { provideMockStore, MockStore } from '@ngrx/store/testing';
 import { Observable, of, throwError } from 'rxjs';
 import { AuthEffects } from './auth.effects';
 import { AuthActions } from './auth.actions';
+import { selectAuthState } from './auth.selectors';
 import { AuthService } from 'src/app/auth/auth.service';
+import { loadSession, saveSession } from '../session-storage.util';
 
 describe('AuthEffects', () => {
   let effects: AuthEffects;
   let actions$: Observable<any>;
   let authService: jasmine.SpyObj<AuthService>;
+  let router: Router;
+  let store: MockStore;
 
   beforeEach(() => {
-    const spy = jasmine.createSpyObj('AuthService', [
-      'login',
-      'logout',
-      'refreshToken',
-    ]);
+    const spy = jasmine.createSpyObj('AuthService', ['login', 'refreshToken']);
 
     TestBed.configureTestingModule({
+      imports: [RouterTestingModule],
       providers: [
         AuthEffects,
         provideMockActions(() => actions$),
         { provide: AuthService, useValue: spy },
+        provideMockStore({
+          selectors: [{ selector: selectAuthState, value: {} }],
+        }),
       ],
     });
 
     effects = TestBed.inject(AuthEffects);
     authService = TestBed.inject(AuthService) as jasmine.SpyObj<AuthService>;
+    router = TestBed.inject(Router);
+    store = TestBed.inject(MockStore);
+    spyOn(router, 'navigate');
   });
 
   it('should dispatch loginSuccess on successful login', (done) => {
@@ -78,22 +88,21 @@ describe('AuthEffects', () => {
     });
   });
 
-  it('should call authService.logout and dispatch logoutSuccess', (done) => {
-    authService.logout.and.returnValue(true);
+  it('should dispatch logoutSuccess on logout', (done) => {
     actions$ = of(AuthActions.logout());
 
     effects.logout$.subscribe((action) => {
-      expect(authService.logout).toHaveBeenCalled();
       expect(action).toEqual(AuthActions.logoutSuccess());
       done();
     });
   });
 
-  it('should dispatch refreshTokenSuccess on successful refresh', (done) => {
+  it('should refresh using the token from the action payload and dispatch refreshTokenSuccess', (done) => {
     authService.refreshToken.and.returnValue(of({ token: 'fresh-token' }));
-    actions$ = of(AuthActions.refreshToken());
+    actions$ = of(AuthActions.refreshToken({ token: 'stale-token' }));
 
     effects.refreshToken$.subscribe((action) => {
+      expect(authService.refreshToken).toHaveBeenCalledWith('stale-token');
       expect(action).toEqual(
         AuthActions.refreshTokenSuccess({ token: 'fresh-token' }),
       );
@@ -105,13 +114,108 @@ describe('AuthEffects', () => {
     authService.refreshToken.and.returnValue(
       throwError(() => new Error('Session expired')),
     );
-    actions$ = of(AuthActions.refreshToken());
+    actions$ = of(AuthActions.refreshToken({ token: 'stale-token' }));
 
     effects.refreshToken$.subscribe((action) => {
       expect(action).toEqual(
         AuthActions.refreshTokenFailure({ error: 'Session expired' }),
       );
       done();
+    });
+  });
+
+  it('should redirect to login when a refresh fails, regardless of what triggered it', (done) => {
+    actions$ = of(
+      AuthActions.refreshTokenFailure({ error: 'Session expired' }),
+    );
+
+    effects.refreshTokenFailureRedirect$.subscribe(() => {
+      expect(router.navigate).toHaveBeenCalledWith(['/login']);
+      done();
+    });
+  });
+
+  describe('persistSession$', () => {
+    const user = { id: '1', username: 'u', email: 'u@u.com', role: 'trainer' } as any;
+
+    afterEach(() => {
+      localStorage.removeItem('auth_session');
+    });
+
+    it('should persist the current user and token on loginSuccess', (done) => {
+      store.overrideSelector(selectAuthState, {
+        user,
+        token: 'abc',
+        loading: false,
+        isAuthenticated: true,
+      });
+      store.refreshState();
+      actions$ = of(AuthActions.loginSuccess({ user, token: 'abc' }));
+
+      effects.persistSession$.subscribe(() => {
+        expect(loadSession()).toEqual({ user, token: 'abc' });
+        done();
+      });
+    });
+
+    it('should persist the existing user alongside a fresh token on refreshTokenSuccess', (done) => {
+      store.overrideSelector(selectAuthState, {
+        user,
+        token: 'fresh-token',
+        loading: false,
+        isAuthenticated: true,
+      });
+      store.refreshState();
+      actions$ = of(AuthActions.refreshTokenSuccess({ token: 'fresh-token' }));
+
+      effects.persistSession$.subscribe(() => {
+        expect(loadSession()).toEqual({ user, token: 'fresh-token' });
+        done();
+      });
+    });
+
+    it('should not persist anything when the store has no user/token yet', (done) => {
+      store.overrideSelector(selectAuthState, {
+        loading: false,
+        isAuthenticated: false,
+      });
+      store.refreshState();
+      actions$ = of(AuthActions.loginSuccess({ user, token: 'abc' }));
+
+      effects.persistSession$.subscribe(() => {
+        expect(loadSession()).toBeNull();
+        done();
+      });
+    });
+  });
+
+  describe('clearPersistedSession$', () => {
+    const user = { id: '1', username: 'u', email: 'u@u.com', role: 'trainer' } as any;
+
+    afterEach(() => {
+      localStorage.removeItem('auth_session');
+    });
+
+    it('should clear the persisted session on logoutSuccess', (done) => {
+      saveSession(user, 'abc');
+      actions$ = of(AuthActions.logoutSuccess());
+
+      effects.clearPersistedSession$.subscribe(() => {
+        expect(loadSession()).toBeNull();
+        done();
+      });
+    });
+
+    it('should clear the persisted session on refreshTokenFailure', (done) => {
+      saveSession(user, 'abc');
+      actions$ = of(
+        AuthActions.refreshTokenFailure({ error: 'Session expired' }),
+      );
+
+      effects.clearPersistedSession$.subscribe(() => {
+        expect(loadSession()).toBeNull();
+        done();
+      });
     });
   });
 });

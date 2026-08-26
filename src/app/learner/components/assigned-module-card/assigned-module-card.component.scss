@@ -29,17 +29,8 @@
 }
 
 .assigned-module-card__status {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: #ecfdf5;
-  color: #065f46;
-  font-size: 12px;
-  font-weight: 700;
-  border-radius: 999px;
-  padding: 6px 12px;
+  display: inline-block;
   margin-bottom: 8px;
-  text-transform: uppercase;
 }
 
 .assigned-module-card h3 {

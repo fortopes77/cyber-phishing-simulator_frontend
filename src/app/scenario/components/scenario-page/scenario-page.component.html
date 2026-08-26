@@ -17,7 +17,7 @@
     class="scenario-card"
     [ngClass]="'scenario-card--' + getScenarioTypeKey()"
   >
-    <div class="scenario-card__top">
+    <div class="scenario-card__top" (mouseup)="onContentMouseUp()">
       <span class="scenario-card__tag">{{ scenario.type }}</span>
       <span
         *ngIf="scenario.difficulty"
@@ -26,6 +26,9 @@
       >
       <div *ngIf="scenario.from" class="scenario-card__from">
         From: {{ scenario.from }}
+      </div>
+      <div *ngIf="scenario.recipient" class="scenario-card__recipient">
+        To: {{ scenario.recipient }}
       </div>
       <div class="scenario-card__subject">{{ scenario.subject }}</div>
     </div>
@@ -39,6 +42,10 @@
         <div *ngIf="scenario.from" class="message-shell__meta">
           <span class="message-shell__label">From</span>
           <span>{{ scenario.from }}</span>
+        </div>
+        <div *ngIf="scenario.recipient" class="message-shell__meta">
+          <span class="message-shell__label">To</span>
+          <span>{{ scenario.recipient }}</span>
         </div>
         <div class="message-shell__meta">
           <span class="message-shell__label">Subject</span>
@@ -93,6 +100,31 @@
         </div>
       </div>
 
+      <div *ngSwitchCase="'social'" class="message-shell message-shell--social">
+        <div class="message-shell__header">
+          <div class="message-shell__pill message-shell__pill--social">
+            Social Media DM
+          </div>
+          <div *ngIf="scenario.from" class="message-shell__subtle">
+            {{ scenario.from }}
+          </div>
+        </div>
+        <div class="message-shell__chat">
+          <div
+            *ngFor="let message of getSocialMessages()"
+            class="social-bubble"
+            [ngClass]="
+              message.speaker === 'You'
+                ? 'social-bubble--user'
+                : 'social-bubble--caller'
+            "
+          >
+            <div class="social-bubble__sender">{{ message.speaker }}</div>
+            <div class="social-bubble__text">{{ message.text }}</div>
+          </div>
+        </div>
+      </div>
+
       <div
         *ngSwitchCase="'invoice'"
         class="message-shell message-shell--invoice"
@@ -139,7 +171,7 @@
     </div>
   </div>
 
-  <div class="scenario-page__actions">
+  <div class="scenario-page__actions" *ngIf="!previewMode">
     <button class="primary-button" (click)="makeDecision()">
       Make Your Decision
     </button>

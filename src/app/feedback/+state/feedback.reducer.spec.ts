@@ -19,7 +19,7 @@ describe('feedbackReducer', () => {
     const state = feedbackReducer(
       initialFeedbackState,
       FeedbackActions.requestFeedback({
-        request: { scenario_content: '', scenarioChoices: [], selectedChoiceId: 1 },
+        request: { scenarioContent: '', decision: 'Safe', correct: false },
       }),
     );
     expect(state.loading).toBeTrue();

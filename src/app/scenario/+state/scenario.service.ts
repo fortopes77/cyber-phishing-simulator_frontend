@@ -16,11 +16,8 @@ export class ScenarioService {
     // If your mock folder is served from the web root as /mock/... use an absolute path
     // that starts with a leading slash so it resolves from the server root.
     // return this.http.get('/mock/scenarios/get/scenario-list.mock.json');
-    const authData = localStorage.getItem('auth');
-    const token = authData ? JSON.parse(authData).token : null;
-    return this.http.get(`${this.apiEndpoint}scenarios`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
+    // Authorization header is attached by authInterceptor from the store.
+    return this.http.get(`${this.apiEndpoint}scenarios`);
   }
 
   getScenariosByModule(moduleId: number) {
@@ -29,11 +26,8 @@ export class ScenarioService {
     // controller uses a different route (e.g. modules/:id/scenarios).
     // moduleId is numeric throughout the app (see LearnerModule and
     // ScenariosService.createScenario), matching the backend's module PK.
-    const authData = localStorage.getItem('auth');
-    const token = authData ? JSON.parse(authData).token : null;
     return this.http.get(`${this.apiEndpoint}scenarios`, {
       params: { moduleId },
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
   }
 
@@ -41,23 +35,11 @@ export class ScenarioService {
     // If your mock folder is served from the web root as /mock/... use an absolute path
     // that starts with a leading slash so it resolves from the server root.
     // return this.http.get(`/mock/scenarios/get/scenario-details-${scenarioId}.mock.json`);
-    const authData = localStorage.getItem('auth');
-    const token = authData ? JSON.parse(authData).token : null;
-    return this.http.get(`${this.apiEndpoint}scenarios/${scenarioId}`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
+    return this.http.get(`${this.apiEndpoint}scenarios/${scenarioId}`);
   }
 
   createScenario(scenario: any) {
-    const authData = localStorage.getItem('auth');
-    const token = authData ? JSON.parse(authData).token : null;
-    return this.http.post(
-      `${this.apiEndpoint}scenarios`,
-      toScenarioPayload(scenario),
-      {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      },
-    );
+    return this.http.post(`${this.apiEndpoint}scenarios`, toScenarioPayload(scenario));
   }
 
   createScenarioWithAI() {
@@ -65,22 +47,13 @@ export class ScenarioService {
   }
 
   updateScenario(scenarioId: string, updatedScenario: any) {
-    const authData = localStorage.getItem('auth');
-    const token = authData ? JSON.parse(authData).token : null;
     return this.http.patch(
       `${this.apiEndpoint}scenarios/${scenarioId}`,
       toScenarioPayload(updatedScenario),
-      {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      },
     );
   }
 
   deleteScenario(scenarioId: string) {
-    const authData = localStorage.getItem('auth');
-    const token = authData ? JSON.parse(authData).token : null;
-    return this.http.delete(`${this.apiEndpoint}scenarios/${scenarioId}`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
+    return this.http.delete(`${this.apiEndpoint}scenarios/${scenarioId}`);
   }
 }

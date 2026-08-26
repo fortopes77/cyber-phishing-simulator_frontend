@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { combineLatest } from 'rxjs';
@@ -21,6 +21,7 @@ interface Scenario {
   // gracefully rather than showing "From: " with nothing after it.
   difficulty?: string;
   from?: string;
+  recipient?: string;
   subject?: string;
 }
 
@@ -41,8 +42,15 @@ interface InvoiceField {
   templateUrl: './scenario-page.component.html',
   styleUrls: ['./scenario-page.component.scss'],
 })
-export class ScenarioPageComponent implements OnInit {
-  moduleTitle = 'Module';
+export class ScenarioPageComponent implements OnInit, OnChanges {
+  // Lets a caller (e.g. the trainer's scenario-edit live preview) render
+  // this component against an in-memory scenario shape instead of the
+  // routed/store-backed learner flow, so the preview is guaranteed to look
+  // exactly like what a learner will see for a given interaction type -
+  // without dispatching fetchScenarioDetails or navigating on decisions.
+  @Input() previewMode = false;
+  @Input() previewData: Record<string, any> | null = null;
+  @Input() moduleTitle = 'Module';
   scenarioId: number | string = '';
   scenarioNumber = 1;
   totalScenarios = 1;
@@ -66,6 +74,11 @@ export class ScenarioPageComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    if (this.previewMode) {
+      this.scenario = this.mapScenario(this.previewData ?? {});
+      return;
+    }
+
     this.route.paramMap.subscribe((params) => {
       const idParam = params.get('id') || '';
       // Scenario ids from the API are strings (e.g. "s_001"), but some
@@ -116,6 +129,14 @@ export class ScenarioPageComponent implements OnInit {
     });
   }
 
+  ngOnChanges(changes: SimpleChanges): void {
+    // Only live-preview usage feeds previewData - the routed learner flow
+    // above owns `scenario` via the store subscription instead.
+    if (this.previewMode && changes['previewData']) {
+      this.scenario = this.mapScenario(this.previewData ?? {});
+    }
+  }
+
   private mapScenario(raw: any): Scenario {
     return {
       id: raw.id ?? this.scenarioId,
@@ -126,6 +147,7 @@ export class ScenarioPageComponent implements OnInit {
       // future/trainer-scoped response happens to include them.
       difficulty: raw.difficulty || undefined,
       from: raw.sender ?? raw.from ?? undefined,
+      recipient: raw.recipient ?? raw.to ?? undefined,
       subject: raw.subject ?? raw.title ?? undefined,
       body: raw.content ?? raw.body ?? '',
       moduleId: raw.moduleId != null ? Number(raw.moduleId) : undefined,
@@ -133,10 +155,10 @@ export class ScenarioPageComponent implements OnInit {
   }
 
   /**
-   * Maps the `interactionType` enum (EMAIL/SMS/CALL - see scenario.model.ts)
-   * onto the message-shell keys the template switches on. Falls back to a
-   * lowercase pass-through so older/free-text values ("Phone", "Text")
-   * still resolve to something sensible.
+   * Maps the `interactionType` enum (EMAIL/SMS/CALL/SOCIAL_MEDIA - see
+   * scenario.model.ts) onto the message-shell keys the template switches on.
+   * Falls back to a lowercase pass-through so older/free-text values
+   * ("Phone", "Text") still resolve to something sensible.
    */
   getScenarioTypeKey(): string {
     const type = (this.scenario?.type ?? '').toUpperCase();
@@ -144,9 +166,12 @@ export class ScenarioPageComponent implements OnInit {
       EMAIL: 'email',
       SMS: 'text',
       TEXT: 'text',
+      TEXT_MESSAGE: 'text',
       CALL: 'phone',
       PHONE: 'phone',
       VOICE: 'phone',
+      SOCIAL_MEDIA: 'social',
+      SOCIAL: 'social',
     };
 
     return typeMap[type] ?? this.scenario?.type?.toLowerCase() ?? 'generic';
@@ -175,6 +200,10 @@ export class ScenarioPageComponent implements OnInit {
   }
 
   getTextMessages(): MessageEntry[] {
+    return this.getTranscriptEntries();
+  }
+
+  getSocialMessages(): MessageEntry[] {
     return this.getTranscriptEntries();
   }
 
@@ -221,13 +250,13 @@ export class ScenarioPageComponent implements OnInit {
   }
 
   /**
-   * Captures free-text highlighted by the learner inside the scenario
-   * content (email body, phone transcript, text thread, invoice fields) and
-   * adds it to the selected cues. This is the learner's only source of
+   * Captures free-text highlighted by the learner anywhere on the message -
+   * sender, recipient, subject, or the body/transcript/invoice content -
+   * and adds it to the selected cues. This is the learner's only source of
    * cues - the backend never sends the scenario's correctCues to them, so
-   * there's nothing to show as a predefined hint. Bound to (mouseup) on the
-   * wrapper around the switchable content so it works for every scenario
-   * type.
+   * there's nothing to show as a predefined hint. Bound to (mouseup) on
+   * both the sender/recipient/subject summary and the switchable content
+   * wrapper below it, so a selection anywhere across the message counts.
    */
   onContentMouseUp(): void {
     const selection = window.getSelection ? window.getSelection() : null;

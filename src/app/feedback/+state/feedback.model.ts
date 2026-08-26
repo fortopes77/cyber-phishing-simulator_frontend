@@ -5,16 +5,22 @@ export interface Feedback {
   content: string;
 }
 
-// Payload sent to POST /feedback - mirrors the shape already used by
-// AuthService.getFeedback / nav.component.ts's debug trigger.
+/**
+ * Payload sent to POST /feedback. ASSUMPTION: the AI feedback endpoint
+ * wants what the learner actually did and got wrong, not a generic
+ * multiple-choice shape - scenario_content/scenarioChoices/selectedChoiceId
+ * (nav.component.ts's old debug trigger) was never wired into any screen
+ * and predates the scenarios ticket's correctAnswer/correctCues model, so
+ * it wasn't a confirmed contract worth preserving. correctAnswer and
+ * missedCues are mutually exclusive (see Attempt) - only whichever applies
+ * to the scenario's answer mode is sent.
+ */
 export interface FeedbackRequest {
-  scenario_content: string;
-  scenarioChoices: Array<{
-    id: number | string;
-    text: string;
-    isCorrect: boolean;
-    scenarioId: number | string;
-  }>;
-  selectedChoiceId: number | string;
+  scenarioContent: string;
+  decision: string;
+  correct: boolean;
+  correctAnswer?: string;
+  selectedCues?: string[];
+  missedCues?: string[];
   attemptId?: string;
 }

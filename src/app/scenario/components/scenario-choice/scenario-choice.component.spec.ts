@@ -135,6 +135,62 @@ describe('ScenarioChoiceComponent', () => {
     );
   });
 
+  it('should request AI feedback with the decision, selected cues and graded outcome', () => {
+    component.selectedCues = ['Urgent language', 'Suspicious link'];
+    component.selectDecision('Suspicious');
+
+    actionsSubject.next(
+      AttemptsActions.createAttemptSuccess({
+        attempt: {
+          id: 'a_1',
+          scenarioId: 's_002',
+          decision: 'Suspicious',
+          correct: true,
+        },
+      }),
+    );
+
+    expect(store.dispatch).toHaveBeenCalledWith(
+      FeedbackActions.requestFeedback({
+        request: {
+          scenarioContent: 'Please install the attached update immediately.',
+          decision: 'Suspicious',
+          correct: true,
+          correctAnswer: undefined,
+          selectedCues: ['Urgent language', 'Suspicious link'],
+          missedCues: undefined,
+          attemptId: 'a_1',
+        },
+      }),
+    );
+  });
+
+  it('should pass the graded correctAnswer/missedCues through to the feedback request', () => {
+    component.selectDecision('Safe');
+
+    actionsSubject.next(
+      AttemptsActions.createAttemptSuccess({
+        attempt: {
+          id: 'a_3',
+          scenarioId: 's_002',
+          decision: 'Safe',
+          correct: false,
+          correctAnswer: 'Suspicious',
+          missedCues: ['Urgent deadline', 'Mismatched sender domain'],
+        },
+      }),
+    );
+
+    expect(store.dispatch).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        request: jasmine.objectContaining({
+          correctAnswer: 'Suspicious',
+          missedCues: ['Urgent deadline', 'Mismatched sender domain'],
+        }),
+      }),
+    );
+  });
+
   it('should show incorrect result when the attempt was wrong', () => {
     component.selectDecision('Safe');
 
@@ -150,6 +206,49 @@ describe('ScenarioChoiceComponent', () => {
     );
 
     expect(component.isCorrect).toBeFalse();
+  });
+
+  it('should render the missed cues and correct answer for a wrong attempt', () => {
+    component.selectDecision('Safe');
+
+    actionsSubject.next(
+      AttemptsActions.createAttemptSuccess({
+        attempt: {
+          id: 'a_4',
+          scenarioId: 's_002',
+          decision: 'Safe',
+          correct: false,
+          correctAnswer: 'Suspicious',
+          missedCues: ['Urgent deadline'],
+        },
+      }),
+    );
+    fixture.detectChanges();
+
+    const text = fixture.nativeElement.textContent;
+    expect(text).toContain('Cues you missed');
+    expect(text).toContain('Urgent deadline');
+    expect(text).toContain('Correct answer:');
+    expect(text).toContain('Suspicious');
+  });
+
+  it('should not render missed cues or correct answer for a correct attempt', () => {
+    component.selectDecision('Suspicious');
+
+    actionsSubject.next(
+      AttemptsActions.createAttemptSuccess({
+        attempt: {
+          id: 'a_5',
+          scenarioId: 's_002',
+          decision: 'Suspicious',
+          correct: true,
+          correctAnswer: 'Suspicious',
+        },
+      }),
+    );
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).not.toContain('Correct answer:');
   });
 
   it('should stop submitting on createAttemptFailure', () => {
@@ -192,5 +291,58 @@ describe('ScenarioChoiceComponent', () => {
       '/learner/scenarios',
       's_002',
     ]);
+  });
+
+  it('should report pager state and navigate to the previous/next scenario', () => {
+    expect(component.hasPrevious).toBeTrue();
+    expect(component.hasNext).toBeFalse();
+
+    component.goToPrevious();
+    expect(router.navigate).toHaveBeenCalledWith([
+      '/learner/scenarios',
+      's_001',
+    ]);
+
+    component.scenarioId = 's_001';
+    expect(component.hasPrevious).toBeFalse();
+    expect(component.hasNext).toBeTrue();
+
+    component.goToNext();
+    expect(router.navigate).toHaveBeenCalledWith([
+      '/learner/scenarios',
+      's_002',
+    ]);
+  });
+
+  it('should close back to the module the scenario belongs to', () => {
+    component.closeSession();
+
+    expect(router.navigate).toHaveBeenCalledWith(['/learner/modules', 1]);
+  });
+
+  it('should close to the dashboard when no module is known', () => {
+    component.scenario = { ...component.scenario, moduleId: undefined };
+
+    component.closeSession();
+
+    expect(router.navigate).toHaveBeenCalledWith(['/learner/dashboard']);
+  });
+
+  it('should provide an icon and description for each decision option', () => {
+    expect(component.getDecisionDescription('Safe')).toBe(
+      'This is a legitimate message',
+    );
+    expect(component.getDecisionDescription('Suspicious')).toBe(
+      'This looks like a phishing attempt',
+    );
+    expect(component.getDecisionIcon('Safe')).toBeTruthy();
+  });
+
+  it('should compute progress as the current position out of the total', () => {
+    expect(component.progressPercentage).toBe(100);
+
+    component.scenarioNumber = 1;
+    component.totalScenarios = 2;
+    expect(component.progressPercentage).toBe(50);
   });
 });

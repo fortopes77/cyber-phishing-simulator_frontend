@@ -1,6 +1,5 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
 export interface User {
@@ -13,9 +12,9 @@ export interface User {
 /**
  * The backend returns role as "TRAINER"/"USER" (all caps) rather than the
  * lowercase values used throughout the app for role checks (AuthGuard,
- * nav.component, login redirect, hasRole/isAdmin below). Normalize once
- * here, right where the raw API response is turned into a User, so every
- * downstream comparison can keep using the lowercase literal.
+ * nav.component, login redirect). Normalize once here, right where the raw
+ * API response is turned into a User, so every downstream comparison can
+ * keep using the lowercase literal.
  */
 export function normalizeUser(raw: any): User {
   return {
@@ -28,48 +27,9 @@ export function normalizeUser(raw: any): User {
   providedIn: 'root',
 })
 export class AuthService {
-  private readonly STORAGE_KEY = 'auth_token';
-  private readonly USER_STORAGE_KEY = 'current_user';
   private apiEndpoint = environment.apiUrl || 'http://localhost:3000/';
 
-  // Mock user database - username and email can be used interchangeably
-  private readonly mockUsers = [
-    {
-      username: 'admin',
-      email: 'admin@example.com',
-      password: 'admin',
-      role: 'trainer' as const,
-    },
-    {
-      username: 'user',
-      email: 'user@example.com',
-      password: 'user',
-      role: 'user' as const,
-    },
-  ];
-
-  private currentUserSubject = new BehaviorSubject<User | null>(
-    this.loadUserFromStorage(),
-  );
-  public currentUser$: Observable<User | null> =
-    this.currentUserSubject.asObservable();
-
-  private isAuthenticatedSubject = new BehaviorSubject<boolean>(
-    this.hasValidToken(),
-  );
-  public isAuthenticated$: Observable<boolean> =
-    this.isAuthenticatedSubject.asObservable();
-
-  constructor(private http: HttpClient) {
-    // Restore user session if token exists
-    if (this.hasValidToken()) {
-      const storedUser = this.loadUserFromStorage();
-      if (storedUser) {
-        this.currentUserSubject.next(storedUser);
-        this.isAuthenticatedSubject.next(true);
-      }
-    }
-  }
+  constructor(private http: HttpClient) {}
 
   /**
    * Login user with username/email and password
@@ -83,90 +43,23 @@ export class AuthService {
   }
 
   /**
-   * Requests a fresh token for the current session.
+   * Requests a fresh token for the current session. `token` is the
+   * (possibly expired) access token from the NgRx auth state - the caller
+   * (AuthGuard, the auth HTTP interceptor) already has it from the store,
+   * since nothing is persisted to localStorage any more.
    * ASSUMPTION: backend exposes POST /auth/refresh accepting the current
-   * (possibly expired) token and returning a new one in the same shape as
-   * login - update the payload/response mapping if your NestJS route
-   * differs (e.g. a separate refresh token rather than reusing the access
-   * token).
+   * token and returning a new one in the same shape as login - update the
+   * payload/response mapping if your NestJS route differs (e.g. a separate
+   * refresh token rather than reusing the access token).
    */
-  refreshToken() {
-    const authData = localStorage.getItem('auth');
-    const token = authData ? JSON.parse(authData).token : null;
+  refreshToken(token: string | undefined) {
     return this.http.post<{ token: string }>(
       `${this.apiEndpoint}auth/refresh`,
-      { token },
+      { token: token ?? null },
     );
   }
 
   getFeedback(payload: any) {
     return this.http.post(`${this.apiEndpoint}feedback`, payload);
-  }
-
-  /**
-   * Logout current user and clear storage
-   */
-  logout(): boolean {
-    localStorage.removeItem(this.STORAGE_KEY);
-    localStorage.removeItem(this.USER_STORAGE_KEY);
-    this.currentUserSubject.next(null);
-    this.isAuthenticatedSubject.next(false);
-    return true;
-  }
-
-  /**
-   * Check if user has valid token (basic check - no expiry logic yet)
-   */
-  hasValidToken(): boolean {
-    const token = localStorage.getItem(this.STORAGE_KEY);
-    return token !== null && token.length > 0;
-  }
-
-  /**
-   * Get current user synchronously
-   */
-  getCurrentUser(): User | null {
-    return this.currentUserSubject.value;
-  }
-
-  /**
-   * Check if current user has specific role
-   */
-  hasRole(role: string): boolean {
-    const user = this.getCurrentUser();
-    return user !== null && user.role === role;
-  }
-
-  /**
-   * Check if user is admin
-   */
-  isAdmin(): boolean {
-    return this.hasRole('trainer');
-  }
-
-  /**
-   * Generate mock JWT-like token
-   * Format: mock_token_{base64_user_data}_{timestamp}
-   */
-  private generateMockToken(user: any): string {
-    const timestamp = Date.now();
-    const payload = `${user.username}:${user.role}`;
-    const encoded = btoa(payload); // Simple base64 encoding (not secure, mock only)
-    return `mock_token_${encoded}_${timestamp}`;
-  }
-
-  /**
-   * Load user from localStorage
-   */
-  private loadUserFromStorage(): User | null {
-    const userJson = localStorage.getItem(this.USER_STORAGE_KEY);
-    if (!userJson) {
-      return null;
-    }
-    try {
-      return JSON.parse(userJson) as User;
-    } catch {
-      return null;
-    }
   }
 }
