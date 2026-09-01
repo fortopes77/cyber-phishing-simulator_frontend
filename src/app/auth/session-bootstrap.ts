@@ -17,6 +17,7 @@ export function rehydrateSessionOnBootstrap(store: Store): () => void {
         AuthActions.sessionRestored({
           user: session.user,
           token: session.token,
+          refreshToken: session.refreshToken,
         }),
       );
     }

@@ -12,7 +12,11 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { User } from 'src/app/auth/auth.service';
 import { ModalComponent } from '../modal/modal.component';
 import { FormFieldErrorComponent } from '../form-field-error/form-field-error.component';
-import { emailValidator, textValidator } from '../../validators/pattern.validators';
+import {
+  emailValidator,
+  passwordComplexityValidator,
+  textValidator,
+} from '../../validators/pattern.validators';
 import { passwordsMatchValidator } from '../../validators/password-match.validator';
 
 const NAME_MAX_LENGTH = 150;
@@ -49,7 +53,6 @@ export class ProfileModalComponent implements OnChanges {
   @Output() profileSubmitted = new EventEmitter<{
     firstName: string;
     lastName: string;
-    username: string;
     email: string;
   }>();
   @Output() passwordSubmitted = new EventEmitter<{
@@ -59,17 +62,23 @@ export class ProfileModalComponent implements OnChanges {
 
   private readonly fb = inject(FormBuilder);
 
+  // `username` is display-only: the backend's PATCH /users/{id} has no field
+  // for it, so it's shown for reference but disabled and never part of the
+  // profileSubmitted payload.
   readonly profileForm = this.fb.nonNullable.group({
     firstName: ['', [Validators.required, Validators.maxLength(NAME_MAX_LENGTH), textValidator()]],
     lastName: ['', [Validators.required, Validators.maxLength(NAME_MAX_LENGTH), textValidator()]],
-    username: ['', [Validators.required, Validators.maxLength(NAME_MAX_LENGTH), textValidator()]],
+    username: [{ value: '', disabled: true }],
     email: ['', [Validators.required, emailValidator()]],
   });
 
   readonly passwordForm = this.fb.nonNullable.group(
     {
       currentPassword: ['', [Validators.required]],
-      newPassword: ['', [Validators.required, Validators.minLength(MIN_PASSWORD_LENGTH)]],
+      newPassword: [
+        '',
+        [Validators.required, Validators.minLength(MIN_PASSWORD_LENGTH), passwordComplexityValidator()],
+      ],
       confirmPassword: ['', [Validators.required]],
     },
     { validators: passwordsMatchValidator() },
@@ -96,7 +105,8 @@ export class ProfileModalComponent implements OnChanges {
       return;
     }
 
-    this.profileSubmitted.emit(this.profileForm.getRawValue());
+    const { firstName, lastName, email } = this.profileForm.getRawValue();
+    this.profileSubmitted.emit({ firstName, lastName, email });
   }
 
   onSubmitPassword(): void {

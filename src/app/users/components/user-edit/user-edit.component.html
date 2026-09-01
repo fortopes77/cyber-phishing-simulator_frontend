@@ -15,15 +15,44 @@
   <form class="user-form" [formGroup]="userForm" (ngSubmit)="onSubmit()">
     <div class="form-grid">
       <label class="field">
-        <span>Full name</span>
+        <span>Username</span>
         <input
           type="text"
-          formControlName="fullName"
-          placeholder="Enter full name"
+          formControlName="username"
+          placeholder="Enter username"
+        />
+        @if (!isCreateMode) {
+          <small class="field-hint">Username can't be changed.</small>
+        }
+        <app-form-field-error
+          [control]="userForm.get('username')"
+          label="Username"
+        ></app-form-field-error>
+      </label>
+
+      <label class="field">
+        <span>First name</span>
+        <input
+          type="text"
+          formControlName="firstName"
+          placeholder="Enter first name"
         />
         <app-form-field-error
-          [control]="userForm.get('fullName')"
-          label="Full name"
+          [control]="userForm.get('firstName')"
+          label="First name"
+        ></app-form-field-error>
+      </label>
+
+      <label class="field">
+        <span>Last name</span>
+        <input
+          type="text"
+          formControlName="lastName"
+          placeholder="Enter last name"
+        />
+        <app-form-field-error
+          [control]="userForm.get('lastName')"
+          label="Last name"
         ></app-form-field-error>
       </label>
 
@@ -41,12 +70,32 @@
       </label>
 
       <label class="field">
+        <span>{{ isCreateMode ? 'Password' : 'New password' }}</span>
+        <input
+          type="password"
+          formControlName="password"
+          placeholder="Enter password"
+          autocomplete="new-password"
+        />
+        @if (!isCreateMode) {
+          <small class="field-hint">Leave blank to keep the current password.</small>
+        }
+        <app-form-field-error
+          [control]="userForm.get('password')"
+          label="Password"
+        ></app-form-field-error>
+      </label>
+
+      <label class="field">
         <span>Role</span>
         <select formControlName="role">
           @for (option of roleOptions; track option.value) {
             <option [value]="option.value">{{ option.label }}</option>
           }
         </select>
+        @if (!isCreateMode) {
+          <small class="field-hint">Role can't be changed.</small>
+        }
         <app-form-field-error
           [control]="userForm.get('role')"
           label="Role"
@@ -76,7 +125,7 @@
 
 <app-send-reminder-modal
   [isOpen]="isSendReminderModalOpen"
-  [learnerName]="userForm.get('fullName')?.value || 'this learner'"
+  [learnerName]="fullNameValue || 'this learner'"
   [loading]="reminderSending"
   [error]="reminderError"
   (confirmed)="confirmSendReminder()"

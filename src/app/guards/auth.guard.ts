@@ -74,7 +74,9 @@ export class AuthGuard implements CanActivate {
         }
 
         console.log('Token expired - requesting a refresh');
-        this.store.dispatch(AuthActions.refreshToken({ token: auth.token }));
+        this.store.dispatch(
+          AuthActions.refreshToken({ refreshToken: auth.refreshToken }),
+        );
 
         return this.actions$.pipe(
           ofType(

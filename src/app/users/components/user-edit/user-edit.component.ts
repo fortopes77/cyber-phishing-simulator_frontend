@@ -7,16 +7,21 @@ import { HeaderComponent } from 'src/app/shared/components/header/header.compone
 import { DashboardCardComponent } from 'src/app/shared/components/dashboard-card/dashboard-card.component';
 import { FormFieldErrorComponent } from 'src/app/shared/components/form-field-error/form-field-error.component';
 import { SendReminderModalComponent } from 'src/app/shared/components/send-reminder-modal/send-reminder-modal.component';
-import { emailValidator, textValidator } from 'src/app/shared/validators/pattern.validators';
+import {
+  emailValidator,
+  passwordComplexityValidator,
+  textValidator,
+} from 'src/app/shared/validators/pattern.validators';
 import { UsersActions } from '../../+state/users.actions';
 import {
   selectUser,
   selectUsersError,
   selectUsersLoading,
 } from '../../+state/users.selectors';
-import { UserAccountRole } from '../../+state/user-account.model';
+import { UpdateUserPayload, UserAccountRole } from '../../+state/user-account.model';
 
 const NAME_MAX_LENGTH = 150;
+const MIN_PASSWORD_LENGTH = 8;
 
 @Component({
   selector: 'app-user-edit',
@@ -47,12 +52,26 @@ export class UserEditComponent implements OnInit {
     { value: 'trainer', label: 'Trainer' },
   ];
 
+  // `username` and `role` are only ever set at creation - the backend's
+  // UpdateUserDto (PATCH /users/{id}) has no field for either, so both
+  // controls are disabled once we're in edit mode (see ngOnInit).
+  // `password` is required to create an account but optional to edit one
+  // (blank = leave unchanged).
   readonly userForm: FormGroup = this.fb.group({
-    fullName: [
+    username: [
+      '',
+      [Validators.required, Validators.maxLength(NAME_MAX_LENGTH), textValidator()],
+    ],
+    firstName: [
+      '',
+      [Validators.required, Validators.maxLength(NAME_MAX_LENGTH), textValidator()],
+    ],
+    lastName: [
       '',
       [Validators.required, Validators.maxLength(NAME_MAX_LENGTH), textValidator()],
     ],
     email: ['', [Validators.required, emailValidator()]],
+    password: [''],
     role: this.fb.nonNullable.control<UserAccountRole>('user', Validators.required),
   });
 
@@ -83,8 +102,23 @@ export class UserEditComponent implements OnInit {
     this.subscribeToReminderEmailResult();
 
     if (this.isCreateMode) {
+      this.userForm
+        .get('password')
+        ?.setValidators([
+          Validators.required,
+          Validators.minLength(MIN_PASSWORD_LENGTH),
+          passwordComplexityValidator(),
+        ]);
       return;
     }
+
+    // Editing: username/role can't be changed via PATCH /users/{id}, and
+    // password is optional (blank = leave unchanged).
+    this.userForm.get('username')?.disable();
+    this.userForm.get('role')?.disable();
+    this.userForm
+      .get('password')
+      ?.setValidators([Validators.minLength(MIN_PASSWORD_LENGTH), passwordComplexityValidator()]);
 
     this.userId = this.route.snapshot.paramMap.get('id');
 
@@ -101,7 +135,9 @@ export class UserEditComponent implements OnInit {
 
       this.isLearner = user.role === 'user';
       this.userForm.patchValue({
-        fullName: user.fullName ?? '',
+        username: user.username ?? '',
+        firstName: user.firstName ?? '',
+        lastName: user.lastName ?? '',
         email: user.email ?? '',
         role: user.role ?? 'user',
       });
@@ -133,19 +169,37 @@ export class UserEditComponent implements OnInit {
       return;
     }
 
-    const user = this.userForm.value;
+    const { username, firstName, lastName, email, password, role } =
+      this.userForm.getRawValue();
 
     if (this.isCreateMode) {
-      this.store.dispatch(UsersActions.createUser({ user }));
-    } else if (this.userId) {
       this.store.dispatch(
-        UsersActions.updateUser({ userId: this.userId, updatedUser: user }),
+        UsersActions.createUser({
+          user: { username, firstName, lastName, email, password, role },
+        }),
       );
+      return;
     }
+
+    if (!this.userId) {
+      return;
+    }
+
+    const updatedUser: UpdateUserPayload = { firstName, lastName, email };
+    if (password) {
+      updatedUser.password = password;
+    }
+
+    this.store.dispatch(UsersActions.updateUser({ userId: this.userId, updatedUser }));
   }
 
   onCancel(): void {
     this.router.navigate(['/trainer/learners']);
+  }
+
+  get fullNameValue(): string {
+    const { firstName, lastName } = this.userForm.getRawValue();
+    return `${firstName ?? ''} ${lastName ?? ''}`.trim();
   }
 
   openSendReminderModal(): void {

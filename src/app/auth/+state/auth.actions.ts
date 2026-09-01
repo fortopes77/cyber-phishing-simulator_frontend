@@ -4,25 +4,32 @@ export const AuthActions = createActionGroup({
   source: 'Auth',
   events: {
     Login: props<{ credential: string; password: string }>(),
-    'Login Success': props<{ user: any; token: string }>(),
+    'Login Success': props<{ user: any; token: string; refreshToken: string }>(),
     'Login Failure': props<{ error: string }>(),
     // Dispatched once at app bootstrap (see session-bootstrap.ts) when a
     // persisted session is found in storage. Kept distinct from Login
     // Success so a page reload is never confused with an actual login in
     // the action log, even though the reducer applies the same state.
-    'Session Restored': props<{ user: any; token: string }>(),
+    'Session Restored': props<{ user: any; token: string; refreshToken: string }>(),
     Logout: emptyProps(),
     'Logout Success': emptyProps(),
-    // The token being refreshed is passed explicitly (from whichever slice
-    // of state/response triggered the refresh) rather than read back out of
-    // storage, since auth state now lives only in the NgRx store.
-    'Refresh Token': props<{ token: string | undefined }>(),
-    'Refresh Token Success': props<{ token: string }>(),
+    // The backend issues a separate, rotating refresh token (opaque string,
+    // not the JWT access token) - that's what /auth/refresh expects, and
+    // it's passed explicitly (from whichever slice of state/response
+    // triggered the refresh) rather than read back out of storage, since
+    // auth state now lives only in the NgRx store.
+    'Refresh Token': props<{ refreshToken: string | undefined }>(),
+    // The backend rotates the refresh token on every use (the old one is
+    // invalidated), so the response's new refreshToken must be captured
+    // here too, not just the new access token.
+    'Refresh Token Success': props<{ token: string; refreshToken: string }>(),
     'Refresh Token Failure': props<{ error: string }>(),
+    // `username` is deliberately absent - the backend's UpdateUserDto (PATCH
+    // /users/{id}) has no field for it, so it can't be changed this way.
     'Update Profile': props<{
+      userId: string;
       firstName: string;
       lastName: string;
-      username: string;
       email: string;
     }>(),
     'Update Profile Success': props<{ user: any }>(),

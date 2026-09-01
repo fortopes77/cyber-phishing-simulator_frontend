@@ -6,6 +6,10 @@ import { decodeTokenExpiry } from '../token.utils';
 export interface AuthState {
   user?: User;
   token?: string;
+  // The opaque, rotating token /auth/refresh expects - distinct from the
+  // JWT access token above. Rotated (a new one issued, the old one
+  // invalidated) on every successful refresh.
+  refreshToken?: string;
   // Epoch ms the current token expires at - used to decide whether a
   // rehydrated (page-refresh) session is still usable, and to trigger a
   // refresh via AuthGuard/the auth HTTP interceptor.
@@ -25,12 +29,13 @@ export const initialAuthState: AuthState = {
 // login would, just without a loading phase.
 const applyAuthenticatedSession = (
   state: AuthState,
-  { user, token }: { user: User; token: string },
+  { user, token, refreshToken }: { user: User; token: string; refreshToken: string },
 ): AuthState => ({
   ...state,
   user,
   isAuthenticated: true,
   token,
+  refreshToken,
   tokenExpiresAt: decodeTokenExpiry(token),
   loading: false,
   error: undefined,
@@ -56,13 +61,15 @@ export const authReducer = createReducer(
     ...state,
     user: undefined,
     token: undefined,
+    refreshToken: undefined,
     tokenExpiresAt: undefined,
     isAuthenticated: false,
   })),
 
-  on(AuthActions.refreshTokenSuccess, (state, { token }) => ({
+  on(AuthActions.refreshTokenSuccess, (state, { token, refreshToken }) => ({
     ...state,
     token,
+    refreshToken,
     tokenExpiresAt: decodeTokenExpiry(token),
     isAuthenticated: true,
     error: undefined,
@@ -75,6 +82,7 @@ export const authReducer = createReducer(
     ...state,
     user: undefined,
     token: undefined,
+    refreshToken: undefined,
     tokenExpiresAt: undefined,
     isAuthenticated: false,
   })),

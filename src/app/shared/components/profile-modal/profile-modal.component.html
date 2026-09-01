@@ -29,10 +29,7 @@
       <label class="field">
         <span>Username</span>
         <input type="text" formControlName="username" />
-        <app-form-field-error
-          [control]="profileForm.get('username')"
-          label="Username"
-        ></app-form-field-error>
+        <small class="field-hint">Username can't be changed.</small>
       </label>
 
       <label class="field">

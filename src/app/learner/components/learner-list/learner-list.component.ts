@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { Actions, ofType } from '@ngrx/effects';
+import { filter, map, take } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import {
   HeaderComponent,
@@ -25,7 +26,11 @@ import {
   ListComponent,
 } from 'src/app/shared/components/list/list.component';
 import { iconLibrary } from 'src/app/shared/constants/font-awesome-icons.const';
+import { selectAuthState } from 'src/app/auth/+state/auth.selectors';
 import { UsersActions } from 'src/app/users/+state/users.actions';
+import { selectUserList } from 'src/app/users/+state/users.selectors';
+import { UserAccount } from 'src/app/users/+state/user-account.model';
+import { CATEGORY_OPTIONS } from 'src/app/scenario/models/scenario.model';
 
 interface LearnerRow extends Record<string, unknown> {
   id: number;
@@ -38,24 +43,26 @@ interface LearnerRow extends Record<string, unknown> {
   weaknesses: string[];
 }
 
-// ASSUMPTION: no learners/analytics endpoint exists yet - there's no Jira
-// ticket covering it on the backend board at time of writing. This mock
-// data stands in until a real "GET learners" (with per-learner progress,
-// score and weakness breakdown) contract is available.
-const FIRST_NAMES = [
-  'Ava', 'Noah', 'Mia', 'Liam', 'Zoe', 'Ethan', 'Grace', 'Lucas', 'Ella',
-  'Mason', 'Chloe', 'Owen', 'Ruby', 'Leo', 'Nina', 'Jack', 'Isla', 'Finn',
-  'Maya', 'Sam',
-];
-const LAST_NAMES = [
-  'Morales', 'Bennett', 'Chen', 'Patel', 'Okafor', 'Nguyen', 'Fischer',
-  'Rossi', 'Kowalski', 'Silva', 'Andersson', 'Kim', 'Haddad', 'Novak',
-  'Reyes',
-];
-const WEAKNESS_POOL = [
-  'Urgency', 'Domain Mismatch', 'Spoofed Sender', 'Suspicious Link',
-  'Grammar Errors', 'Attachment Risk', 'Generic Greeting',
-];
+// ASSUMPTION: identity (name/email/id) now comes from the real
+// GET /users/learners endpoint, but no learner-progress/analytics endpoint
+// exists yet - there's no Jira ticket covering it on the backend board at
+// time of writing. Progress, score and last-active stay deterministically
+// derived per learner id (see buildLearnerRows) until a real "learner
+// analytics" contract is available.
+//
+// Weaknesses use the real scenario `category` enum (Phishing/Smishing/.../
+// Whaling - see scenario.model.ts, confirmed against the backend via a 400
+// validation response) rather than invented per-cue tags like "Urgency" or
+// "Domain Mismatch": the backend has no such categorization for the
+// free-text cues a learner selects (CreateScenarioAttemptDto.selectedCues),
+// so category is the only real, queryable dimension a "weakness" can map
+// to. Which categories are assigned to which learner is still simulated,
+// though - that needs each learner's per-scenario correct/incorrect result
+// cross-referenced with the scenario's category, and there's no populated
+// example of GET /results/user/{userId}'s response to confirm field names
+// against yet (empty in this dev DB - no scenarios/attempts exist to
+// generate one).
+const WEAKNESS_POOL = CATEGORY_OPTIONS.map((option) => option.label);
 const LAST_ACTIVE_POOL = [
   'Just now', '2 hours ago', 'Yesterday', '2 days ago', '3 days ago',
   '1 week ago',
@@ -64,7 +71,6 @@ const LAST_ACTIVE_POOL = [
 // represents, so the "Last Active" filter has a real Date to compare
 // against instead of just the display string.
 const LAST_ACTIVE_DAYS_AGO_POOL = [0, 0, 1, 2, 3, 7];
-const TOTAL_MOCK_LEARNERS = 52;
 
 @Component({
   selector: 'app-learner-list',
@@ -125,9 +131,8 @@ export class LearnerListComponent implements OnInit {
 
   ngOnInit(): void {
     this.subscribeToResetPasswordResult();
-    this.rows = this.buildLearnerRows();
-    this.filteredRows = this.rows;
-    this.computeStats(this.filteredRows);
+    this.subscribeToLearnerList();
+    this.fetchLearners();
 
     this.columns = [
       { key: 'learner', label: 'Learner', sortable: true },
@@ -157,6 +162,31 @@ export class LearnerListComponent implements OnInit {
         tooltip: 'Reset password',
       },
     ];
+  }
+
+  // GET /users/learners is scoped to one organisation - read it off the
+  // signed-in trainer's own account rather than hard-coding it.
+  private fetchLearners(): void {
+    this.store
+      .select(selectAuthState)
+      .pipe(
+        map((auth) => auth.user?.organisationId),
+        filter((organisationId): organisationId is number => organisationId != null),
+        take(1),
+      )
+      .subscribe((organisationId) => {
+        this.store.dispatch(UsersActions.fetchList({ organisationId }));
+      });
+  }
+
+  // Reacts to the store's learner list rather than mutating `rows` locally,
+  // so a delete/create/edit is reflected here as soon as the reducer
+  // applies it - no manual splicing needed (see confirmDelete).
+  private subscribeToLearnerList(): void {
+    this.store.select(selectUserList).subscribe((users) => {
+      this.rows = this.buildLearnerRows(users);
+      this.applyLastActiveFilter();
+    });
   }
 
   private handleCreate(): void {
@@ -225,15 +255,12 @@ export class LearnerListComponent implements OnInit {
       return;
     }
 
-    const userId = String(this.selectedLearnerRow.id);
-    this.store.dispatch(UsersActions.deleteUser({ userId }));
-    // The learner table above is still generated mock data (see the
-    // ASSUMPTION comment on buildLearnerRows) rather than store-backed, so
-    // the row is removed here directly instead of waiting on a
-    // deleteUserSuccess subscription - swap this for a store selector once
-    // a real "GET learners" endpoint exists.
-    this.rows = this.rows.filter((row) => row.id !== this.selectedLearnerRow!.id);
-    this.applyLastActiveFilter();
+    // No manual row removal needed - users.reducer already drops the
+    // deleted id from userList on deleteUserSuccess, which flows back here
+    // through subscribeToLearnerList.
+    this.store.dispatch(
+      UsersActions.deleteUser({ userId: String(this.selectedLearnerRow.id) }),
+    );
     this.selectedLearnerRow = null;
     this.selectedLearnerName = '';
   }
@@ -285,12 +312,14 @@ export class LearnerListComponent implements OnInit {
     this.computeStats(this.filteredRows);
   }
 
-  private buildLearnerRows(): LearnerRow[] {
-    const rows: LearnerRow[] = [];
-
-    for (let i = 0; i < TOTAL_MOCK_LEARNERS; i++) {
-      const firstName = FIRST_NAMES[i % FIRST_NAMES.length];
-      const lastName = LAST_NAMES[(i * 3) % LAST_NAMES.length];
+  // Identity (id/fullName/email) is real, from the store's learner list.
+  // Progress/score/last-active/weaknesses are still mocked - deterministically
+  // derived from each learner's id so a given learner's row stays stable
+  // across refreshes - until a real analytics endpoint exists (see the
+  // ASSUMPTION comment above the mock pools).
+  private buildLearnerRows(users: UserAccount[]): LearnerRow[] {
+    return users.map((user) => {
+      const i = this.analyticsSeed(user.id);
       const weaknessCount = 1 + (i % 3);
       const weaknesses = Array.from(
         { length: weaknessCount },
@@ -303,19 +332,30 @@ export class LearnerListComponent implements OnInit {
         lastActiveDate.getDate() - LAST_ACTIVE_DAYS_AGO_POOL[lastActiveIndex],
       );
 
-      rows.push({
-        id: i + 1,
-        fullName: `${firstName} ${lastName}`,
-        email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@example.com`,
+      return {
+        id: Number(user.id),
+        fullName: user.fullName,
+        email: user.email,
         progress: (i * 7) % 101,
         avgScore: 40 + ((i * 11) % 61),
         lastActive: LAST_ACTIVE_POOL[lastActiveIndex],
         lastActiveDate,
         weaknesses,
-      });
+      };
+    });
+  }
+
+  private analyticsSeed(id: string): number {
+    const numericId = Number(id);
+    if (!Number.isNaN(numericId)) {
+      return numericId;
     }
 
-    return rows;
+    let hash = 0;
+    for (let c = 0; c < id.length; c++) {
+      hash = (hash * 31 + id.charCodeAt(c)) >>> 0;
+    }
+    return hash;
   }
 
   private computeStats(rows: LearnerRow[]): void {

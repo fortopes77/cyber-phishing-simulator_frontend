@@ -153,6 +153,7 @@ describe('AuthGuard', () => {
     store.overrideSelector(selectAuthState, {
       isAuthenticated: true,
       token: 'stale-token',
+      refreshToken: 'stale-refresh-token',
       tokenExpiresAt: Date.now() - 1000,
       loading: false,
       user: { id: '1', username: 'u', email: 'u@u.com', role: 'user' },
@@ -168,13 +169,16 @@ describe('AuthGuard', () => {
     });
 
     expect(store.dispatch).toHaveBeenCalledWith(
-      AuthActions.refreshToken({ token: 'stale-token' }),
+      AuthActions.refreshToken({ refreshToken: 'stale-refresh-token' }),
     );
     // canActivate must not resolve until the refresh outcome is known.
     expect(resolved).toBeFalse();
 
     actionsSubject.next(
-      AuthActions.refreshTokenSuccess({ token: 'fresh-token' }),
+      AuthActions.refreshTokenSuccess({
+        token: 'fresh-token',
+        refreshToken: 'fresh-refresh-token',
+      }),
     );
   });
 
@@ -182,6 +186,7 @@ describe('AuthGuard', () => {
     store.overrideSelector(selectAuthState, {
       isAuthenticated: true,
       token: 'stale-token',
+      refreshToken: 'stale-refresh-token',
       tokenExpiresAt: Date.now() - 1000,
       loading: false,
       user: { id: '1', username: 'u', email: 'u@u.com', role: 'user' },

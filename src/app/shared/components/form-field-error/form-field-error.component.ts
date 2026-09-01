@@ -39,6 +39,9 @@ export class FormFieldErrorComponent {
     if (errors['text']) {
       return `${this.label} contains characters that aren't allowed.`;
     }
+    if (errors['passwordComplexity']) {
+      return `${this.label} must include at least 1 number and 1 special character (!@#$%*?).`;
+    }
     if (errors['minlength']) {
       return `${this.label} must be at least ${errors['minlength'].requiredLength} characters.`;
     }

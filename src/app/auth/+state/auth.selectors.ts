@@ -10,6 +10,10 @@ export const selectToken = createSelector(
   selectAuthState,
   (state) => state.token,
 );
+export const selectRefreshToken = createSelector(
+  selectAuthState,
+  (state) => state.refreshToken,
+);
 export const selectTokenExpiresAt = createSelector(
   selectAuthState,
   (state) => state.tokenExpiresAt,

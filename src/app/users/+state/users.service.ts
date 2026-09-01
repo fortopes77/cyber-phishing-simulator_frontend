@@ -1,7 +1,17 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { environment } from 'src/environments/environment.development';
-import { UserAccount } from './user-account.model';
+import {
+  CreateUserPayload,
+  RawUserAccount,
+  UpdateUserPayload,
+  UserAccount,
+} from './user-account.model';
+
+const ROLE_TO_API: Record<UserAccount['role'], string> = {
+  trainer: 'TRAINER',
+  user: 'LEARNER',
+};
 
 @Injectable({
   providedIn: 'root',
@@ -11,27 +21,35 @@ export class UsersService {
 
   constructor(private http: HttpClient) {}
 
-  // ASSUMPTION: no user-management controller was included in this upload
-  // (only auth/login and auth/refresh exist in auth.service.ts) - this
-  // mirrors the Scenario/Module resources' Create/Read/Update/Delete shape
-  // against a "users" resource. Update the path/payload mapping once a real
-  // "User Management" ticket/contract is available.
-  getUsers() {
-    return this.http.get<UserAccount[] | { users: UserAccount[] }>(
-      `${this.apiEndpoint}users`,
+  // GET /users - list all users - doesn't exist on this backend; only
+  // GET /users/learners (trainer-only, scoped to one organisation) is
+  // exposed, per the Swagger contract.
+  getUsers(organisationId: number) {
+    return this.http.get<RawUserAccount[] | { users: RawUserAccount[] }>(
+      `${this.apiEndpoint}users/learners`,
+      { params: { organisationId } },
     );
   }
 
   getUserDetails(userId: string) {
-    return this.http.get<UserAccount>(`${this.apiEndpoint}users/${userId}`);
+    return this.http.get<RawUserAccount>(`${this.apiEndpoint}users/${userId}`);
   }
 
-  createUser(user: Partial<UserAccount>) {
-    return this.http.post<UserAccount>(`${this.apiEndpoint}users`, user);
+  // POST /users (CreateUserDto) - trainer-only. organisationId is
+  // intentionally omitted: per the Swagger contract a trainer's own
+  // organisation is inferred server-side and only a global admin needs to
+  // supply it.
+  createUser(user: CreateUserPayload) {
+    return this.http.post<RawUserAccount>(`${this.apiEndpoint}users`, {
+      ...user,
+      role: ROLE_TO_API[user.role],
+    });
   }
 
-  updateUser(userId: string, updatedUser: Partial<UserAccount>) {
-    return this.http.patch<UserAccount>(
+  // PATCH /users/{id} (UpdateUserDto) - email/password/firstName/lastName
+  // only; the backend has no field to change username or role.
+  updateUser(userId: string, updatedUser: UpdateUserPayload) {
+    return this.http.patch<RawUserAccount>(
       `${this.apiEndpoint}users/${userId}`,
       updatedUser,
     );
@@ -41,16 +59,20 @@ export class UsersService {
     return this.http.delete(`${this.apiEndpoint}users/${userId}`);
   }
 
-  // ASSUMPTION: no reset-password/send-reminder routes were included in this
-  // upload - these mirror the CRUD endpoints above as sub-resources of a
-  // given user. Update the path/payload mapping once a real contract exists.
+  // No dedicated reset-password route exists - PATCH /users/{id} accepts an
+  // optional `password` field (UpdateUserDto), so a trainer resetting
+  // someone else's password reuses the same update endpoint.
   resetPassword(userId: string, newPassword: string) {
-    return this.http.post<void>(
-      `${this.apiEndpoint}users/${userId}/reset-password`,
-      { newPassword },
-    );
+    return this.http.patch<RawUserAccount>(`${this.apiEndpoint}users/${userId}`, {
+      password: newPassword,
+    });
   }
 
+  // ASSUMPTION: no "send reminder email" route exists anywhere in the
+  // Swagger contract - there's no backend equivalent to wire this up to yet.
+  // Left as a stub pointing at a plausible sub-resource path so the UI
+  // action fails loudly (a 404) rather than silently, until a real contract
+  // is available.
   sendReminderEmail(userId: string) {
     return this.http.post<void>(
       `${this.apiEndpoint}users/${userId}/send-reminder`,

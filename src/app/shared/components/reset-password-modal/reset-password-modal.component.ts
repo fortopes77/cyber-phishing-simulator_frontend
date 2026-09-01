@@ -12,6 +12,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ModalComponent } from '../modal/modal.component';
 import { FormFieldErrorComponent } from '../form-field-error/form-field-error.component';
 import { passwordsMatchValidator } from '../../validators/password-match.validator';
+import { passwordComplexityValidator } from '../../validators/pattern.validators';
 
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -42,7 +43,10 @@ export class ResetPasswordModalComponent implements OnChanges {
 
   readonly form = this.fb.nonNullable.group(
     {
-      newPassword: ['', [Validators.required, Validators.minLength(MIN_PASSWORD_LENGTH)]],
+      newPassword: [
+        '',
+        [Validators.required, Validators.minLength(MIN_PASSWORD_LENGTH), passwordComplexityValidator()],
+      ],
       confirmPassword: ['', [Validators.required]],
     },
     { validators: passwordsMatchValidator() },

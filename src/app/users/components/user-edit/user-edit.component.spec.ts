@@ -47,9 +47,15 @@ describe('UserEditComponent', () => {
     const compiled = fixture.nativeElement as HTMLElement;
 
     expect(compiled.querySelector('form')).toBeTruthy();
-    expect(compiled.textContent).toContain('Full name');
+    expect(compiled.textContent).toContain('First name');
+    expect(compiled.textContent).toContain('Last name');
     expect(compiled.textContent).toContain('Save');
     expect(compiled.textContent).toContain('Cancel');
+  });
+
+  it('should disable username and role in edit mode, since the backend cannot change them', () => {
+    expect(component.userForm.get('username')?.disabled).toBeTrue();
+    expect(component.userForm.get('role')?.disabled).toBeTrue();
   });
 
   it('should read the user id from the route and fetch its details', () => {
@@ -77,11 +83,14 @@ describe('UserEditComponent', () => {
     expect(component.isCreateMode).toBeTrue();
   });
 
-  it('should dispatch createUser with the form values in create mode', () => {
+  it('should dispatch createUser with the form values, mapped role and password, in create mode', () => {
     component.isCreateMode = true;
     component.userForm.setValue({
-      fullName: 'Ava Morales',
+      username: 'ava.morales',
+      firstName: 'Ava',
+      lastName: 'Morales',
       email: 'ava.morales@example.com',
+      password: 'Password1!',
       role: 'user',
     });
 
@@ -90,21 +99,27 @@ describe('UserEditComponent', () => {
     expect(store.dispatch).toHaveBeenCalledWith(
       UsersActions.createUser({
         user: {
-          fullName: 'Ava Morales',
+          username: 'ava.morales',
+          firstName: 'Ava',
+          lastName: 'Morales',
           email: 'ava.morales@example.com',
+          password: 'Password1!',
           role: 'user',
         },
       }),
     );
   });
 
-  it('should dispatch updateUser with the form values in edit mode', () => {
+  it('should dispatch updateUser without username/role/password when the password field is left blank', () => {
     component.isCreateMode = false;
     component.userId = 'u_7';
-    component.userForm.setValue({
-      fullName: 'Noah Bennett',
+    component.userForm.get('username')?.disable();
+    component.userForm.get('role')?.disable();
+    component.userForm.patchValue({
+      firstName: 'Noah',
+      lastName: 'Bennett',
       email: 'noah.bennett@example.com',
-      role: 'trainer',
+      password: '',
     });
 
     component.onSubmit();
@@ -113,19 +128,45 @@ describe('UserEditComponent', () => {
       UsersActions.updateUser({
         userId: 'u_7',
         updatedUser: {
-          fullName: 'Noah Bennett',
+          firstName: 'Noah',
+          lastName: 'Bennett',
           email: 'noah.bennett@example.com',
-          role: 'trainer',
+        },
+      }),
+    );
+  });
+
+  it('should include the password in updateUser when one was entered', () => {
+    component.isCreateMode = false;
+    component.userId = 'u_7';
+    component.userForm.get('username')?.disable();
+    component.userForm.get('role')?.disable();
+    component.userForm.patchValue({
+      firstName: 'Noah',
+      lastName: 'Bennett',
+      email: 'noah.bennett@example.com',
+      password: 'NewPassword1!',
+    });
+
+    component.onSubmit();
+
+    expect(store.dispatch).toHaveBeenCalledWith(
+      UsersActions.updateUser({
+        userId: 'u_7',
+        updatedUser: {
+          firstName: 'Noah',
+          lastName: 'Bennett',
+          email: 'noah.bennett@example.com',
+          password: 'NewPassword1!',
         },
       }),
     );
   });
 
   it('should not dispatch when the form is invalid', () => {
-    component.userForm.setValue({
-      fullName: '',
+    component.userForm.patchValue({
+      firstName: '',
       email: 'not-an-email',
-      role: 'user',
     });
 
     component.onSubmit();
@@ -141,6 +182,9 @@ describe('UserEditComponent', () => {
   it('should mark isLearner from the loaded user, not the unsaved role field', () => {
     store.overrideSelector(selectUser, {
       id: 'u_1',
+      username: 'ava.morales',
+      firstName: 'Ava',
+      lastName: 'Morales',
       fullName: 'Ava Morales',
       email: 'ava.morales@example.com',
       role: 'user',

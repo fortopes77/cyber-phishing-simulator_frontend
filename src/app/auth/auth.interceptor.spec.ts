@@ -13,7 +13,7 @@ import { of, throwError } from 'rxjs';
 import { authInterceptor } from './auth.interceptor';
 import { AuthService } from './auth.service';
 import { AuthActions } from './+state/auth.actions';
-import { selectToken } from './+state/auth.selectors';
+import { selectToken, selectRefreshToken } from './+state/auth.selectors';
 
 describe('authInterceptor', () => {
   let http: HttpClient;
@@ -31,7 +31,10 @@ describe('authInterceptor', () => {
         provideHttpClient(withInterceptors([authInterceptor])),
         provideHttpClientTesting(),
         provideMockStore({
-          selectors: [{ selector: selectToken, value: 'initial-token' }],
+          selectors: [
+            { selector: selectToken, value: 'initial-token' },
+            { selector: selectRefreshToken, value: 'initial-refresh-token' },
+          ],
         }),
         { provide: AuthService, useValue: authServiceSpy },
       ],
@@ -70,15 +73,20 @@ describe('authInterceptor', () => {
   });
 
   it('should refresh the token and retry the request on a 401', (done) => {
-    authService.refreshToken.and.returnValue(of({ token: 'fresh-token' }));
+    authService.refreshToken.and.returnValue(
+      of({ token: 'fresh-token', refreshToken: 'fresh-refresh-token' }),
+    );
 
     http.get('/api/scenarios').subscribe({
       next: () => {
         expect(authService.refreshToken).toHaveBeenCalledWith(
-          'initial-token',
+          'initial-refresh-token',
         );
         expect(store.dispatch).toHaveBeenCalledWith(
-          AuthActions.refreshTokenSuccess({ token: 'fresh-token' }),
+          AuthActions.refreshTokenSuccess({
+            token: 'fresh-token',
+            refreshToken: 'fresh-refresh-token',
+          }),
         );
         done();
       },

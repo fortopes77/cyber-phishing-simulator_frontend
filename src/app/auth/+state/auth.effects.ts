@@ -26,6 +26,7 @@ export class AuthEffects {
             AuthActions.loginSuccess({
               user: normalizeUser(response.user),
               token: response.token,
+              refreshToken: response.refreshToken,
             }),
           ),
           catchError((error) =>
@@ -50,10 +51,13 @@ export class AuthEffects {
   refreshToken$ = createEffect(() =>
     this.actions$.pipe(
       ofType(AuthActions.refreshToken),
-      mergeMap(({ token }) =>
-        this.authService.refreshToken(token).pipe(
+      mergeMap(({ refreshToken }) =>
+        this.authService.refreshToken(refreshToken).pipe(
           map((response) =>
-            AuthActions.refreshTokenSuccess({ token: response.token }),
+            AuthActions.refreshTokenSuccess({
+              token: response.token,
+              refreshToken: response.refreshToken,
+            }),
           ),
           catchError((error) =>
             of(
@@ -70,8 +74,8 @@ export class AuthEffects {
   updateProfile$ = createEffect(() =>
     this.actions$.pipe(
       ofType(AuthActions.updateProfile),
-      mergeMap(({ firstName, lastName, username, email }) =>
-        this.authService.updateProfile(firstName, lastName, username, email).pipe(
+      mergeMap(({ userId, firstName, lastName, email }) =>
+        this.authService.updateProfile(userId, firstName, lastName, email).pipe(
           map((response: any) =>
             AuthActions.updateProfileSuccess({
               user: normalizeUser(response.user ?? response),
@@ -139,8 +143,8 @@ export class AuthEffects {
         ),
         withLatestFrom(this.store.select(selectAuthState)),
         tap(([, auth]) => {
-          if (auth.user && auth.token) {
-            saveSession(auth.user, auth.token);
+          if (auth.user && auth.token && auth.refreshToken) {
+            saveSession(auth.user, auth.token, auth.refreshToken);
           }
         }),
       ),

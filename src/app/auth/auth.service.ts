@@ -9,19 +9,29 @@ export interface User {
   role: 'trainer' | 'user';
   firstName?: string;
   lastName?: string;
+  organisationId?: number;
 }
 
+// The backend's role enum ("LEARNER"/"TRAINER") doesn't match the lowercase
+// 'user'/'trainer' literal the app routes and guards on (AuthGuard's
+// ROLE_HOME, route data's `roles`, nav.component) - a plain .toLowerCase()
+// would turn "LEARNER" into "learner", which matches nothing. Map explicitly
+// instead.
+const ROLE_MAP: Record<string, 'trainer' | 'user'> = {
+  TRAINER: 'trainer',
+  LEARNER: 'user',
+};
+
 /**
- * The backend returns role as "TRAINER"/"USER" (all caps) rather than the
- * lowercase values used throughout the app for role checks (AuthGuard,
- * nav.component, login redirect). Normalize once here, right where the raw
- * API response is turned into a User, so every downstream comparison can
- * keep using the lowercase literal.
+ * Normalizes a raw API role/user into the lowercase 'trainer'/'user'
+ * literal used throughout the app for role checks (AuthGuard, nav.component,
+ * login redirect).
  */
 export function normalizeUser(raw: any): User {
+  const rawRole = (raw?.role ?? '').toString().toUpperCase();
   return {
     ...raw,
-    role: (raw?.role ?? '').toString().toLowerCase(),
+    role: ROLE_MAP[rawRole] ?? rawRole.toLowerCase(),
   };
 }
 
@@ -45,19 +55,18 @@ export class AuthService {
   }
 
   /**
-   * Requests a fresh token for the current session. `token` is the
-   * (possibly expired) access token from the NgRx auth state - the caller
-   * (AuthGuard, the auth HTTP interceptor) already has it from the store,
-   * since nothing is persisted to localStorage any more.
-   * ASSUMPTION: backend exposes POST /auth/refresh accepting the current
-   * token and returning a new one in the same shape as login - update the
-   * payload/response mapping if your NestJS route differs (e.g. a separate
-   * refresh token rather than reusing the access token).
+   * Requests a fresh access token using the current refresh token. Per the
+   * backend's Swagger contract (POST /auth/refresh, RefreshTokenDto), this
+   * is a separate opaque `refreshToken` - not the JWT access token - and it
+   * rotates: the response carries both a new access token and a new
+   * refreshToken, and the one just used stops working. The caller (AuthGuard,
+   * the auth HTTP interceptor) reads the current refreshToken from the NgRx
+   * auth state, since nothing is persisted to localStorage beyond that.
    */
-  refreshToken(token: string | undefined) {
-    return this.http.post<{ token: string }>(
+  refreshToken(refreshToken: string | undefined) {
+    return this.http.post<{ token: string; refreshToken: string; user?: any }>(
       `${this.apiEndpoint}auth/refresh`,
-      { token: token ?? null },
+      { refreshToken: refreshToken ?? null },
     );
   }
 
@@ -65,15 +74,16 @@ export class AuthService {
     return this.http.post(`${this.apiEndpoint}feedback`, payload);
   }
 
-  // ASSUMPTION: no "update my profile"/"change my password" controller was
-  // included in this upload - these mirror the auth/login, auth/refresh
-  // naming convention. Update the path/payload mapping once a real contract
-  // is available.
-  updateProfile(firstName: string, lastName: string, username: string, email: string) {
-    return this.http.patch(`${this.apiEndpoint}auth/profile`, {
+  /**
+   * Updates the signed-in user's own name/email via PATCH /users/{id}
+   * (UpdateUserDto). The backend has no route to change `username` - it's
+   * not part of UpdateUserDto - so it's intentionally left out of the
+   * payload here even though the profile modal still displays it.
+   */
+  updateProfile(userId: string, firstName: string, lastName: string, email: string) {
+    return this.http.patch(`${this.apiEndpoint}users/${userId}`, {
       firstName,
       lastName,
-      username,
       email,
     });
   }

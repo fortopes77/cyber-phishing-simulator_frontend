@@ -46,7 +46,7 @@ describe('AuthEffects', () => {
 
   it('should dispatch loginSuccess on successful login', (done) => {
     authService.login.and.returnValue(
-      of({ user: { id: '1' }, token: 'abc' }),
+      of({ user: { id: '1' }, token: 'abc', refreshToken: 'refresh-abc' }),
     );
     actions$ = of(
       AuthActions.login({ credential: 'user', password: 'pass' }),
@@ -54,7 +54,11 @@ describe('AuthEffects', () => {
 
     effects.login$.subscribe((action) => {
       expect(action).toEqual(
-        AuthActions.loginSuccess({ user: { id: '1', role: '' } as any, token: 'abc' }),
+        AuthActions.loginSuccess({
+          user: { id: '1', role: '' } as any,
+          token: 'abc',
+          refreshToken: 'refresh-abc',
+        }),
       );
       done();
     });
@@ -65,6 +69,7 @@ describe('AuthEffects', () => {
       of({
         user: { id: '1', username: 'jane', email: 'jane@example.com', role: 'TRAINER' },
         token: 'abc',
+        refreshToken: 'refresh-abc',
       }),
     );
     actions$ = of(
@@ -102,14 +107,23 @@ describe('AuthEffects', () => {
     });
   });
 
-  it('should refresh using the token from the action payload and dispatch refreshTokenSuccess', (done) => {
-    authService.refreshToken.and.returnValue(of({ token: 'fresh-token' }));
-    actions$ = of(AuthActions.refreshToken({ token: 'stale-token' }));
+  it('should refresh using the refresh token from the action payload and dispatch refreshTokenSuccess', (done) => {
+    authService.refreshToken.and.returnValue(
+      of({ token: 'fresh-token', refreshToken: 'fresh-refresh-token' }),
+    );
+    actions$ = of(
+      AuthActions.refreshToken({ refreshToken: 'stale-refresh-token' }),
+    );
 
     effects.refreshToken$.subscribe((action) => {
-      expect(authService.refreshToken).toHaveBeenCalledWith('stale-token');
+      expect(authService.refreshToken).toHaveBeenCalledWith(
+        'stale-refresh-token',
+      );
       expect(action).toEqual(
-        AuthActions.refreshTokenSuccess({ token: 'fresh-token' }),
+        AuthActions.refreshTokenSuccess({
+          token: 'fresh-token',
+          refreshToken: 'fresh-refresh-token',
+        }),
       );
       done();
     });
@@ -119,7 +133,9 @@ describe('AuthEffects', () => {
     authService.refreshToken.and.returnValue(
       throwError(() => new Error('Session expired')),
     );
-    actions$ = of(AuthActions.refreshToken({ token: 'stale-token' }));
+    actions$ = of(
+      AuthActions.refreshToken({ refreshToken: 'stale-refresh-token' }),
+    );
 
     effects.refreshToken$.subscribe((action) => {
       expect(action).toEqual(
@@ -143,30 +159,28 @@ describe('AuthEffects', () => {
   it('should dispatch updateProfileSuccess with a normalized user on successful update', (done) => {
     authService.updateProfile.and.returnValue(
       of({
-        user: {
-          id: '1',
-          firstName: 'Ava',
-          lastName: 'Morales',
-          username: 'ava',
-          email: 'ava@example.com',
-          role: 'USER',
-        },
+        id: '1',
+        firstName: 'Ava',
+        lastName: 'Morales',
+        username: 'ava',
+        email: 'ava@example.com',
+        role: 'LEARNER',
       }),
     );
     actions$ = of(
       AuthActions.updateProfile({
+        userId: '1',
         firstName: 'Ava',
         lastName: 'Morales',
-        username: 'ava',
         email: 'ava@example.com',
       }),
     );
 
     effects.updateProfile$.subscribe((action: any) => {
       expect(authService.updateProfile).toHaveBeenCalledWith(
+        '1',
         'Ava',
         'Morales',
-        'ava',
         'ava@example.com',
       );
       expect(action.user.role).toBe('user');
@@ -180,9 +194,9 @@ describe('AuthEffects', () => {
     );
     actions$ = of(
       AuthActions.updateProfile({
+        userId: '1',
         firstName: 'Ava',
         lastName: 'Morales',
-        username: 'ava',
         email: 'ava@example.com',
       }),
     );
@@ -231,34 +245,51 @@ describe('AuthEffects', () => {
       localStorage.removeItem('auth_session');
     });
 
-    it('should persist the current user and token on loginSuccess', (done) => {
+    it('should persist the current user, token, and refresh token on loginSuccess', (done) => {
       store.overrideSelector(selectAuthState, {
         user,
         token: 'abc',
+        refreshToken: 'refresh-abc',
         loading: false,
         isAuthenticated: true,
       });
       store.refreshState();
-      actions$ = of(AuthActions.loginSuccess({ user, token: 'abc' }));
+      actions$ = of(
+        AuthActions.loginSuccess({ user, token: 'abc', refreshToken: 'refresh-abc' }),
+      );
 
       effects.persistSession$.subscribe(() => {
-        expect(loadSession()).toEqual({ user, token: 'abc' });
+        expect(loadSession()).toEqual({
+          user,
+          token: 'abc',
+          refreshToken: 'refresh-abc',
+        });
         done();
       });
     });
 
-    it('should persist the existing user alongside a fresh token on refreshTokenSuccess', (done) => {
+    it('should persist the existing user alongside a fresh token and refresh token on refreshTokenSuccess', (done) => {
       store.overrideSelector(selectAuthState, {
         user,
         token: 'fresh-token',
+        refreshToken: 'fresh-refresh-token',
         loading: false,
         isAuthenticated: true,
       });
       store.refreshState();
-      actions$ = of(AuthActions.refreshTokenSuccess({ token: 'fresh-token' }));
+      actions$ = of(
+        AuthActions.refreshTokenSuccess({
+          token: 'fresh-token',
+          refreshToken: 'fresh-refresh-token',
+        }),
+      );
 
       effects.persistSession$.subscribe(() => {
-        expect(loadSession()).toEqual({ user, token: 'fresh-token' });
+        expect(loadSession()).toEqual({
+          user,
+          token: 'fresh-token',
+          refreshToken: 'fresh-refresh-token',
+        });
         done();
       });
     });
@@ -268,6 +299,7 @@ describe('AuthEffects', () => {
       store.overrideSelector(selectAuthState, {
         user: updatedUser,
         token: 'abc',
+        refreshToken: 'refresh-abc',
         loading: false,
         isAuthenticated: true,
       });
@@ -275,7 +307,11 @@ describe('AuthEffects', () => {
       actions$ = of(AuthActions.updateProfileSuccess({ user: updatedUser }));
 
       effects.persistSession$.subscribe(() => {
-        expect(loadSession()).toEqual({ user: updatedUser, token: 'abc' });
+        expect(loadSession()).toEqual({
+          user: updatedUser,
+          token: 'abc',
+          refreshToken: 'refresh-abc',
+        });
         done();
       });
     });
@@ -286,7 +322,9 @@ describe('AuthEffects', () => {
         isAuthenticated: false,
       });
       store.refreshState();
-      actions$ = of(AuthActions.loginSuccess({ user, token: 'abc' }));
+      actions$ = of(
+        AuthActions.loginSuccess({ user, token: 'abc', refreshToken: 'refresh-abc' }),
+      );
 
       effects.persistSession$.subscribe(() => {
         expect(loadSession()).toBeNull();
@@ -303,7 +341,7 @@ describe('AuthEffects', () => {
     });
 
     it('should clear the persisted session on logoutSuccess', (done) => {
-      saveSession(user, 'abc');
+      saveSession(user, 'abc', 'refresh-abc');
       actions$ = of(AuthActions.logoutSuccess());
 
       effects.clearPersistedSession$.subscribe(() => {
@@ -313,7 +351,7 @@ describe('AuthEffects', () => {
     });
 
     it('should clear the persisted session on refreshTokenFailure', (done) => {
-      saveSession(user, 'abc');
+      saveSession(user, 'abc', 'refresh-abc');
       actions$ = of(
         AuthActions.refreshTokenFailure({ error: 'Session expired' }),
       );

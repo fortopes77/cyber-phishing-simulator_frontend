@@ -41,7 +41,7 @@ describe('ProfileModalComponent', () => {
       },
     });
 
-    expect(component.profileForm.value).toEqual({
+    expect(component.profileForm.getRawValue()).toEqual({
       firstName: 'Ava',
       lastName: 'Morales',
       username: 'ava.morales',
@@ -49,15 +49,18 @@ describe('ProfileModalComponent', () => {
     });
   });
 
+  it('should keep the username control disabled so it can never be submitted', () => {
+    expect(component.profileForm.get('username')?.disabled).toBeTrue();
+  });
+
   it('should not emit profileSubmitted when the profile form is invalid', () => {
     component.isOpen = true;
     fixture.detectChanges();
     spyOn(component.profileSubmitted, 'emit');
 
-    component.profileForm.setValue({
+    component.profileForm.patchValue({
       firstName: '',
       lastName: '',
-      username: '',
       email: 'not-an-email',
     });
     component.onSubmitProfile();
@@ -65,15 +68,14 @@ describe('ProfileModalComponent', () => {
     expect(component.profileSubmitted.emit).not.toHaveBeenCalled();
   });
 
-  it('should emit profileSubmitted with the form values when valid', () => {
+  it('should emit profileSubmitted with the form values when valid, excluding username', () => {
     component.isOpen = true;
     fixture.detectChanges();
     spyOn(component.profileSubmitted, 'emit');
 
-    component.profileForm.setValue({
+    component.profileForm.patchValue({
       firstName: 'Noah',
       lastName: 'Bennett',
-      username: 'noah.bennett',
       email: 'noah.bennett@example.com',
     });
     component.onSubmitProfile();
@@ -81,7 +83,6 @@ describe('ProfileModalComponent', () => {
     expect(component.profileSubmitted.emit).toHaveBeenCalledWith({
       firstName: 'Noah',
       lastName: 'Bennett',
-      username: 'noah.bennett',
       email: 'noah.bennett@example.com',
     });
   });
@@ -96,6 +97,18 @@ describe('ProfileModalComponent', () => {
     expect(component.passwordForm.errors?.['passwordMismatch']).toBeTrue();
   });
 
+  it('should reject a new password missing the required number/special character', () => {
+    component.passwordForm.setValue({
+      currentPassword: 'oldpassword',
+      newPassword: 'newpassword',
+      confirmPassword: 'newpassword',
+    });
+
+    expect(
+      component.passwordForm.get('newPassword')?.errors?.['passwordComplexity'],
+    ).toBeTrue();
+  });
+
   it('should emit passwordSubmitted with current and new password when valid', () => {
     component.isOpen = true;
     fixture.detectChanges();
@@ -103,14 +116,14 @@ describe('ProfileModalComponent', () => {
 
     component.passwordForm.setValue({
       currentPassword: 'oldpassword',
-      newPassword: 'newpassword1',
-      confirmPassword: 'newpassword1',
+      newPassword: 'newpassword1!',
+      confirmPassword: 'newpassword1!',
     });
     component.onSubmitPassword();
 
     expect(component.passwordSubmitted.emit).toHaveBeenCalledWith({
       currentPassword: 'oldpassword',
-      newPassword: 'newpassword1',
+      newPassword: 'newpassword1!',
     });
   });
 

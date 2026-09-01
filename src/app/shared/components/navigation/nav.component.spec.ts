@@ -88,23 +88,41 @@ describe('NavComponent', () => {
     expect(component.profileModalOpen).toBeTrue();
   });
 
-  it('should dispatch updateProfile and mark saving on saveProfile', () => {
+  it('should dispatch updateProfile with the signed-in user id and mark saving on saveProfile', () => {
+    component.currentUser = {
+      id: '1',
+      username: 'ava',
+      email: 'ava@example.com',
+      role: 'user',
+    };
+
     component.saveProfile({
       firstName: 'Ava',
       lastName: 'Morales',
-      username: 'ava',
       email: 'ava@example.com',
     });
 
     expect(component.profileSaving).toBeTrue();
     expect(store.dispatch).toHaveBeenCalledWith(
       AuthActions.updateProfile({
+        userId: '1',
         firstName: 'Ava',
         lastName: 'Morales',
-        username: 'ava',
         email: 'ava@example.com',
       }),
     );
+  });
+
+  it('should not dispatch updateProfile when there is no signed-in user', () => {
+    component.currentUser = undefined;
+
+    component.saveProfile({
+      firstName: 'Ava',
+      lastName: 'Morales',
+      email: 'ava@example.com',
+    });
+
+    expect(store.dispatch).not.toHaveBeenCalled();
   });
 
   it('should dispatch resetPassword and mark saving on savePassword', () => {

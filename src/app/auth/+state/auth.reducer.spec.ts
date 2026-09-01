@@ -23,11 +23,16 @@ describe('authReducer', () => {
 
     const state = authReducer(
       initialAuthState,
-      AuthActions.loginSuccess({ user: { id: '1' } as any, token }),
+      AuthActions.loginSuccess({
+        user: { id: '1' } as any,
+        token,
+        refreshToken: 'refresh-1',
+      }),
     );
 
     expect(state.isAuthenticated).toBeTrue();
     expect(state.token).toBe(token);
+    expect(state.refreshToken).toBe('refresh-1');
     expect(state.tokenExpiresAt).toBe(expSeconds * 1000);
     expect(state.loading).toBeFalse();
   });
@@ -40,11 +45,16 @@ describe('authReducer', () => {
 
     const state = authReducer(
       initialAuthState,
-      AuthActions.sessionRestored({ user: { id: '1' } as any, token }),
+      AuthActions.sessionRestored({
+        user: { id: '1' } as any,
+        token,
+        refreshToken: 'refresh-1',
+      }),
     );
 
     expect(state.isAuthenticated).toBeTrue();
     expect(state.token).toBe(token);
+    expect(state.refreshToken).toBe('refresh-1');
     expect(state.tokenExpiresAt).toBe(expSeconds * 1000);
     expect(state.loading).toBeFalse();
   });
@@ -63,6 +73,7 @@ describe('authReducer', () => {
       {
         user: { id: '1' } as any,
         token: 'abc',
+        refreshToken: 'refresh-abc',
         tokenExpiresAt: Date.now() + 1000,
         loading: false,
         isAuthenticated: true,
@@ -72,14 +83,16 @@ describe('authReducer', () => {
 
     expect(state.user).toBeUndefined();
     expect(state.token).toBeUndefined();
+    expect(state.refreshToken).toBeUndefined();
     expect(state.tokenExpiresAt).toBeUndefined();
     expect(state.isAuthenticated).toBeFalse();
   });
 
-  it('should update the token and expiry on refreshTokenSuccess', () => {
+  it('should update the token, refresh token, and expiry on refreshTokenSuccess', () => {
     const startState = {
       user: { id: '1' } as any,
       token: 'stale',
+      refreshToken: 'refresh-stale',
       tokenExpiresAt: 1,
       loading: false,
       isAuthenticated: true,
@@ -87,10 +100,14 @@ describe('authReducer', () => {
 
     const state = authReducer(
       startState,
-      AuthActions.refreshTokenSuccess({ token: 'fresh' }),
+      AuthActions.refreshTokenSuccess({
+        token: 'fresh',
+        refreshToken: 'refresh-fresh',
+      }),
     );
 
     expect(state.token).toBe('fresh');
+    expect(state.refreshToken).toBe('refresh-fresh');
     expect(state.isAuthenticated).toBeTrue();
     expect(state.tokenExpiresAt).toBeGreaterThan(1);
   });
@@ -99,9 +116,9 @@ describe('authReducer', () => {
     const state = authReducer(
       initialAuthState,
       AuthActions.updateProfile({
+        userId: '1',
         firstName: 'Ava',
         lastName: 'Morales',
-        username: 'ava',
         email: 'ava@example.com',
       }),
     );
@@ -140,6 +157,7 @@ describe('authReducer', () => {
     const startState = {
       user: { id: '1' } as any,
       token: 'stale',
+      refreshToken: 'refresh-stale',
       tokenExpiresAt: 1,
       loading: false,
       isAuthenticated: true,

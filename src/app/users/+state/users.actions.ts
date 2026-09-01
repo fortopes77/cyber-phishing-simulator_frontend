@@ -1,19 +1,21 @@
-import { createActionGroup, emptyProps, props } from '@ngrx/store';
-import { UserAccount } from './user-account.model';
+import { createActionGroup, props } from '@ngrx/store';
+import { CreateUserPayload, UpdateUserPayload, UserAccount } from './user-account.model';
 
 export const UsersActions = createActionGroup({
   source: 'Users',
   events: {
-    fetchList: emptyProps(),
+    // organisationId is required - GET /users/learners is scoped to one
+    // organisation and has no "list everyone" mode.
+    fetchList: props<{ organisationId: number }>(),
     fetchListSuccess: props<{ users: UserAccount[] }>(),
     fetchListFailure: props<{ error: string }>(),
     fetchUserDetails: props<{ userId: string }>(),
     fetchUserDetailsSuccess: props<{ user: UserAccount }>(),
     fetchUserDetailsFailure: props<{ error: string }>(),
-    createUser: props<{ user: Partial<UserAccount> }>(),
+    createUser: props<{ user: CreateUserPayload }>(),
     createUserSuccess: props<{ user: UserAccount }>(),
     createUserFailure: props<{ error: string }>(),
-    updateUser: props<{ userId: string; updatedUser: Partial<UserAccount> }>(),
+    updateUser: props<{ userId: string; updatedUser: UpdateUserPayload }>(),
     updateUserSuccess: props<{ user: UserAccount }>(),
     updateUserFailure: props<{ error: string }>(),
     deleteUser: props<{ userId: string }>(),

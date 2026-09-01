@@ -1,7 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, Validators } from '@angular/forms';
 import { FormFieldErrorComponent } from './form-field-error.component';
-import { emailValidator, numberValidator } from '../../validators/pattern.validators';
+import {
+  emailValidator,
+  numberValidator,
+  passwordComplexityValidator,
+} from '../../validators/pattern.validators';
 
 describe('FormFieldErrorComponent', () => {
   let component: FormFieldErrorComponent;
@@ -63,6 +67,17 @@ describe('FormFieldErrorComponent', () => {
     component.label = 'Code';
 
     expect(component.message).toBe('Code must be 3 characters or fewer.');
+  });
+
+  it('should show a password-complexity message matching the backend rule', () => {
+    const control = new FormControl('Password1', passwordComplexityValidator());
+    control.markAsTouched();
+    component.control = control;
+    component.label = 'Password';
+
+    expect(component.message).toBe(
+      "Password must include at least 1 number and 1 special character (!@#$%*?).",
+    );
   });
 
   it('should clear the message once the control becomes valid', () => {

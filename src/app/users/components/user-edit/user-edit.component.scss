@@ -39,7 +39,19 @@
     border-radius: 8px;
     font: inherit;
     box-sizing: border-box;
+
+    &:disabled {
+      background: #f1f3f7;
+      color: #6b7385;
+      cursor: not-allowed;
+    }
   }
+}
+
+.field-hint {
+  font-weight: 400;
+  font-size: 0.8rem;
+  color: #6b7385;
 }
 
 .actions {

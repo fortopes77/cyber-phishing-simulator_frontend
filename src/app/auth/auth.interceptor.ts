@@ -7,7 +7,7 @@ import { Store } from '@ngrx/store';
 import { catchError, switchMap, take, throwError } from 'rxjs';
 import { AuthService } from './auth.service';
 import { AuthActions } from './+state/auth.actions';
-import { selectToken } from './+state/auth.selectors';
+import { selectToken, selectRefreshToken } from './+state/auth.selectors';
 
 // Requests to these endpoints must never be retried through the refresh
 // flow, or a bad login/refresh could recurse into itself.
@@ -36,6 +36,12 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     .pipe(take(1))
     .subscribe((value) => (token = value));
 
+  let refreshToken: string | undefined;
+  store
+    .select(selectRefreshToken)
+    .pipe(take(1))
+    .subscribe((value) => (refreshToken = value));
+
   const authorizedReq = token
     ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
     : req;
@@ -49,10 +55,13 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         return throwError(() => error);
       }
 
-      return authService.refreshToken(token).pipe(
+      return authService.refreshToken(refreshToken).pipe(
         switchMap((response) => {
           store.dispatch(
-            AuthActions.refreshTokenSuccess({ token: response.token }),
+            AuthActions.refreshTokenSuccess({
+              token: response.token,
+              refreshToken: response.refreshToken,
+            }),
           );
 
           const retryReq = req.clone({

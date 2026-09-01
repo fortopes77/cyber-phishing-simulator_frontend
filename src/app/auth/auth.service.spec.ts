@@ -36,46 +36,43 @@ describe('AuthService', () => {
       credential: 'user@example.com',
       password: 'password',
     });
-    req.flush({ user: { id: '1' }, token: 'abc' });
+    req.flush({ user: { id: '1' }, token: 'abc', refreshToken: 'refresh-abc' });
   });
 
-  it('should POST the given token to the refresh endpoint', () => {
-    service.refreshToken('stale-token').subscribe();
+  it('should POST the given refresh token to the refresh endpoint', () => {
+    service.refreshToken('stale-refresh-token').subscribe();
 
     const req = httpMock.expectOne(`${environment.apiUrl}auth/refresh`);
     expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual({ token: 'stale-token' });
-    req.flush({ token: 'fresh-token' });
+    expect(req.request.body).toEqual({ refreshToken: 'stale-refresh-token' });
+    req.flush({ token: 'fresh-token', refreshToken: 'fresh-refresh-token' });
   });
 
-  it('should send a null token to refresh when none is supplied', () => {
+  it('should send a null refresh token to refresh when none is supplied', () => {
     service.refreshToken(undefined).subscribe();
 
     const req = httpMock.expectOne(`${environment.apiUrl}auth/refresh`);
-    expect(req.request.body).toEqual({ token: null });
-    req.flush({ token: 'fresh-token' });
+    expect(req.request.body).toEqual({ refreshToken: null });
+    req.flush({ token: 'fresh-token', refreshToken: 'fresh-refresh-token' });
   });
 
-  it('should PATCH the username and email to the profile endpoint', () => {
-    service.updateProfile('Ava', 'Morales', 'ava', 'ava@example.com').subscribe();
+  it('should PATCH the name and email to the users/{id} endpoint', () => {
+    service.updateProfile('1', 'Ava', 'Morales', 'ava@example.com').subscribe();
 
-    const req = httpMock.expectOne(`${environment.apiUrl}auth/profile`);
+    const req = httpMock.expectOne(`${environment.apiUrl}users/1`);
     expect(req.request.method).toBe('PATCH');
     expect(req.request.body).toEqual({
       firstName: 'Ava',
       lastName: 'Morales',
-      username: 'ava',
       email: 'ava@example.com',
     });
     req.flush({
-      user: {
-        id: '1',
-        firstName: 'Ava',
-        lastName: 'Morales',
-        username: 'ava',
-        email: 'ava@example.com',
-        role: 'user',
-      },
+      id: '1',
+      firstName: 'Ava',
+      lastName: 'Morales',
+      username: 'ava',
+      email: 'ava@example.com',
+      role: 'LEARNER',
     });
   });
 
@@ -115,8 +112,20 @@ describe('normalizeUser', () => {
     expect(user.role).toBe('user');
   });
 
+  it('should map the backend LEARNER role to the app\'s "user" literal', () => {
+    const user = normalizeUser({
+      id: '1',
+      username: 'jane',
+      email: 'jane@example.com',
+      role: 'LEARNER',
+    });
+
+    expect(user.role).toBe('user');
+  });
+
   it('should handle mixed-case roles', () => {
     expect(normalizeUser({ role: 'Trainer' }).role).toBe('trainer');
+    expect(normalizeUser({ role: 'Learner' }).role).toBe('user');
   });
 
   it('should not blow up when role is missing', () => {

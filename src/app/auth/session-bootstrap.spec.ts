@@ -16,14 +16,18 @@ describe('rehydrateSessionOnBootstrap', () => {
   });
 
   it('should dispatch sessionRestored when a persisted session exists', () => {
-    saveSession(user, 'abc123');
+    saveSession(user, 'abc123', 'refresh-abc123');
     const dispatch = jasmine.createSpy('dispatch');
     const storeStub = { dispatch } as any;
 
     rehydrateSessionOnBootstrap(storeStub)();
 
     expect(dispatch).toHaveBeenCalledWith(
-      AuthActions.sessionRestored({ user, token: 'abc123' }),
+      AuthActions.sessionRestored({
+        user,
+        token: 'abc123',
+        refreshToken: 'refresh-abc123',
+      }),
     );
   });
 

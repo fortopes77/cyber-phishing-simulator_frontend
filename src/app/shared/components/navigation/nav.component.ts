@@ -111,15 +111,16 @@ export class NavComponent implements OnInit, OnDestroy {
     this.profileModalOpen = false;
   }
 
-  saveProfile(payload: {
-    firstName: string;
-    lastName: string;
-    username: string;
-    email: string;
-  }): void {
+  saveProfile(payload: { firstName: string; lastName: string; email: string }): void {
+    if (!this.currentUser) {
+      return;
+    }
+
     this.profileSaving = true;
     this.profileSaved = false;
-    this.store.dispatch(AuthActions.updateProfile(payload));
+    this.store.dispatch(
+      AuthActions.updateProfile({ userId: this.currentUser.id, ...payload }),
+    );
   }
 
   savePassword(payload: { currentPassword: string; newPassword: string }): void {

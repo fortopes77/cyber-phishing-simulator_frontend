@@ -3,7 +3,7 @@ import { catchError, map, mergeMap, of } from 'rxjs';
 import { Injectable } from '@angular/core';
 import { UsersActions } from './users.actions';
 import { UsersService } from './users.service';
-import { UserAccount } from './user-account.model';
+import { normalizeUserAccount } from './user-account.model';
 
 @Injectable()
 export class UsersEffects {
@@ -15,11 +15,13 @@ export class UsersEffects {
   fetchUsers$ = createEffect(() =>
     this.actions$.pipe(
       ofType(UsersActions.fetchList),
-      mergeMap(() =>
-        this.usersService.getUsers().pipe(
-          map((response: UserAccount[] | { users: UserAccount[] }) =>
+      mergeMap(({ organisationId }) =>
+        this.usersService.getUsers(organisationId).pipe(
+          map((response: any) =>
             UsersActions.fetchListSuccess({
-              users: Array.isArray(response) ? response : response.users,
+              users: (Array.isArray(response) ? response : response.users).map(
+                normalizeUserAccount,
+              ),
             }),
           ),
           catchError((error) =>
@@ -39,8 +41,8 @@ export class UsersEffects {
       ofType(UsersActions.fetchUserDetails),
       mergeMap((action) =>
         this.usersService.getUserDetails(action.userId).pipe(
-          map((user: UserAccount) =>
-            UsersActions.fetchUserDetailsSuccess({ user }),
+          map((user: any) =>
+            UsersActions.fetchUserDetailsSuccess({ user: normalizeUserAccount(user) }),
           ),
           catchError((error) =>
             of(
@@ -59,7 +61,9 @@ export class UsersEffects {
       ofType(UsersActions.createUser),
       mergeMap((action) =>
         this.usersService.createUser(action.user).pipe(
-          map((user: UserAccount) => UsersActions.createUserSuccess({ user })),
+          map((user: any) =>
+            UsersActions.createUserSuccess({ user: normalizeUserAccount(user) }),
+          ),
           catchError((error) =>
             of(
               UsersActions.createUserFailure({
@@ -77,7 +81,9 @@ export class UsersEffects {
       ofType(UsersActions.updateUser),
       mergeMap((action) =>
         this.usersService.updateUser(action.userId, action.updatedUser).pipe(
-          map((user: UserAccount) => UsersActions.updateUserSuccess({ user })),
+          map((user: any) =>
+            UsersActions.updateUserSuccess({ user: normalizeUserAccount(user) }),
+          ),
           catchError((error) =>
             of(
               UsersActions.updateUserFailure({

@@ -2,6 +2,7 @@ import { FormControl } from '@angular/forms';
 import {
   emailValidator,
   numberValidator,
+  passwordComplexityValidator,
   textValidator,
 } from './pattern.validators';
 
@@ -53,6 +54,37 @@ describe('pattern.validators', () => {
     it('should fail text containing disallowed characters', () => {
       control.setValue('<script>alert(1)</script>');
       expect(control.errors).toEqual({ text: true });
+    });
+  });
+
+  describe('passwordComplexityValidator', () => {
+    const control = new FormControl('', passwordComplexityValidator());
+
+    it('should pass a password with a digit and a special character', () => {
+      control.setValue('Password1!');
+      expect(control.errors).toBeNull();
+    });
+
+    it('should fail a password missing a digit', () => {
+      control.setValue('Password!');
+      expect(control.errors).toEqual({ passwordComplexity: true });
+    });
+
+    it('should fail a password missing a special character', () => {
+      control.setValue('Password1');
+      expect(control.errors).toEqual({ passwordComplexity: true });
+    });
+
+    it('should accept each special character the backend allows', () => {
+      for (const char of ['!', '@', '#', '$', '%', '*', '?']) {
+        control.setValue(`Password1${char}`);
+        expect(control.errors).toBeNull();
+      }
+    });
+
+    it('should not flag an empty value (leave that to Validators.required)', () => {
+      control.setValue('');
+      expect(control.errors).toBeNull();
     });
   });
 });

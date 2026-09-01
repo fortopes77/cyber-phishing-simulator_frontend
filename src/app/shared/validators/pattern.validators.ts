@@ -13,6 +13,11 @@ export const NUMBER_PATTERN = /^-?\d+(\.\d+)?$/;
 // and common punctuation - blocks stray control/markup characters without
 // being so strict it rejects normal scenario copy.
 export const TEXT_PATTERN = /^[\w\s.,'"!?()&/@:;-]*$/;
+// Mirrors the backend's password-complexity rule (class-validator, on
+// RegisterUserDto/CreateUserDto/UpdateUserDto's password field): at least
+// one digit and one of !@#$%*? - checked here too so a bad password is
+// rejected client-side instead of round-tripping to a 400.
+export const PASSWORD_COMPLEXITY_PATTERN = /^(?=.*\d)(?=.*[!@#$%*?]).+$/;
 
 function patternValidator(pattern: RegExp, errorKey: string): ValidatorFn {
   return (control: AbstractControl): ValidationErrors | null => {
@@ -35,4 +40,8 @@ export function numberValidator(): ValidatorFn {
 
 export function textValidator(): ValidatorFn {
   return patternValidator(TEXT_PATTERN, 'text');
+}
+
+export function passwordComplexityValidator(): ValidatorFn {
+  return patternValidator(PASSWORD_COMPLEXITY_PATTERN, 'passwordComplexity');
 }

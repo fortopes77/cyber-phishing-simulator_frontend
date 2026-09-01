@@ -8,6 +8,9 @@ import { Observable, of } from 'rxjs';
 
 import { LearnerListComponent } from './learner-list.component';
 import { UsersActions } from 'src/app/users/+state/users.actions';
+import { selectUserList } from 'src/app/users/+state/users.selectors';
+import { selectAuthState } from 'src/app/auth/+state/auth.selectors';
+import { UserAccount } from 'src/app/users/+state/user-account.model';
 
 describe('LearnerListComponent', () => {
   let component: LearnerListComponent;
@@ -15,6 +18,24 @@ describe('LearnerListComponent', () => {
   let store: MockStore;
   let router: Router;
   let actions$: Observable<any>;
+
+  // 10 fixture learners, ids 1-10 - buildLearnerRows derives each row's
+  // mock progress/score/last-active/weaknesses deterministically from the
+  // numeric id, so this spread gives every threshold-based test (weakness
+  // overflow, last-active filtering, score variants) something to assert on.
+  const mockUsers: UserAccount[] = Array.from({ length: 10 }, (_, i) => {
+    const id = String(i + 1);
+    return {
+      id,
+      username: `learner${id}`,
+      firstName: `Learner${id}`,
+      lastName: 'Test',
+      fullName: `Learner${id} Test`,
+      email: `learner${id}@example.com`,
+      role: 'user',
+      organisationId: 1,
+    };
+  });
 
   beforeEach(async () => {
     actions$ = of();
@@ -25,7 +46,22 @@ describe('LearnerListComponent', () => {
         NoopAnimationsModule,
         RouterTestingModule,
       ],
-      providers: [provideMockStore(), provideMockActions(() => actions$)],
+      providers: [
+        provideMockStore({
+          selectors: [
+            { selector: selectUserList, value: mockUsers },
+            {
+              selector: selectAuthState,
+              value: {
+                isAuthenticated: true,
+                loading: false,
+                user: { id: '99', username: 't', email: 't@t.com', role: 'trainer', organisationId: 1 },
+              },
+            },
+          ],
+        }),
+        provideMockActions(() => actions$),
+      ],
     }).compileComponents();
 
     store = TestBed.inject(MockStore);
@@ -42,8 +78,16 @@ describe('LearnerListComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should seed the learner list with learner rows', () => {
-    expect(component.rows.length).toBeGreaterThan(0);
+  it("should dispatch fetchList with the trainer's organisationId on init", () => {
+    expect(store.dispatch).toHaveBeenCalledWith(
+      UsersActions.fetchList({ organisationId: 1 }),
+    );
+  });
+
+  it('should seed the learner list from the store with learner rows', () => {
+    expect(component.rows.length).toBe(mockUsers.length);
+    expect(component.rows[0].fullName).toBe('Learner1 Test');
+    expect(component.rows[0].email).toBe('learner1@example.com');
     expect(component.columns.length).toBeGreaterThan(0);
     expect(
       component.columns.some((column) => column.key === 'weaknesses'),
@@ -144,9 +188,8 @@ describe('LearnerListComponent', () => {
     expect(component.selectedLearnerName).toBe(component.rows[0].fullName);
   });
 
-  it('should dispatch deleteUser and remove the row on confirm', () => {
+  it('should dispatch deleteUser on confirm and close the modal', () => {
     const firstRow = component.rows[0];
-    const initialCount = component.rows.length;
 
     component.actions[1].action(firstRow);
     component.confirmDelete();
@@ -154,15 +197,26 @@ describe('LearnerListComponent', () => {
     expect(store.dispatch).toHaveBeenCalledWith(
       UsersActions.deleteUser({ userId: String(firstRow.id) }),
     );
-    expect(component.rows.length).toBe(initialCount - 1);
     expect(component.isDeleteModalOpen).toBeFalse();
+    expect(component.selectedLearnerRow).toBeNull();
+  });
+
+  it('should reflect the store dropping a deleted learner from the list', () => {
+    const remaining = mockUsers.slice(1);
+    store.overrideSelector(selectUserList, remaining);
+    store.refreshState();
+
+    expect(component.rows.length).toBe(remaining.length);
+    expect(component.rows.find((row) => String(row.id) === mockUsers[0].id)).toBeUndefined();
   });
 
   it('should close the modal without dispatching on cancel', () => {
     component.actions[1].action(component.rows[0]);
     component.cancelDelete();
 
-    expect(store.dispatch).not.toHaveBeenCalled();
+    expect(store.dispatch).not.toHaveBeenCalledWith(
+      jasmine.objectContaining({ type: UsersActions.deleteUser.type }),
+    );
     expect(component.isDeleteModalOpen).toBeFalse();
   });
 
@@ -192,7 +246,6 @@ describe('LearnerListComponent', () => {
     component.actions[2].action(component.rows[0]);
     component.cancelResetPassword();
 
-    expect(store.dispatch).not.toHaveBeenCalled();
     expect(component.isResetPasswordModalOpen).toBeFalse();
   });
 

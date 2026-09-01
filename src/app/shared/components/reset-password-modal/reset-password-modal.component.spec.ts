@@ -37,19 +37,24 @@ describe('ResetPasswordModalComponent', () => {
   });
 
   it('should flag a mismatch between new and confirm password', () => {
-    component.form.setValue({ newPassword: 'password1', confirmPassword: 'password2' });
+    component.form.setValue({ newPassword: 'Password1!', confirmPassword: 'Password2!' });
     expect(component.form.errors?.['passwordMismatch']).toBeTrue();
+  });
+
+  it('should reject a password missing the required number/special character', () => {
+    component.form.setValue({ newPassword: 'longenough', confirmPassword: 'longenough' });
+    expect(component.form.get('newPassword')?.errors?.['passwordComplexity']).toBeTrue();
   });
 
   it('should emit submitted with the new password when valid', () => {
     component.isOpen = true;
     fixture.detectChanges();
     spyOn(component.submitted, 'emit');
-    component.form.setValue({ newPassword: 'longenough1', confirmPassword: 'longenough1' });
+    component.form.setValue({ newPassword: 'longenough1!', confirmPassword: 'longenough1!' });
 
     component.onSubmit();
 
-    expect(component.submitted.emit).toHaveBeenCalledWith({ newPassword: 'longenough1' });
+    expect(component.submitted.emit).toHaveBeenCalledWith({ newPassword: 'longenough1!' });
   });
 
   it('should emit cancelled when the cancel button is clicked', () => {

@@ -18,25 +18,34 @@ describe('session-storage.util', () => {
   });
 
   it('should round-trip a saved session', () => {
-    saveSession(user, 'abc123');
+    saveSession(user, 'abc123', 'refresh-abc123');
 
-    expect(loadSession()).toEqual({ user, token: 'abc123' });
+    expect(loadSession()).toEqual({
+      user,
+      token: 'abc123',
+      refreshToken: 'refresh-abc123',
+    });
   });
 
-  it('should store only user and token, nothing else', () => {
-    saveSession(user, 'abc123');
+  it('should store only user, token, and refreshToken, nothing else', () => {
+    saveSession(user, 'abc123', 'refresh-abc123');
 
     const raw = JSON.parse(localStorage.getItem('auth_session') as string);
-    expect(Object.keys(raw).sort()).toEqual(['token', 'user']);
+    expect(Object.keys(raw).sort()).toEqual([
+      'refreshToken',
+      'token',
+      'user',
+    ]);
   });
 
   it('should overwrite a previously saved session', () => {
-    saveSession(user, 'abc123');
-    saveSession({ ...user, id: '2' }, 'fresh-token');
+    saveSession(user, 'abc123', 'refresh-abc123');
+    saveSession({ ...user, id: '2' }, 'fresh-token', 'fresh-refresh-token');
 
     expect(loadSession()).toEqual({
       user: { ...user, id: '2' },
       token: 'fresh-token',
+      refreshToken: 'fresh-refresh-token',
     });
   });
 
@@ -47,13 +56,25 @@ describe('session-storage.util', () => {
   });
 
   it('should return null when the stored value is missing a token', () => {
-    localStorage.setItem('auth_session', JSON.stringify({ user }));
+    localStorage.setItem(
+      'auth_session',
+      JSON.stringify({ user, refreshToken: 'refresh-abc123' }),
+    );
+
+    expect(loadSession()).toBeNull();
+  });
+
+  it('should return null when the stored value is missing a refresh token', () => {
+    localStorage.setItem(
+      'auth_session',
+      JSON.stringify({ user, token: 'abc123' }),
+    );
 
     expect(loadSession()).toBeNull();
   });
 
   it('should remove the stored session on clear', () => {
-    saveSession(user, 'abc123');
+    saveSession(user, 'abc123', 'refresh-abc123');
 
     clearSession();
 
