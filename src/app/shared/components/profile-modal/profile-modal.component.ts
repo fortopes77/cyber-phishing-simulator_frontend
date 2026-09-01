@@ -55,10 +55,10 @@ export class ProfileModalComponent implements OnChanges {
     lastName: string;
     email: string;
   }>();
-  @Output() passwordSubmitted = new EventEmitter<{
-    currentPassword: string;
-    newPassword: string;
-  }>();
+  // No `currentPassword`: this backend has no route to verify it before
+  // changing a password (PATCH /users/{id} - the only self-service password
+  // change endpoint - rejects any field UpdateUserDto doesn't declare).
+  @Output() passwordSubmitted = new EventEmitter<{ newPassword: string }>();
 
   private readonly fb = inject(FormBuilder);
 
@@ -74,7 +74,6 @@ export class ProfileModalComponent implements OnChanges {
 
   readonly passwordForm = this.fb.nonNullable.group(
     {
-      currentPassword: ['', [Validators.required]],
       newPassword: [
         '',
         [Validators.required, Validators.minLength(MIN_PASSWORD_LENGTH), passwordComplexityValidator()],
@@ -95,7 +94,7 @@ export class ProfileModalComponent implements OnChanges {
     }
 
     if (changes['isOpen'] && this.isOpen) {
-      this.passwordForm.reset({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      this.passwordForm.reset({ newPassword: '', confirmPassword: '' });
     }
   }
 
@@ -115,8 +114,8 @@ export class ProfileModalComponent implements OnChanges {
       return;
     }
 
-    const { currentPassword, newPassword } = this.passwordForm.getRawValue();
-    this.passwordSubmitted.emit({ currentPassword, newPassword });
+    const { newPassword } = this.passwordForm.getRawValue();
+    this.passwordSubmitted.emit({ newPassword });
   }
 
   onClose(): void {

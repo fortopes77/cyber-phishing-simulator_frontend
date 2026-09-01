@@ -8,6 +8,7 @@ import { Observable, of } from 'rxjs';
 import { UserEditComponent } from './user-edit.component';
 import { UsersActions } from '../../+state/users.actions';
 import { selectUser } from '../../+state/users.selectors';
+import { AuthActions } from 'src/app/auth/+state/auth.actions';
 
 describe('UserEditComponent', () => {
   let component: UserEditComponent;
@@ -251,5 +252,80 @@ describe('UserEditComponent', () => {
 
     expect(component.reminderSending).toBeFalse();
     expect(component.reminderError).toBe('Failed to send reminder email');
+  });
+
+  describe('forgot password', () => {
+    const loadedUser = {
+      id: 'u_1',
+      username: 'ava.morales',
+      firstName: 'Ava',
+      lastName: 'Morales',
+      fullName: 'Ava Morales',
+      email: 'ava.morales@example.com',
+      role: 'user' as const,
+    };
+
+    it('should show the button in edit mode but not in create mode', () => {
+      expect(fixture.nativeElement.textContent).toContain('Send Password Reset Email');
+
+      component.isCreateMode = true;
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.textContent).not.toContain('Send Password Reset Email');
+    });
+
+    it("should dispatch forgotPassword with the loaded user's email on confirm", () => {
+      store.overrideSelector(selectUser, loadedUser);
+      store.refreshState();
+
+      component.openForgotPasswordModal();
+      component.confirmForgotPassword();
+
+      expect(component.forgotPasswordSending).toBeTrue();
+      expect(store.dispatch).toHaveBeenCalledWith(
+        AuthActions.forgotPassword({ email: 'ava.morales@example.com' }),
+      );
+    });
+
+    it('should not dispatch when no user has been loaded yet', () => {
+      component.confirmForgotPassword();
+
+      expect(store.dispatch).not.toHaveBeenCalled();
+    });
+
+    it('should close the forgot-password modal without dispatching on cancel', () => {
+      component.openForgotPasswordModal();
+      component.cancelForgotPassword();
+
+      expect(store.dispatch).not.toHaveBeenCalled();
+      expect(component.isForgotPasswordModalOpen).toBeFalse();
+    });
+
+    it('should clear sending and close the modal when forgotPasswordSuccess is seen', () => {
+      actions$ = of(AuthActions.forgotPasswordSuccess());
+      fixture = TestBed.createComponent(UserEditComponent);
+      component = fixture.componentInstance;
+      component.isForgotPasswordModalOpen = true;
+      component.forgotPasswordSending = true;
+
+      fixture.detectChanges();
+
+      expect(component.forgotPasswordSending).toBeFalse();
+      expect(component.isForgotPasswordModalOpen).toBeFalse();
+    });
+
+    it('should surface the error when forgotPasswordFailure is seen', () => {
+      actions$ = of(
+        AuthActions.forgotPasswordFailure({ error: 'Failed to send password reset email' }),
+      );
+      fixture = TestBed.createComponent(UserEditComponent);
+      component = fixture.componentInstance;
+      component.forgotPasswordSending = true;
+
+      fixture.detectChanges();
+
+      expect(component.forgotPasswordSending).toBeFalse();
+      expect(component.forgotPasswordError).toBe('Failed to send password reset email');
+    });
   });
 });

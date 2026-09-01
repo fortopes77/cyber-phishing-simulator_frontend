@@ -22,7 +22,9 @@ describe('AuthEffects', () => {
       'login',
       'refreshToken',
       'updateProfile',
-      'resetPassword',
+      'changePassword',
+      'logout',
+      'forgotPassword',
     ]);
 
     TestBed.configureTestingModule({
@@ -98,10 +100,46 @@ describe('AuthEffects', () => {
     });
   });
 
-  it('should dispatch logoutSuccess on logout', (done) => {
+  it('should revoke the refresh token via the backend and dispatch logoutSuccess', (done) => {
+    store.overrideSelector(selectAuthState, {
+      refreshToken: 'stale-refresh-token',
+      loading: false,
+      isAuthenticated: true,
+    });
+    store.refreshState();
+    authService.logout.and.returnValue(of({}));
     actions$ = of(AuthActions.logout());
 
     effects.logout$.subscribe((action) => {
+      expect(authService.logout).toHaveBeenCalledWith('stale-refresh-token');
+      expect(action).toEqual(AuthActions.logoutSuccess());
+      done();
+    });
+  });
+
+  it('should still dispatch logoutSuccess when the backend logout call fails', (done) => {
+    store.overrideSelector(selectAuthState, {
+      refreshToken: 'stale-refresh-token',
+      loading: false,
+      isAuthenticated: true,
+    });
+    store.refreshState();
+    authService.logout.and.returnValue(throwError(() => new Error('Network error')));
+    actions$ = of(AuthActions.logout());
+
+    effects.logout$.subscribe((action) => {
+      expect(action).toEqual(AuthActions.logoutSuccess());
+      done();
+    });
+  });
+
+  it('should dispatch logoutSuccess without calling the backend when there is no refresh token', (done) => {
+    store.overrideSelector(selectAuthState, { loading: false, isAuthenticated: false });
+    store.refreshState();
+    actions$ = of(AuthActions.logout());
+
+    effects.logout$.subscribe((action) => {
+      expect(authService.logout).not.toHaveBeenCalled();
       expect(action).toEqual(AuthActions.logoutSuccess());
       done();
     });
@@ -209,30 +247,51 @@ describe('AuthEffects', () => {
     });
   });
 
-  it('should dispatch resetPasswordSuccess on successful reset', (done) => {
-    authService.resetPassword.and.returnValue(of({}));
-    actions$ = of(
-      AuthActions.resetPassword({ currentPassword: 'old', newPassword: 'new' }),
-    );
+  it('should dispatch changePasswordSuccess on successful change', (done) => {
+    authService.changePassword.and.returnValue(of({}));
+    actions$ = of(AuthActions.changePassword({ userId: '1', newPassword: 'new' }));
 
-    effects.resetPassword$.subscribe((action) => {
-      expect(authService.resetPassword).toHaveBeenCalledWith('old', 'new');
-      expect(action).toEqual(AuthActions.resetPasswordSuccess());
+    effects.changePassword$.subscribe((action) => {
+      expect(authService.changePassword).toHaveBeenCalledWith('1', 'new');
+      expect(action).toEqual(AuthActions.changePasswordSuccess());
       done();
     });
   });
 
-  it('should dispatch resetPasswordFailure on reset error', (done) => {
-    authService.resetPassword.and.returnValue(
-      throwError(() => new Error('Current password is incorrect')),
+  it('should dispatch changePasswordFailure on change error', (done) => {
+    authService.changePassword.and.returnValue(
+      throwError(() => new Error('Failed to change password')),
     );
-    actions$ = of(
-      AuthActions.resetPassword({ currentPassword: 'wrong', newPassword: 'new' }),
-    );
+    actions$ = of(AuthActions.changePassword({ userId: '1', newPassword: 'new' }));
 
-    effects.resetPassword$.subscribe((action) => {
+    effects.changePassword$.subscribe((action) => {
       expect(action).toEqual(
-        AuthActions.resetPasswordFailure({ error: 'Current password is incorrect' }),
+        AuthActions.changePasswordFailure({ error: 'Failed to change password' }),
+      );
+      done();
+    });
+  });
+
+  it('should dispatch forgotPasswordSuccess on successful request', (done) => {
+    authService.forgotPassword.and.returnValue(of({}));
+    actions$ = of(AuthActions.forgotPassword({ email: 'ava@example.com' }));
+
+    effects.forgotPassword$.subscribe((action) => {
+      expect(authService.forgotPassword).toHaveBeenCalledWith('ava@example.com');
+      expect(action).toEqual(AuthActions.forgotPasswordSuccess());
+      done();
+    });
+  });
+
+  it('should dispatch forgotPasswordFailure on error', (done) => {
+    authService.forgotPassword.and.returnValue(
+      throwError(() => new Error('Failed to send password reset email')),
+    );
+    actions$ = of(AuthActions.forgotPassword({ email: 'ava@example.com' }));
+
+    effects.forgotPassword$.subscribe((action) => {
+      expect(action).toEqual(
+        AuthActions.forgotPasswordFailure({ error: 'Failed to send password reset email' }),
       );
       done();
     });

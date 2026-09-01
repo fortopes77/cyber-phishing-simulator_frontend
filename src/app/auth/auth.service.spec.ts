@@ -76,16 +76,38 @@ describe('AuthService', () => {
     });
   });
 
-  it('should POST the current and new password to the reset-password endpoint', () => {
-    service.resetPassword('old-password', 'new-password').subscribe();
+  it('should PATCH just the new password to the users/{id} endpoint', () => {
+    service.changePassword('1', 'new-password').subscribe();
 
-    const req = httpMock.expectOne(`${environment.apiUrl}auth/reset-password`);
-    expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual({
-      currentPassword: 'old-password',
-      newPassword: 'new-password',
+    const req = httpMock.expectOne(`${environment.apiUrl}users/1`);
+    expect(req.request.method).toBe('PATCH');
+    expect(req.request.body).toEqual({ password: 'new-password' });
+    req.flush({
+      id: '1',
+      firstName: 'Ava',
+      lastName: 'Morales',
+      username: 'ava',
+      email: 'ava@example.com',
+      role: 'LEARNER',
     });
-    req.flush({});
+  });
+
+  it('should POST the refresh token to the logout endpoint', () => {
+    service.logout('stale-refresh-token').subscribe();
+
+    const req = httpMock.expectOne(`${environment.apiUrl}auth/logout`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ refreshToken: 'stale-refresh-token' });
+    req.flush({ message: 'Logged out successfully' });
+  });
+
+  it('should POST the email to the forgot-password endpoint', () => {
+    service.forgotPassword('ava.morales@example.com').subscribe();
+
+    const req = httpMock.expectOne(`${environment.apiUrl}auth/forgot-password`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ email: 'ava.morales@example.com' });
+    req.flush({ message: 'If an account exists for this email, a reset link has been sent.' });
   });
 });
 

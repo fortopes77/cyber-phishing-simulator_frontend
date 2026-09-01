@@ -7,11 +7,13 @@ import { HeaderComponent } from 'src/app/shared/components/header/header.compone
 import { DashboardCardComponent } from 'src/app/shared/components/dashboard-card/dashboard-card.component';
 import { FormFieldErrorComponent } from 'src/app/shared/components/form-field-error/form-field-error.component';
 import { SendReminderModalComponent } from 'src/app/shared/components/send-reminder-modal/send-reminder-modal.component';
+import { ForgotPasswordModalComponent } from 'src/app/shared/components/forgot-password-modal/forgot-password-modal.component';
 import {
   emailValidator,
   passwordComplexityValidator,
   textValidator,
 } from 'src/app/shared/validators/pattern.validators';
+import { AuthActions } from 'src/app/auth/+state/auth.actions';
 import { UsersActions } from '../../+state/users.actions';
 import {
   selectUser,
@@ -33,6 +35,7 @@ const MIN_PASSWORD_LENGTH = 8;
     DashboardCardComponent,
     FormFieldErrorComponent,
     SendReminderModalComponent,
+    ForgotPasswordModalComponent,
   ],
   templateUrl: './user-edit.component.html',
   styleUrl: './user-edit.component.scss',
@@ -86,9 +89,19 @@ export class UserEditComponent implements OnInit {
   // before saving.
   isLearner = false;
 
+  // The account's email as loaded from the store - used for the forgot-
+  // password email rather than whatever's currently typed in the (possibly
+  // unsaved) email field, so a reset link is never sent to an address that
+  // hasn't actually been saved yet.
+  private loadedUserEmail: string | null = null;
+
   isSendReminderModalOpen = false;
   reminderSending = false;
   reminderError: string | null = null;
+
+  isForgotPasswordModalOpen = false;
+  forgotPasswordSending = false;
+  forgotPasswordError: string | null = null;
 
   ngOnInit(): void {
     this.isCreateMode = this.route.snapshot.url.some((segment) =>
@@ -100,6 +113,7 @@ export class UserEditComponent implements OnInit {
     this.subscribeToCreateSuccess();
     this.subscribeToUpdateSuccess();
     this.subscribeToReminderEmailResult();
+    this.subscribeToForgotPasswordResult();
 
     if (this.isCreateMode) {
       this.userForm
@@ -134,6 +148,7 @@ export class UserEditComponent implements OnInit {
       }
 
       this.isLearner = user.role === 'user';
+      this.loadedUserEmail = user.email ?? null;
       this.userForm.patchValue({
         username: user.username ?? '',
         firstName: user.firstName ?? '',
@@ -234,6 +249,41 @@ export class UserEditComponent implements OnInit {
       .subscribe(({ error }) => {
         this.reminderSending = false;
         this.reminderError = error;
+      });
+  }
+
+  openForgotPasswordModal(): void {
+    this.forgotPasswordError = null;
+    this.isForgotPasswordModalOpen = true;
+  }
+
+  confirmForgotPassword(): void {
+    if (!this.loadedUserEmail) {
+      return;
+    }
+
+    this.forgotPasswordSending = true;
+    this.store.dispatch(AuthActions.forgotPassword({ email: this.loadedUserEmail }));
+  }
+
+  cancelForgotPassword(): void {
+    this.isForgotPasswordModalOpen = false;
+    this.forgotPasswordError = null;
+  }
+
+  private subscribeToForgotPasswordResult(): void {
+    this.actions$
+      .pipe(ofType(AuthActions.forgotPasswordSuccess))
+      .subscribe(() => {
+        this.forgotPasswordSending = false;
+        this.isForgotPasswordModalOpen = false;
+      });
+
+    this.actions$
+      .pipe(ofType(AuthActions.forgotPasswordFailure))
+      .subscribe(({ error }) => {
+        this.forgotPasswordSending = false;
+        this.forgotPasswordError = error;
       });
   }
 }

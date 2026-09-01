@@ -44,7 +44,23 @@ export class AuthEffects {
   logout$ = createEffect(() =>
     this.actions$.pipe(
       ofType(AuthActions.logout),
-      map(() => AuthActions.logoutSuccess()),
+      withLatestFrom(this.store.select(selectAuthState)),
+      mergeMap(([, auth]) => {
+        // Nothing to revoke server-side if there's no refresh token (e.g.
+        // the session was already cleared) - go straight to a local logout.
+        if (!auth.refreshToken) {
+          return of(AuthActions.logoutSuccess());
+        }
+
+        return this.authService.logout(auth.refreshToken).pipe(
+          map(() => AuthActions.logoutSuccess()),
+          // Sign-out must still succeed locally even if the server-side
+          // revoke fails (network error, already-expired/rotated token,
+          // etc.) - the user expects to be logged out of this app either
+          // way, regardless of what the backend call did.
+          catchError(() => of(AuthActions.logoutSuccess())),
+        );
+      }),
     ),
   );
 
@@ -93,16 +109,34 @@ export class AuthEffects {
     ),
   );
 
-  resetPassword$ = createEffect(() =>
+  changePassword$ = createEffect(() =>
     this.actions$.pipe(
-      ofType(AuthActions.resetPassword),
-      mergeMap(({ currentPassword, newPassword }) =>
-        this.authService.resetPassword(currentPassword, newPassword).pipe(
-          map(() => AuthActions.resetPasswordSuccess()),
+      ofType(AuthActions.changePassword),
+      mergeMap(({ userId, newPassword }) =>
+        this.authService.changePassword(userId, newPassword).pipe(
+          map(() => AuthActions.changePasswordSuccess()),
           catchError((error) =>
             of(
-              AuthActions.resetPasswordFailure({
-                error: error.message || 'Failed to reset password',
+              AuthActions.changePasswordFailure({
+                error: error.message || 'Failed to change password',
+              }),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+
+  forgotPassword$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(AuthActions.forgotPassword),
+      mergeMap(({ email }) =>
+        this.authService.forgotPassword(email).pipe(
+          map(() => AuthActions.forgotPasswordSuccess()),
+          catchError((error) =>
+            of(
+              AuthActions.forgotPasswordFailure({
+                error: error.message || 'Failed to send password reset email',
               }),
             ),
           ),

@@ -124,4 +124,54 @@ export class ModulesEffects {
       ),
     ),
   );
+
+  assignLearner$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(ModulesActions.assignLearner),
+      mergeMap((action) =>
+        this.modulesService.assignLearner(action.moduleId, action.userId).pipe(
+          map(() =>
+            ModulesActions.assignLearnerSuccess({
+              moduleId: action.moduleId,
+              userId: action.userId,
+            }),
+          ),
+          catchError((error) =>
+            of(
+              ModulesActions.assignLearnerFailure({
+                userId: action.userId,
+                error: error.message || 'Failed to assign learner',
+              }),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+
+  unassignLearner$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(ModulesActions.unassignLearner),
+      mergeMap((action) =>
+        this.modulesService
+          .unassignLearner(action.moduleId, action.userId)
+          .pipe(
+            map(() =>
+              ModulesActions.unassignLearnerSuccess({
+                moduleId: action.moduleId,
+                userId: action.userId,
+              }),
+            ),
+            catchError((error) =>
+              of(
+                ModulesActions.unassignLearnerFailure({
+                  userId: action.userId,
+                  error: error.message || 'Failed to unassign learner',
+                }),
+              ),
+            ),
+          ),
+      ),
+    ),
+  );
 }

@@ -1,7 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { environment } from 'src/environments/environment';
-import { TrainerDashboardStats } from './dashboard.model';
 
 @Injectable({
   providedIn: 'root',
@@ -12,20 +11,23 @@ export class DashboardService {
   constructor(private http: HttpClient) {}
 
   /**
-   * ASSUMPTION: PHISH-383 "Trainer Dashboard" is still To Do on the backend
-   * board, so this endpoint doesn't exist yet - this assumes a single
-   * aggregate GET returning everything the screen needs (learner/module
-   * counts, completion rate, average score, per-module completion, recent
-   * activity) rather than the frontend stitching together several separate
-   * list endpoints, most of which are themselves still To Do/In Review
-   * (PHISH-313 Scenario Attempt, PHISH-314 Module Results, PHISH-312
-   * Advanced Analytics). Update the path/response mapping once PHISH-383
-   * lands if the real contract differs.
+   * GET /organisations/{orgId}/trainer-dashboard - "Headline training stats
+   * for an organisation (trainer only)". Authorization header is attached
+   * by authInterceptor from the store.
    */
-  getTrainerDashboard() {
-    // Authorization header is attached by authInterceptor from the store.
-    return this.http.get<
-      { stats: TrainerDashboardStats } | TrainerDashboardStats
-    >(`${this.apiEndpoint}trainer/dashboard`);
+  getOverview(organisationId: number) {
+    return this.http.get<any>(
+      `${this.apiEndpoint}organisations/${organisationId}/trainer-dashboard`,
+    );
+  }
+
+  /**
+   * GET /organisations/{orgId}/trainer-dashboard/activity - "Ten most
+   * recent learner activity items (trainer only)".
+   */
+  getActivity(organisationId: number) {
+    return this.http.get<any>(
+      `${this.apiEndpoint}organisations/${organisationId}/trainer-dashboard/activity`,
+    );
   }
 }

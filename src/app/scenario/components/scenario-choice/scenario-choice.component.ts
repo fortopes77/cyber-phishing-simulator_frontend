@@ -19,6 +19,7 @@ import {
   selectFeedbackLoading,
 } from 'src/app/feedback/+state/feedback.selectors';
 import { iconLibrary } from 'src/app/shared/constants/font-awesome-icons.const';
+import { SIMPLE_ANSWER_OPTIONS } from '../../models/scenario.model';
 
 interface Scenario {
   id: number | string;
@@ -31,13 +32,7 @@ interface Scenario {
   from?: string;
 }
 
-// The scenarios API has no `options` field - a scenario's correctAnswer is
-// free text a trainer enters (see ScenarioEditComponent), and a learner
-// never receives it, so there's no way to derive scenario-specific choices
-// on this end. Safe/Suspicious is the fixed decision every scenario is
-// judged against; trainers should set correctAnswer to one of these two
-// values for a "simple" scenario.
-const DECISION_OPTIONS = ['Safe', 'Suspicious'];
+const DECISION_OPTIONS: string[] = [...SIMPLE_ANSWER_OPTIONS];
 
 // Icon + supporting copy for each decision option, keyed off the option
 // label above - kept separate from DECISION_OPTIONS so the dispatched

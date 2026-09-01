@@ -104,6 +104,15 @@
     </div>
 
     <div class="actions">
+      @if (!isCreateMode) {
+        <button
+          type="button"
+          class="btn btn-secondary"
+          (click)="openForgotPasswordModal()"
+        >
+          Send Password Reset Email
+        </button>
+      }
       @if (!isCreateMode && isLearner) {
         <button
           type="button"
@@ -131,3 +140,12 @@
   (confirmed)="confirmSendReminder()"
   (cancelled)="cancelSendReminder()"
 ></app-send-reminder-modal>
+
+<app-forgot-password-modal
+  [isOpen]="isForgotPasswordModalOpen"
+  [targetName]="fullNameValue || 'this account'"
+  [loading]="forgotPasswordSending"
+  [error]="forgotPasswordError"
+  (confirmed)="confirmForgotPassword()"
+  (cancelled)="cancelForgotPassword()"
+></app-forgot-password-modal>

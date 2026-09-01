@@ -6,20 +6,10 @@ import {
 import { provideHttpClient } from '@angular/common/http';
 import { DashboardService } from './dashboard.service';
 import { environment } from 'src/environments/environment';
-import { TrainerDashboardStats } from './dashboard.model';
 
 describe('DashboardService', () => {
   let service: DashboardService;
   let httpMock: HttpTestingController;
-
-  const stats: TrainerDashboardStats = {
-    totalLearners: 52,
-    activeModules: 8,
-    completionRate: 78,
-    averageScore: 81,
-    moduleCompletion: [],
-    recentActivity: [],
-  };
 
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -37,11 +27,23 @@ describe('DashboardService', () => {
     expect(service).toBeTruthy();
   });
 
-  it('should GET the trainer dashboard endpoint', () => {
-    service.getTrainerDashboard().subscribe();
+  it('should GET the trainer-dashboard overview endpoint for the given organisation', () => {
+    service.getOverview(1).subscribe();
 
-    const req = httpMock.expectOne(`${environment.apiUrl}trainer/dashboard`);
+    const req = httpMock.expectOne(
+      `${environment.apiUrl}organisations/1/trainer-dashboard`,
+    );
     expect(req.request.method).toBe('GET');
-    req.flush(stats);
+    req.flush({ totalLearners: 52 });
+  });
+
+  it('should GET the trainer-dashboard activity endpoint for the given organisation', () => {
+    service.getActivity(1).subscribe();
+
+    const req = httpMock.expectOne(
+      `${environment.apiUrl}organisations/1/trainer-dashboard/activity`,
+    );
+    expect(req.request.method).toBe('GET');
+    req.flush([]);
   });
 });

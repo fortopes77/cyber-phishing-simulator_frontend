@@ -75,6 +75,15 @@ export class AuthService {
   }
 
   /**
+   * Revokes the current refresh token via POST /auth/logout (RefreshTokenDto)
+   * so it can't be replayed after sign-out. Requires the access token too,
+   * but that's attached automatically by the auth HTTP interceptor.
+   */
+  logout(refreshToken: string) {
+    return this.http.post(`${this.apiEndpoint}auth/logout`, { refreshToken });
+  }
+
+  /**
    * Updates the signed-in user's own name/email via PATCH /users/{id}
    * (UpdateUserDto). The backend has no route to change `username` - it's
    * not part of UpdateUserDto - so it's intentionally left out of the
@@ -88,10 +97,29 @@ export class AuthService {
     });
   }
 
-  resetPassword(currentPassword: string, newPassword: string) {
-    return this.http.post(`${this.apiEndpoint}auth/reset-password`, {
-      currentPassword,
-      newPassword,
+  /**
+   * Changes the signed-in user's own password via PATCH /users/{id}
+   * (UpdateUserDto) - the same endpoint updateProfile() uses. There's no
+   * "verify current password, then change it" route on this backend:
+   * POST /auth/reset-password takes a `token` (from the separate,
+   * unauthenticated forgot-password flow via POST /auth/forgot-password),
+   * not a current password, and rejects `currentPassword` outright since
+   * ResetPasswordDto doesn't declare it.
+   */
+  changePassword(userId: string, newPassword: string) {
+    return this.http.patch(`${this.apiEndpoint}users/${userId}`, {
+      password: newPassword,
     });
+  }
+
+  /**
+   * Requests a password-reset email for the given address via
+   * POST /auth/forgot-password (ForgotPasswordDto) - unauthenticated (no
+   * bearer token required), and the response is a generic "if an account
+   * exists..." message regardless of whether the email is actually
+   * registered, so there's nothing meaningful in the body to branch on.
+   */
+  forgotPassword(email: string) {
+    return this.http.post(`${this.apiEndpoint}auth/forgot-password`, { email });
   }
 }

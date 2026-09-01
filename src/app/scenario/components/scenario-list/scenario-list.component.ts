@@ -16,8 +16,11 @@ import { DashboardCardComponent } from 'src/app/shared/components/dashboard-card
 import { Actions, ofType } from '@ngrx/effects';
 import { DeleteConfirmationModalComponent } from 'src/app/shared/components/delete-confirmation-modal/delete-confirmation-modal.component';
 import { SearchFilterBarComponent } from 'src/app/shared/components/search-filter-bar/search-filter-bar.component';
+import { SelectModuleModalComponent } from 'src/app/shared/components/select-module-modal/select-module-modal.component';
 import { iconLibrary } from 'src/app/shared/constants/font-awesome-icons.const';
 import { getScenarioOptionLabel } from '../../models/scenario.model';
+import { ModulesActions } from 'src/app/modules/+state/modules.actions';
+import { selectModuleList } from 'src/app/modules/+state/modules.selectors';
 
 @Component({
   selector: 'app-scenario-list',
@@ -27,6 +30,7 @@ import { getScenarioOptionLabel } from '../../models/scenario.model';
     DashboardCardComponent,
     DeleteConfirmationModalComponent,
     SearchFilterBarComponent,
+    SelectModuleModalComponent,
   ],
   templateUrl: './scenario-list.component.html',
   styleUrl: './scenario-list.component.scss',
@@ -55,6 +59,15 @@ export class ScenarioListComponent implements OnInit {
   selectedScenarioRow: Record<string, unknown> | null = null;
   isCreatingWithAi = false;
 
+  // The AI generation API has no concept of a module - it only produces
+  // scenario content - but POST /scenarios requires one, so the trainer
+  // picks it up front via isSelectModuleModalOpen, and it's carried in
+  // pendingAiModuleId until the generated content comes back and the two
+  // are merged (see subscribeToAIScenarioCreateSuccess).
+  modules: { moduleId: number; moduleName: string }[] = [];
+  isSelectModuleModalOpen = false;
+  pendingAiModuleId: number | null = null;
+
   constructor(
     private store: Store,
     private router: Router,
@@ -78,12 +91,16 @@ export class ScenarioListComponent implements OnInit {
     ];
 
     this.subscribeToScenarioList();
+    this.subscribeToModuleList();
     this.subscribeToAIScenarioCreateSuccess();
     this.subscribeToAIScenarioCreateFailure();
     this.subscribeToCreateScenarioSuccess();
     this.subscribeToCreateScenarioFailure();
     this.subscribeToDeleteScenarioSuccess();
     this.store.dispatch(ScenarioActions.fetchList());
+    // No userId - the trainer needs the org's full module catalog to choose
+    // from, not a single learner's assignments.
+    this.store.dispatch(ModulesActions.fetchList({}));
   }
 
   subscribeToScenarioList(): void {
@@ -98,12 +115,23 @@ export class ScenarioListComponent implements OnInit {
     });
   }
 
+  subscribeToModuleList(): void {
+    this.store.select(selectModuleList).subscribe((moduleList) => {
+      this.modules = (moduleList ?? []).map((module) => ({
+        moduleId: module.moduleId,
+        moduleName: module.moduleName,
+      }));
+    });
+  }
+
   subscribeToAIScenarioCreateSuccess(): void {
     this.actions$
       .pipe(ofType(ScenarioActions.createAIScenarioSuccess))
       .subscribe((scenario: any) => {
         this.store.dispatch(
-          ScenarioActions.createScenario({ scenario: scenario['scenario'] }),
+          ScenarioActions.createScenario({
+            scenario: { ...scenario['scenario'], moduleId: this.pendingAiModuleId },
+          }),
         );
       });
   }
@@ -294,8 +322,18 @@ export class ScenarioListComponent implements OnInit {
       return;
     }
 
+    this.isSelectModuleModalOpen = true;
+  }
+
+  confirmSelectModule(moduleId: number): void {
+    this.isSelectModuleModalOpen = false;
+    this.pendingAiModuleId = moduleId;
     this.isCreatingWithAi = true;
     this.store.dispatch(ScenarioActions.createAIScenario());
+  }
+
+  cancelSelectModule(): void {
+    this.isSelectModuleModalOpen = false;
   }
 
   private handleCreateManually(): void {

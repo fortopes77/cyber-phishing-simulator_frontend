@@ -16,13 +16,13 @@
   }
   <div>
     <span class="statistic">
-      @if (statistic?.topValue) {
+      @if (statistic?.topValue != null) {
         {{ statistic?.topValue }}/{{ statistic?.bottomValue }}
       }
-      @if (statistic?.percentage) {
+      @if (statistic?.percentage != null) {
         {{ statistic?.percentage }}%
       }
-      @if (statistic?.singleValue) {
+      @if (statistic?.singleValue != null) {
         {{ statistic?.singleValue }}
       }
     </span>

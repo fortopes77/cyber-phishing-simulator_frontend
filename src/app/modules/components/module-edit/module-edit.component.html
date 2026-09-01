@@ -1,91 +1,223 @@
-<app-header
-  [title]="isCreateMode ? 'Create Module' : 'Edit Module'"
-  [subtitle]="
-    isCreateMode
-      ? 'Add a new training module below.'
-      : 'Update the module details below and save your changes.'
-  "
-></app-header>
+<div class="edit-page">
+  <div class="edit-header">
+    <div class="edit-header-left">
+      <button
+        type="button"
+        class="back-btn"
+        (click)="onCancel()"
+        aria-label="Back to modules"
+      >
+        <fa-icon [icon]="fontAwesomeIcons.chevronLeftIcon"></fa-icon>
+      </button>
+      <div>
+        <h1>{{ isCreateMode ? 'Create Module' : 'Edit Module' }}</h1>
+        <p>
+          {{
+            isCreateMode
+              ? 'Add a new training module below.'
+              : 'Modify module settings and scenarios.'
+          }}
+        </p>
+      </div>
+    </div>
+    <button
+      type="submit"
+      form="module-form"
+      class="btn btn-primary save-btn"
+      [disabled]="loading"
+    >
+      <fa-icon [icon]="fontAwesomeIcons.saveIcon"></fa-icon>
+      {{ isCreateMode ? 'Create Module' : 'Save Changes' }}
+    </button>
+  </div>
 
-<app-dashboard-card>
   @if (error) {
     <p class="module-edit-error">Something went wrong - {{ error }}</p>
   }
 
-  <form class="module-form" [formGroup]="moduleForm" (ngSubmit)="onSubmit()">
-    <div class="form-grid">
-      <label class="field">
-        <span>Module name</span>
-        <input
-          type="text"
-          formControlName="moduleName"
-          placeholder="Enter module name"
-        />
-        <app-form-field-error
-          [control]="moduleForm.get('moduleName')"
-          label="Module name"
-        ></app-form-field-error>
-      </label>
+  <form id="module-form" [formGroup]="moduleForm" (ngSubmit)="onSubmit()">
+    <div class="edit-grid">
+      <div class="edit-column">
+        <div class="card">
+          <h2>Module Information</h2>
+          <p class="card-subtitle">Basic details about this training module</p>
 
-      <label class="field">
-        <span>Version</span>
-        <input
-          type="text"
-          formControlName="version"
-          placeholder="e.g. 1.0.0"
-        />
-        <app-form-field-error
-          [control]="moduleForm.get('version')"
-          label="Version"
-        ></app-form-field-error>
-      </label>
+          <div class="form-grid">
+            <label class="field field-full">
+              <span>Module name</span>
+              <input
+                type="text"
+                formControlName="moduleName"
+                placeholder="Enter module name"
+              />
+              <app-form-field-error
+                [control]="moduleForm.get('moduleName')"
+                label="Module name"
+              ></app-form-field-error>
+            </label>
 
-      <label class="field field-full">
-        <span>Description</span>
-        <textarea
-          rows="4"
-          formControlName="description"
-          placeholder="Describe this module"
-        ></textarea>
-        <app-form-field-error
-          [control]="moduleForm.get('description')"
-          label="Description"
-        ></app-form-field-error>
-      </label>
-    </div>
+            <label class="field">
+              <span>Version</span>
+              <input
+                type="text"
+                formControlName="version"
+                placeholder="e.g. 1.0.0"
+              />
+              <app-form-field-error
+                [control]="moduleForm.get('version')"
+                label="Version"
+              ></app-form-field-error>
+            </label>
 
-    <div class="actions">
-      <button type="button" class="btn btn-secondary" (click)="onCancel()">
-        Cancel
-      </button>
-      <button type="submit" class="btn btn-primary" [disabled]="loading">
-        Save
-      </button>
+            <label class="field field-full">
+              <span>Description</span>
+              <textarea
+                rows="4"
+                formControlName="description"
+                placeholder="Describe this module"
+              ></textarea>
+              <app-form-field-error
+                [control]="moduleForm.get('description')"
+                label="Description"
+              ></app-form-field-error>
+            </label>
+          </div>
+        </div>
+
+        <div class="card scenario-assign-panel">
+          <div class="card-header-row">
+            <div>
+              <h2>Scenarios</h2>
+              <p class="card-subtitle">
+                Search the library and assign scenarios to this module
+              </p>
+            </div>
+            <button
+              type="button"
+              class="btn btn-secondary btn-small"
+              (click)="manageScenarios()"
+            >
+              Manage Library
+            </button>
+          </div>
+
+          @if (isCreateMode) {
+            <p class="empty-state">Save this module first to assign scenarios.</p>
+          } @else {
+            @if (scenarioAssignError) {
+              <p class="assign-panel-error">{{ scenarioAssignError }}</p>
+            }
+
+            <input
+              type="text"
+              class="search-input"
+              placeholder="Search scenarios by title"
+              [(ngModel)]="scenarioSearch"
+              [ngModelOptions]="{ standalone: true }"
+            />
+
+            @if (filteredScenarios.length) {
+              <ul class="assign-list">
+                @for (scenario of filteredScenarios; track scenario.id) {
+                  <li class="assign-row">
+                    <span class="assign-row-label">{{ scenario.title }}</span>
+                    <button
+                      type="button"
+                      class="toggle-switch"
+                      [class.on]="isAssignedToThisModule(scenario)"
+                      [disabled]="reassigningScenarioId === scenario.id"
+                      [attr.aria-pressed]="isAssignedToThisModule(scenario)"
+                      attr.aria-label="Toggle module assignment for {{ scenario.title }}"
+                      (click)="toggleScenario(scenario)"
+                    >
+                      <span class="toggle-knob"></span>
+                    </button>
+                  </li>
+                }
+              </ul>
+            } @else {
+              <p class="empty-state">No scenarios match your search.</p>
+            }
+          }
+        </div>
+      </div>
+
+      <div class="edit-column">
+        <div class="card learner-assign-panel">
+          <h2>Assign to Individual Learners</h2>
+          <p class="card-subtitle">Select which learners can access this module</p>
+
+          @if (isCreateMode) {
+            <p class="empty-state">Save this module first to assign learners.</p>
+          } @else {
+            @if (learnerAssignError) {
+              <p class="assign-panel-error">{{ learnerAssignError }}</p>
+            }
+
+            <input
+              type="text"
+              class="search-input"
+              placeholder="Search learners by name or email"
+              [(ngModel)]="learnerSearch"
+              [ngModelOptions]="{ standalone: true }"
+            />
+
+            @if (filteredLearners.length) {
+              <ul class="assign-list">
+                @for (learner of filteredLearners; track learner.id) {
+                  <li class="assign-row">
+                    <span class="assign-row-label">
+                      {{ learner.fullName }}
+                      <span class="assign-row-sublabel">{{ learner.email }}</span>
+                    </span>
+                    <button
+                      type="button"
+                      class="toggle-switch"
+                      [class.on]="addedLearnerIds.has(learnerId(learner))"
+                      [disabled]="assigningLearnerIds.has(learnerId(learner))"
+                      [attr.aria-pressed]="addedLearnerIds.has(learnerId(learner))"
+                      attr.aria-label="Toggle module access for {{ learner.fullName }}"
+                      (click)="toggleLearner(learner)"
+                    >
+                      <span class="toggle-knob"></span>
+                    </button>
+                  </li>
+                }
+              </ul>
+            } @else {
+              <p class="empty-state">No learners match your search.</p>
+            }
+          }
+        </div>
+
+        <div class="card danger-zone-card">
+          <h2>
+            <fa-icon [icon]="fontAwesomeIcons.warningIcon"></fa-icon>
+            Danger Zone
+          </h2>
+          <p class="card-subtitle">
+            Deleting this module removes it and unassigns it from every
+            learner - this can't be undone.
+          </p>
+          <button
+            type="button"
+            class="btn btn-danger"
+            [disabled]="isCreateMode"
+            (click)="handleDeleteModule()"
+          >
+            <fa-icon [icon]="fontAwesomeIcons.trashIcon"></fa-icon>
+            Delete Module
+          </button>
+        </div>
+      </div>
     </div>
   </form>
 
-  @if (!isCreateMode) {
-    <div class="module-scenarios">
-      <div class="module-scenarios-header">
-        <h2>Scenarios in this module</h2>
-        <button
-          type="button"
-          class="btn btn-secondary"
-          (click)="manageScenarios()"
-        >
-          Manage Scenarios
-        </button>
-      </div>
-
-      @if (moduleScenarios.length) {
-        <ul class="scenario-list">
-          @for (scenario of moduleScenarios; track scenario.id) {
-            <li>{{ scenario.title }}</li>
-          }
-        </ul>
-      } @else {
-        <p class="empty-state">No scenarios assigned to this module yet.</p>
-      }
-    </div>
-  }
-</app-dashboard-card>
+  <app-delete-confirmation-modal
+    [isOpen]="isDeleteModalOpen"
+    [title]="moduleForm.get('moduleName')?.value || 'this module'"
+    [message]="'Are you sure you wish to delete'"
+    (confirmed)="confirmDeleteModule()"
+    (cancelled)="cancelDeleteModule()"
+  ></app-delete-confirmation-modal>
+</div>

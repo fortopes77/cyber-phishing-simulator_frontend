@@ -57,4 +57,23 @@ export class ModulesService {
   deleteModule(moduleId: number) {
     return this.http.delete(`${this.apiEndpoint}training-modules/${moduleId}`);
   }
+
+  // Confirmed via GET /api-json: POST /training-modules/{moduleId}/assignments
+  // with { userId } (AssignUserDto), "Assign a learner to a module (trainer
+  // only)". There's no matching GET to list who's already assigned, so the
+  // module-edit screen can't show existing assignments - only add new ones.
+  assignLearner(moduleId: number, userId: number) {
+    return this.http.post(
+      `${this.apiEndpoint}training-modules/${moduleId}/assignments`,
+      { userId },
+    );
+  }
+
+  // Confirmed via GET /api-json: DELETE /training-modules/{moduleId}/
+  // assignments/{userId}, "Unassign a learner from a module (trainer only)".
+  unassignLearner(moduleId: number, userId: number) {
+    return this.http.delete(
+      `${this.apiEndpoint}training-modules/${moduleId}/assignments/${userId}`,
+    );
+  }
 }

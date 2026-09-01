@@ -58,6 +58,25 @@ describe('scenario.model', () => {
         ScenarioInteractionType.SocialMedia,
       );
     });
+
+    it('should match the exact enum values confirmed by the backend\'s 400 response - EMAIL, TEXT_MESSAGE, PHONE_CALL, SOCIAL_MEDIA', () => {
+      expect(ScenarioInteractionType.Email).toBe('EMAIL');
+      expect(ScenarioInteractionType.Sms).toBe('TEXT_MESSAGE');
+      expect(ScenarioInteractionType.Call).toBe('PHONE_CALL');
+      expect(ScenarioInteractionType.SocialMedia).toBe('SOCIAL_MEDIA');
+    });
+
+    it('should map legacy SMS/CALL free text onto the TEXT_MESSAGE/PHONE_CALL enum values', () => {
+      expect(normalizeInteractionType('SMS')).toBe(
+        ScenarioInteractionType.Sms,
+      );
+      expect(normalizeInteractionType('CALL')).toBe(
+        ScenarioInteractionType.Call,
+      );
+      expect(normalizeInteractionType('Phone Call')).toBe(
+        ScenarioInteractionType.Call,
+      );
+    });
   });
 
   describe('toScenarioPayload', () => {
@@ -106,10 +125,16 @@ describe('scenario.model', () => {
       expect(payload.correctCues).toBeUndefined();
     });
 
-    it('should fall back to a placeholder moduleId when none is supplied', () => {
-      const payload = toScenarioPayload({ title: 'AI generated scenario' });
+    it('should carry through whatever moduleId the caller supplies (the manual form or the AI flow after module selection)', () => {
+      const payload = toScenarioPayload({ moduleId: 7, title: 'AI generated scenario' });
 
-      expect(payload.moduleId).toBe(5);
+      expect(payload.moduleId).toBe(7);
+    });
+
+    it('should preserve an explicit null moduleId instead of coercing it to 0 - the module-edit "unassign" toggle', () => {
+      const payload = toScenarioPayload({ moduleId: null, title: 'Unassigned scenario' });
+
+      expect(payload.moduleId).toBeNull();
     });
 
     it('should read legacy field names as a fallback', () => {

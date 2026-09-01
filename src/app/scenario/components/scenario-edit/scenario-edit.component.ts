@@ -10,6 +10,7 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import { ScenarioActions } from '../../+state/scenario.actions';
 import { Store } from '@ngrx/store';
+import { Actions, ofType } from '@ngrx/effects';
 import { selectScenario } from '../../+state/scenario.selectors';
 import { HeaderComponent } from 'src/app/shared/components/header/header.component';
 import { DashboardCardComponent } from 'src/app/shared/components/dashboard-card/dashboard-card.component';
@@ -18,7 +19,11 @@ import {
   CATEGORY_OPTIONS,
   DIFFICULTY_OPTIONS,
   INTERACTION_TYPE_OPTIONS,
+  SIMPLE_ANSWER_OPTIONS,
 } from '../../models/scenario.model';
+import { ModulesActions } from 'src/app/modules/+state/modules.actions';
+import { selectModuleList } from 'src/app/modules/+state/modules.selectors';
+import { FormFieldErrorComponent } from 'src/app/shared/components/form-field-error/form-field-error.component';
 
 // The API length limits aren't published, so these mirror the ticket's
 // "regex/length validation on title, description, content" note with
@@ -38,6 +43,7 @@ type AnswerMode = 'simple' | 'detailed';
     HeaderComponent,
     DashboardCardComponent,
     ScenarioPageComponent,
+    FormFieldErrorComponent,
   ],
   templateUrl: './scenario-edit.component.html',
   styleUrl: './scenario-edit.component.scss',
@@ -47,6 +53,7 @@ export class ScenarioEditComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly actions$ = inject(Actions);
 
   readonly scenarioForm: FormGroup = this.fb.group({
     moduleId: ['', Validators.required],
@@ -70,10 +77,11 @@ export class ScenarioEditComponent implements OnInit {
     correctCues: this.fb.array<FormControl<string>>([]),
   });
 
-  readonly moduleOptions = [1, 2, 3];
+  modules: { moduleId: number; moduleName: string }[] = [];
   readonly categoryOptions = CATEGORY_OPTIONS;
   readonly difficultyOptions = DIFFICULTY_OPTIONS;
   readonly interactionTypeOptions = INTERACTION_TYPE_OPTIONS;
+  readonly simpleAnswerOptions = SIMPLE_ANSWER_OPTIONS;
 
   get correctCuesArray(): FormArray<FormControl<string>> {
     return this.scenarioForm.get('correctCues') as FormArray<
@@ -94,14 +102,10 @@ export class ScenarioEditComponent implements OnInit {
   }
 
   get previewModuleTitle(): string {
-    const moduleId = this.scenarioForm.get('moduleId')?.value;
-    const moduleTitles: Record<string, string> = {
-      'Module 1': 'Email Phishing Basics',
-      'Module 2': 'Credentials & Social Engineering',
-      'Module 3': 'Reporting Suspicious Messages',
-    };
+    const moduleId = Number(this.scenarioForm.get('moduleId')?.value);
+    const module = this.modules.find((candidate) => candidate.moduleId === moduleId);
 
-    return moduleTitles[moduleId] || 'Scenario Preview';
+    return module?.moduleName || 'Scenario Preview';
   }
 
   // Feeds the embedded <app-scenario-page [previewMode]="true"> so the live
@@ -123,12 +127,16 @@ export class ScenarioEditComponent implements OnInit {
 
   scenarioId: string | null = null;
   isCreateMode = false;
+  submitted = false;
 
   ngOnInit(): void {
     this.isCreateMode = this.route.snapshot.url.some((segment) =>
       segment.path.includes('create'),
     );
+    this.subscribeToModuleList();
+    this.store.dispatch(ModulesActions.fetchList({}));
     this.subscribeToScenarioDetails();
+    this.subscribeToSaveSuccess();
     this.scenarioId = this.route.snapshot.paramMap.get('id');
 
     if (this.isCreateMode) {
@@ -141,6 +149,28 @@ export class ScenarioEditComponent implements OnInit {
         ScenarioActions.fetchScenarioDetails({ scenarioId: this.scenarioId }),
       );
     }
+  }
+
+  subscribeToModuleList(): void {
+    this.store.select(selectModuleList).subscribe((moduleList) => {
+      this.modules = (moduleList ?? []).map((module) => ({
+        moduleId: module.moduleId,
+        moduleName: module.moduleName,
+      }));
+    });
+  }
+
+  subscribeToSaveSuccess(): void {
+    this.actions$
+      .pipe(
+        ofType(
+          ScenarioActions.createScenarioSuccess,
+          ScenarioActions.updateScenarioSuccess,
+        ),
+      )
+      .subscribe(() => {
+        this.router.navigate(['/trainer/scenarios']);
+      });
   }
 
   subscribeToScenarioDetails(): void {
@@ -164,7 +194,7 @@ export class ScenarioEditComponent implements OnInit {
           scenarioDescription:
             scenario.scenarioDescription || scenario.description || '',
           answerMode: hasCues ? 'detailed' : 'simple',
-          correctAnswer: scenario.correctAnswer || '',
+          correctAnswer: this.normalizeSimpleAnswer(scenario.correctAnswer),
         });
 
         this.correctCuesArray.clear();
@@ -175,6 +205,19 @@ export class ScenarioEditComponent implements OnInit {
         }
       }
     });
+  }
+
+  // The dropdown's option values are the exact-cased 'Safe'/'Suspicious'
+  // strings, but a scenario saved before this dropdown existed (or with
+  // inconsistent casing) may have stored 'suspicious' or 'SAFE' - match
+  // case-insensitively so those still pre-select correctly instead of
+  // silently falling back to the disabled placeholder option.
+  private normalizeSimpleAnswer(raw: unknown): string {
+    const match = this.simpleAnswerOptions.find(
+      (option) => option.toLowerCase() === String(raw ?? '').toLowerCase(),
+    );
+
+    return match ?? '';
   }
 
   private resetForm(): void {
@@ -192,9 +235,10 @@ export class ScenarioEditComponent implements OnInit {
     this.correctCuesArray.clear();
     this.scenarioForm.markAsPristine();
     this.scenarioForm.markAsUntouched();
+    this.submitted = false;
   }
 
-  private isAnswerSectionValid(): boolean {
+  isAnswerSectionValid(): boolean {
     if (this.answerMode === 'simple') {
       return !!this.scenarioForm.get('correctAnswer')?.value?.trim();
     }
@@ -205,6 +249,8 @@ export class ScenarioEditComponent implements OnInit {
   }
 
   onSubmit(): void {
+    this.submitted = true;
+
     if (this.scenarioForm.invalid || !this.isAnswerSectionValid()) {
       this.scenarioForm.markAllAsTouched();
       return;

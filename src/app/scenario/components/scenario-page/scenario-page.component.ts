@@ -155,10 +155,11 @@ export class ScenarioPageComponent implements OnInit, OnChanges {
   }
 
   /**
-   * Maps the `interactionType` enum (EMAIL/SMS/CALL/SOCIAL_MEDIA - see
-   * scenario.model.ts) onto the message-shell keys the template switches on.
-   * Falls back to a lowercase pass-through so older/free-text values
-   * ("Phone", "Text") still resolve to something sensible.
+   * Maps the `interactionType` enum (EMAIL/TEXT_MESSAGE/PHONE_CALL/
+   * SOCIAL_MEDIA - see scenario.model.ts) onto the message-shell keys the
+   * template switches on. Falls back to a lowercase pass-through so
+   * older/free-text values ("Phone", "Text") still resolve to something
+   * sensible.
    */
   getScenarioTypeKey(): string {
     const type = (this.scenario?.type ?? '').toUpperCase();
@@ -169,6 +170,7 @@ export class ScenarioPageComponent implements OnInit, OnChanges {
       TEXT_MESSAGE: 'text',
       CALL: 'phone',
       PHONE: 'phone',
+      PHONE_CALL: 'phone',
       VOICE: 'phone',
       SOCIAL_MEDIA: 'social',
       SOCIAL: 'social',

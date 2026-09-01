@@ -124,6 +124,12 @@
   grid-column: 1 / -1;
 }
 
+.form-field-error {
+  color: #c33;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
 .answer-mode-toggle {
   display: flex;
   gap: 1.5rem;

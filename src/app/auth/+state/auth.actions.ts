@@ -34,13 +34,27 @@ export const AuthActions = createActionGroup({
     }>(),
     'Update Profile Success': props<{ user: any }>(),
     'Update Profile Failure': props<{ error: string }>(),
-    // Self-service password change from ProfileModalComponent. Its
-    // success/failure are consumed directly via Actions$ in NavComponent
+    // Self-service password change from ProfileModalComponent, via the same
+    // PATCH /users/{id} endpoint as Update Profile - there's no
+    // "verify current password" route on this backend (POST /auth/reset-
+    // password is a different, token-based forgot-password flow, unrelated
+    // to a signed-in user changing their own password), so `currentPassword`
+    // is deliberately absent: UpdateUserDto rejects any unlisted property.
+    // Its success/failure are consumed directly via Actions$ in NavComponent
     // (which tracks its own local saving/error state for the modal) rather
     // than through auth.reducer, since neither outcome changes anything in
     // AuthState.
-    'Reset Password': props<{ currentPassword: string; newPassword: string }>(),
-    'Reset Password Success': emptyProps(),
-    'Reset Password Failure': props<{ error: string }>(),
+    'Change Password': props<{ userId: string; newPassword: string }>(),
+    'Change Password Success': emptyProps(),
+    'Change Password Failure': props<{ error: string }>(),
+    // Trainer-initiated "send this account a password reset email" from
+    // UserEditComponent, via POST /auth/forgot-password - the real
+    // token-based forgot-password flow, distinct from Change Password above
+    // (which sets the password directly). Success/failure are consumed
+    // directly via Actions$ in UserEditComponent, same as Send Reminder
+    // Email, since neither outcome changes anything in AuthState.
+    'Forgot Password': props<{ email: string }>(),
+    'Forgot Password Success': emptyProps(),
+    'Forgot Password Failure': props<{ error: string }>(),
   },
 });

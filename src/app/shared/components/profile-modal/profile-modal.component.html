@@ -62,15 +62,6 @@
 
     <form [formGroup]="passwordForm" (ngSubmit)="onSubmitPassword()" class="profile-form">
       <label class="field">
-        <span>Current password</span>
-        <input type="password" formControlName="currentPassword" autocomplete="current-password" />
-        <app-form-field-error
-          [control]="passwordForm.get('currentPassword')"
-          label="Current password"
-        ></app-form-field-error>
-      </label>
-
-      <label class="field">
         <span>New password</span>
         <input type="password" formControlName="newPassword" autocomplete="new-password" />
         <app-form-field-error

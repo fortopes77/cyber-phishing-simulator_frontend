@@ -1,0 +1,31 @@
+<app-modal [isOpen]="isOpen" title="Select a module" (closed)="onCancel()">
+  <p>Which module should this AI-generated scenario be assigned to?</p>
+  @if (error) {
+    <p class="form-error">{{ error }}</p>
+  }
+
+  @if (modules.length) {
+    <label class="field">
+      <span>Module</span>
+      <select [(ngModel)]="selectedModuleId">
+        @for (module of modules; track module.moduleId) {
+          <option [ngValue]="module.moduleId">{{ module.moduleName }}</option>
+        }
+      </select>
+    </label>
+  } @else {
+    <p class="empty-state">No modules available - create one first.</p>
+  }
+
+  <div modal-footer class="modal-actions">
+    <button type="button" class="btn btn-secondary" (click)="onCancel()">Cancel</button>
+    <button
+      type="button"
+      class="btn btn-primary"
+      [disabled]="loading || selectedModuleId == null"
+      (click)="onConfirm()"
+    >
+      {{ loading ? 'Generating...' : 'Generate scenario' }}
+    </button>
+  </div>
+</app-modal>

@@ -32,3 +32,10 @@
   (confirmed)="confirmDelete()"
   (cancelled)="cancelDelete()"
 ></app-delete-confirmation-modal>
+
+<app-select-module-modal
+  [isOpen]="isSelectModuleModalOpen"
+  [modules]="modules"
+  (confirmed)="confirmSelectModule($event)"
+  (cancelled)="cancelSelectModule()"
+></app-select-module-modal>

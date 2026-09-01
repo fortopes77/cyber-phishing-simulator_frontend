@@ -19,12 +19,16 @@
             <span>Module</span>
             <select formControlName="moduleId">
               <option value="" disabled>Select a module</option>
-              @for (option of moduleOptions; track option) {
-                <option [value]="option">
-                  {{ option }}
+              @for (option of modules; track option.moduleId) {
+                <option [value]="option.moduleId">
+                  {{ option.moduleName }}
                 </option>
               }
             </select>
+            <app-form-field-error
+              [control]="scenarioForm.get('moduleId')"
+              label="Module"
+            ></app-form-field-error>
           </label>
 
           <label class="field">
@@ -34,6 +38,10 @@
               formControlName="title"
               placeholder="Enter scenario title"
             />
+            <app-form-field-error
+              [control]="scenarioForm.get('title')"
+              label="Title"
+            ></app-form-field-error>
           </label>
 
           <label class="field field-full">
@@ -43,6 +51,10 @@
               formControlName="content"
               placeholder="Enter the scenario content"
             ></textarea>
+            <app-form-field-error
+              [control]="scenarioForm.get('content')"
+              label="Content"
+            ></app-form-field-error>
           </label>
 
           <label class="field">
@@ -55,6 +67,10 @@
                 </option>
               }
             </select>
+            <app-form-field-error
+              [control]="scenarioForm.get('category')"
+              label="Category"
+            ></app-form-field-error>
           </label>
 
           <label class="field">
@@ -67,6 +83,10 @@
                 </option>
               }
             </select>
+            <app-form-field-error
+              [control]="scenarioForm.get('difficulty')"
+              label="Difficulty"
+            ></app-form-field-error>
           </label>
 
           <label class="field">
@@ -79,6 +99,10 @@
                 </option>
               }
             </select>
+            <app-form-field-error
+              [control]="scenarioForm.get('interactionType')"
+              label="Interaction type"
+            ></app-form-field-error>
           </label>
 
           <label class="field field-full">
@@ -88,6 +112,10 @@
               formControlName="scenarioDescription"
               placeholder="Describe the scenario"
             ></textarea>
+            <app-form-field-error
+              [control]="scenarioForm.get('scenarioDescription')"
+              label="Scenario description"
+            ></app-form-field-error>
           </label>
 
           <div class="field field-full">
@@ -111,11 +139,17 @@
           @if (answerMode === 'simple') {
             <label class="field field-full">
               <span>Correct answer</span>
-              <input
-                type="text"
-                formControlName="correctAnswer"
-                placeholder="e.g. suspicious"
-              />
+              <select formControlName="correctAnswer">
+                <option value="" disabled>Select the correct answer</option>
+                @for (option of simpleAnswerOptions; track option) {
+                  <option [value]="option">{{ option }}</option>
+                }
+              </select>
+              @if (submitted && !isAnswerSectionValid()) {
+                <div class="form-field-error" role="alert">
+                  Select the correct answer.
+                </div>
+              }
             </label>
           } @else {
             <div class="field field-full">
@@ -141,6 +175,11 @@
               <button type="button" class="btn btn-secondary" (click)="addCue()">
                 Add cue
               </button>
+              @if (submitted && !isAnswerSectionValid()) {
+                <div class="form-field-error" role="alert">
+                  Add at least one correct cue phrase.
+                </div>
+              }
             </div>
           }
         </div>

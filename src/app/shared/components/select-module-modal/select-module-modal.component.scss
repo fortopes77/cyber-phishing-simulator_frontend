@@ -1,0 +1,62 @@
+.form-error {
+  background: #fdecec;
+  border: 1px solid #f3c6c6;
+  color: #b3261e;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 0.9rem;
+}
+
+.empty-state {
+  color: #6b7385;
+  font-size: 0.9rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-weight: 600;
+  color: #243041;
+
+  span {
+    font-size: 0.95rem;
+  }
+
+  select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #c7cedb;
+    border-radius: 8px;
+    font: inherit;
+    box-sizing: border-box;
+  }
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.btn {
+  border: none;
+  border-radius: 0.4rem;
+  padding: 0.6rem 1rem;
+  cursor: pointer;
+}
+
+.btn-secondary {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+.btn-primary {
+  background: #2563eb;
+  color: #fff;
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

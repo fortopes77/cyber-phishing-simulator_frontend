@@ -32,6 +32,22 @@ describe('normalizeModule', () => {
     expect(typeof result.moduleId).toBe('number');
   });
 
+  it('falls back to `title` when moduleName is missing - the actual shape GET /training-modules returns', () => {
+    const result = normalizeModule({ id: 1, title: 'Email Phishing Fundamentals' });
+
+    expect(result.moduleName).toBe('Email Phishing Fundamentals');
+  });
+
+  it('prefers moduleName over title when both are present', () => {
+    const result = normalizeModule({
+      id: 1,
+      moduleName: 'Phishing Awareness',
+      title: 'Should be ignored',
+    });
+
+    expect(result.moduleName).toBe('Phishing Awareness');
+  });
+
   it('preserves every other field unchanged', () => {
     const result = normalizeModule({
       id: 1,

@@ -27,17 +27,14 @@ export enum ScenarioDifficulty {
 }
 
 /**
- * ASSUMPTION: unlike category/difficulty (confirmed from a real 400
- * response), the backend hasn't told us its exact interactionType enum
- * values yet. EMAIL/SMS/CALL/SOCIAL_MEDIA mirrors the category enum's
- * channels (phishing/smishing/vishing/social engineering) and the form's
- * previous free-text options - verify against the backend once that
- * validation is confirmed.
+ * Confirmed via a real 400 validation response: "interactionType must be
+ * one of the following values: EMAIL, TEXT_MESSAGE, PHONE_CALL,
+ * SOCIAL_MEDIA".
  */
 export enum ScenarioInteractionType {
   Email = 'EMAIL',
-  Sms = 'SMS',
-  Call = 'CALL',
+  Sms = 'TEXT_MESSAGE',
+  Call = 'PHONE_CALL',
   SocialMedia = 'SOCIAL_MEDIA',
 }
 
@@ -108,6 +105,18 @@ const INTERACTION_TYPE_ALIASES: Record<string, ScenarioInteractionType> = {
   SOCIAL: ScenarioInteractionType.SocialMedia,
 };
 
+/**
+ * The scenarios API has no `options` field - a "simple" scenario's
+ * correctAnswer is just free text - but the learner-facing scenario-choice
+ * screen only ever offers a fixed Safe/Suspicious decision (there's no way
+ * to derive scenario-specific choices from the API). So a simple scenario's
+ * correctAnswer must be one of these two exact values, or a learner's
+ * correct answer could never match it. Shared with ScenarioChoiceComponent
+ * so the trainer's answer picker and the learner's decision options can
+ * never drift apart.
+ */
+export const SIMPLE_ANSWER_OPTIONS = ['Safe', 'Suspicious'] as const;
+
 export const DEFAULT_CATEGORY = ScenarioCategory.Phishing;
 export const DEFAULT_DIFFICULTY = ScenarioDifficulty.Medium;
 export const DEFAULT_INTERACTION_TYPE = ScenarioInteractionType.Email;
@@ -165,9 +174,17 @@ export function normalizeInteractionType(
   );
 }
 
-/** The request body shape for both the Create and Update endpoints. */
+/**
+ * The request body shape for both the Create and Update endpoints.
+ * moduleId is null only for the module-edit page's "unassign scenario"
+ * toggle (see ModuleEditComponent.unassignScenario) - every other caller
+ * (the manual create/edit form, the AI flow, "assign to this module") always
+ * supplies a real number. Unconfirmed against the backend whether it
+ * actually accepts a null moduleId - there's no trainer account available in
+ * this environment to verify live.
+ */
 export interface ScenarioPayload {
-  moduleId: number;
+  moduleId: number | null;
   title: string;
   scenarioDescription: string;
   content: string;
@@ -186,13 +203,11 @@ export interface ScenarioPayload {
  * rule in the ticket.
  */
 export function toScenarioPayload(source: Record<string, any>): ScenarioPayload {
-  const moduleId = Number(source['moduleId']);
   const payload: ScenarioPayload = {
-    // The AI-generated flow doesn't have a module picker yet, so it never
-    // supplies a moduleId - fall back to a placeholder module rather than
-    // sending an invalid NaN. Remove this fallback once that flow lets the
-    // trainer choose a module before generating.
-    moduleId: Number.isFinite(moduleId) ? moduleId : 5,
+    // Preserve an explicit null (the "unassign scenario" toggle) rather than
+    // coercing it through Number(), which would silently turn it into 0 - a
+    // real, wrong module id - instead of clearing the assignment.
+    moduleId: source['moduleId'] === null ? null : Number(source['moduleId']),
     title: String(source['title'] ?? ''),
     scenarioDescription: String(
       source['scenarioDescription'] ?? source['description'] ?? '',

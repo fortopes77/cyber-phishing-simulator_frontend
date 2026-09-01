@@ -125,13 +125,28 @@ describe('NavComponent', () => {
     expect(store.dispatch).not.toHaveBeenCalled();
   });
 
-  it('should dispatch resetPassword and mark saving on savePassword', () => {
-    component.savePassword({ currentPassword: 'old', newPassword: 'new' });
+  it('should dispatch changePassword with the signed-in user id and mark saving on savePassword', () => {
+    component.currentUser = {
+      id: '1',
+      username: 'ava',
+      email: 'ava@example.com',
+      role: 'user',
+    };
+
+    component.savePassword({ newPassword: 'new' });
 
     expect(component.passwordSaving).toBeTrue();
     expect(store.dispatch).toHaveBeenCalledWith(
-      AuthActions.resetPassword({ currentPassword: 'old', newPassword: 'new' }),
+      AuthActions.changePassword({ userId: '1', newPassword: 'new' }),
     );
+  });
+
+  it('should not dispatch changePassword when there is no signed-in user', () => {
+    component.currentUser = undefined;
+
+    component.savePassword({ newPassword: 'new' });
+
+    expect(store.dispatch).not.toHaveBeenCalled();
   });
 
   it('should clear saving and mark saved when updateProfileSuccess is seen', () => {
@@ -156,8 +171,8 @@ describe('NavComponent', () => {
     expect(component.profileError).toBe('Email already in use');
   });
 
-  it('should clear saving and mark saved when resetPasswordSuccess is seen', () => {
-    actions$ = of(AuthActions.resetPasswordSuccess());
+  it('should clear saving and mark saved when changePasswordSuccess is seen', () => {
+    actions$ = of(AuthActions.changePasswordSuccess());
     fixture = TestBed.createComponent(NavComponent);
     component = fixture.componentInstance;
     component.passwordSaving = true;
@@ -167,14 +182,14 @@ describe('NavComponent', () => {
     expect(component.passwordSaved).toBeTrue();
   });
 
-  it('should surface the error when resetPasswordFailure is seen', () => {
-    actions$ = of(AuthActions.resetPasswordFailure({ error: 'Current password is incorrect' }));
+  it('should surface the error when changePasswordFailure is seen', () => {
+    actions$ = of(AuthActions.changePasswordFailure({ error: 'Failed to change password' }));
     fixture = TestBed.createComponent(NavComponent);
     component = fixture.componentInstance;
     component.passwordSaving = true;
     fixture.detectChanges();
 
     expect(component.passwordSaving).toBeFalse();
-    expect(component.passwordError).toBe('Current password is incorrect');
+    expect(component.passwordError).toBe('Failed to change password');
   });
 });

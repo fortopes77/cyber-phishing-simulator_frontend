@@ -52,7 +52,7 @@ export class NavComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.subscribeToAuthUser();
     this.subscribeToProfileUpdateResult();
-    this.subscribeToPasswordResetResult();
+    this.subscribeToPasswordChangeResult();
   }
 
   subscribeToAuthUser() {
@@ -123,10 +123,16 @@ export class NavComponent implements OnInit, OnDestroy {
     );
   }
 
-  savePassword(payload: { currentPassword: string; newPassword: string }): void {
+  savePassword(payload: { newPassword: string }): void {
+    if (!this.currentUser) {
+      return;
+    }
+
     this.passwordSaving = true;
     this.passwordSaved = false;
-    this.store.dispatch(AuthActions.resetPassword(payload));
+    this.store.dispatch(
+      AuthActions.changePassword({ userId: this.currentUser.id, ...payload }),
+    );
   }
 
   private subscribeToProfileUpdateResult(): void {
@@ -142,14 +148,14 @@ export class NavComponent implements OnInit, OnDestroy {
     });
   }
 
-  private subscribeToPasswordResetResult(): void {
-    this.actions$.pipe(ofType(AuthActions.resetPasswordSuccess)).subscribe(() => {
+  private subscribeToPasswordChangeResult(): void {
+    this.actions$.pipe(ofType(AuthActions.changePasswordSuccess)).subscribe(() => {
       this.passwordSaving = false;
       this.passwordError = null;
       this.passwordSaved = true;
     });
 
-    this.actions$.pipe(ofType(AuthActions.resetPasswordFailure)).subscribe(({ error }) => {
+    this.actions$.pipe(ofType(AuthActions.changePasswordFailure)).subscribe(({ error }) => {
       this.passwordSaving = false;
       this.passwordError = error;
     });

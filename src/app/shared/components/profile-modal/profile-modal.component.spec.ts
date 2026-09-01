@@ -89,9 +89,8 @@ describe('ProfileModalComponent', () => {
 
   it('should flag a mismatch between new and confirm password', () => {
     component.passwordForm.setValue({
-      currentPassword: 'oldpassword',
-      newPassword: 'newpassword1',
-      confirmPassword: 'newpassword2',
+      newPassword: 'newpassword1!',
+      confirmPassword: 'newpassword2!',
     });
 
     expect(component.passwordForm.errors?.['passwordMismatch']).toBeTrue();
@@ -99,7 +98,6 @@ describe('ProfileModalComponent', () => {
 
   it('should reject a new password missing the required number/special character', () => {
     component.passwordForm.setValue({
-      currentPassword: 'oldpassword',
       newPassword: 'newpassword',
       confirmPassword: 'newpassword',
     });
@@ -109,27 +107,24 @@ describe('ProfileModalComponent', () => {
     ).toBeTrue();
   });
 
-  it('should emit passwordSubmitted with current and new password when valid', () => {
+  it('should emit passwordSubmitted with just the new password when valid (no currentPassword field - the backend has no route to verify one)', () => {
     component.isOpen = true;
     fixture.detectChanges();
     spyOn(component.passwordSubmitted, 'emit');
 
     component.passwordForm.setValue({
-      currentPassword: 'oldpassword',
       newPassword: 'newpassword1!',
       confirmPassword: 'newpassword1!',
     });
     component.onSubmitPassword();
 
     expect(component.passwordSubmitted.emit).toHaveBeenCalledWith({
-      currentPassword: 'oldpassword',
       newPassword: 'newpassword1!',
     });
   });
 
   it('should reset the password form each time the modal opens', () => {
     component.passwordForm.setValue({
-      currentPassword: 'stale',
       newPassword: 'stale',
       confirmPassword: 'stale',
     });
@@ -144,7 +139,7 @@ describe('ProfileModalComponent', () => {
       },
     });
 
-    expect(component.passwordForm.get('currentPassword')?.value).toBe('');
+    expect(component.passwordForm.get('newPassword')?.value).toBe('');
   });
 
   it('should emit closed when the modal close button is clicked', () => {
