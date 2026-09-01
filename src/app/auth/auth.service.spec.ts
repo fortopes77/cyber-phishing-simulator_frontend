@@ -55,6 +55,41 @@ describe('AuthService', () => {
     expect(req.request.body).toEqual({ token: null });
     req.flush({ token: 'fresh-token' });
   });
+
+  it('should PATCH the username and email to the profile endpoint', () => {
+    service.updateProfile('Ava', 'Morales', 'ava', 'ava@example.com').subscribe();
+
+    const req = httpMock.expectOne(`${environment.apiUrl}auth/profile`);
+    expect(req.request.method).toBe('PATCH');
+    expect(req.request.body).toEqual({
+      firstName: 'Ava',
+      lastName: 'Morales',
+      username: 'ava',
+      email: 'ava@example.com',
+    });
+    req.flush({
+      user: {
+        id: '1',
+        firstName: 'Ava',
+        lastName: 'Morales',
+        username: 'ava',
+        email: 'ava@example.com',
+        role: 'user',
+      },
+    });
+  });
+
+  it('should POST the current and new password to the reset-password endpoint', () => {
+    service.resetPassword('old-password', 'new-password').subscribe();
+
+    const req = httpMock.expectOne(`${environment.apiUrl}auth/reset-password`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({
+      currentPassword: 'old-password',
+      newPassword: 'new-password',
+    });
+    req.flush({});
+  });
 });
 
 describe('normalizeUser', () => {

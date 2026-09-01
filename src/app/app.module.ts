@@ -32,6 +32,9 @@ import { AttemptsModule } from './attempts/attempts.module';
 import { LearnerModulesModule } from './modules/modules.module';
 import { BreadcrumbsComponent } from './shared/components/breadcrumbs/breadcrumbs.component';
 import { FeedbackModule } from './feedback/feedback.module';
+import { AdminModule } from './admin/admin.module';
+import { UsersModule } from './users/users.module';
+import { ModuleResultsModule } from './module-results/module-results.module';
 import { authInterceptor } from './auth/auth.interceptor';
 
 @NgModule({
@@ -54,6 +57,9 @@ import { authInterceptor } from './auth/auth.interceptor';
     AttemptsModule,
     LearnerModulesModule,
     FeedbackModule,
+    AdminModule,
+    UsersModule,
+    ModuleResultsModule,
     StoreModule.forRoot({}),
     EffectsModule.forRoot([]),
     DataCardComponent,

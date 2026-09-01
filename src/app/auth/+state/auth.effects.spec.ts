@@ -18,7 +18,12 @@ describe('AuthEffects', () => {
   let store: MockStore;
 
   beforeEach(() => {
-    const spy = jasmine.createSpyObj('AuthService', ['login', 'refreshToken']);
+    const spy = jasmine.createSpyObj('AuthService', [
+      'login',
+      'refreshToken',
+      'updateProfile',
+      'resetPassword',
+    ]);
 
     TestBed.configureTestingModule({
       imports: [RouterTestingModule],
@@ -135,6 +140,90 @@ describe('AuthEffects', () => {
     });
   });
 
+  it('should dispatch updateProfileSuccess with a normalized user on successful update', (done) => {
+    authService.updateProfile.and.returnValue(
+      of({
+        user: {
+          id: '1',
+          firstName: 'Ava',
+          lastName: 'Morales',
+          username: 'ava',
+          email: 'ava@example.com',
+          role: 'USER',
+        },
+      }),
+    );
+    actions$ = of(
+      AuthActions.updateProfile({
+        firstName: 'Ava',
+        lastName: 'Morales',
+        username: 'ava',
+        email: 'ava@example.com',
+      }),
+    );
+
+    effects.updateProfile$.subscribe((action: any) => {
+      expect(authService.updateProfile).toHaveBeenCalledWith(
+        'Ava',
+        'Morales',
+        'ava',
+        'ava@example.com',
+      );
+      expect(action.user.role).toBe('user');
+      done();
+    });
+  });
+
+  it('should dispatch updateProfileFailure on update error', (done) => {
+    authService.updateProfile.and.returnValue(
+      throwError(() => new Error('Email already in use')),
+    );
+    actions$ = of(
+      AuthActions.updateProfile({
+        firstName: 'Ava',
+        lastName: 'Morales',
+        username: 'ava',
+        email: 'ava@example.com',
+      }),
+    );
+
+    effects.updateProfile$.subscribe((action) => {
+      expect(action).toEqual(
+        AuthActions.updateProfileFailure({ error: 'Email already in use' }),
+      );
+      done();
+    });
+  });
+
+  it('should dispatch resetPasswordSuccess on successful reset', (done) => {
+    authService.resetPassword.and.returnValue(of({}));
+    actions$ = of(
+      AuthActions.resetPassword({ currentPassword: 'old', newPassword: 'new' }),
+    );
+
+    effects.resetPassword$.subscribe((action) => {
+      expect(authService.resetPassword).toHaveBeenCalledWith('old', 'new');
+      expect(action).toEqual(AuthActions.resetPasswordSuccess());
+      done();
+    });
+  });
+
+  it('should dispatch resetPasswordFailure on reset error', (done) => {
+    authService.resetPassword.and.returnValue(
+      throwError(() => new Error('Current password is incorrect')),
+    );
+    actions$ = of(
+      AuthActions.resetPassword({ currentPassword: 'wrong', newPassword: 'new' }),
+    );
+
+    effects.resetPassword$.subscribe((action) => {
+      expect(action).toEqual(
+        AuthActions.resetPasswordFailure({ error: 'Current password is incorrect' }),
+      );
+      done();
+    });
+  });
+
   describe('persistSession$', () => {
     const user = { id: '1', username: 'u', email: 'u@u.com', role: 'trainer' } as any;
 
@@ -170,6 +259,23 @@ describe('AuthEffects', () => {
 
       effects.persistSession$.subscribe(() => {
         expect(loadSession()).toEqual({ user, token: 'fresh-token' });
+        done();
+      });
+    });
+
+    it('should persist the updated user on updateProfileSuccess', (done) => {
+      const updatedUser = { ...user, username: 'updated' };
+      store.overrideSelector(selectAuthState, {
+        user: updatedUser,
+        token: 'abc',
+        loading: false,
+        isAuthenticated: true,
+      });
+      store.refreshState();
+      actions$ = of(AuthActions.updateProfileSuccess({ user: updatedUser }));
+
+      effects.persistSession$.subscribe(() => {
+        expect(loadSession()).toEqual({ user: updatedUser, token: 'abc' });
         done();
       });
     });

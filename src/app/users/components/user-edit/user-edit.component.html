@@ -1,0 +1,84 @@
+<app-header
+  [title]="isCreateMode ? 'Add Learner' : 'Edit Learner'"
+  [subtitle]="
+    isCreateMode
+      ? 'Create a new learner or trainer account.'
+      : 'Update the account details below and save your changes.'
+  "
+></app-header>
+
+<app-dashboard-card>
+  @if (error) {
+    <p class="user-edit-error">Couldn't save this account - {{ error }}</p>
+  }
+
+  <form class="user-form" [formGroup]="userForm" (ngSubmit)="onSubmit()">
+    <div class="form-grid">
+      <label class="field">
+        <span>Full name</span>
+        <input
+          type="text"
+          formControlName="fullName"
+          placeholder="Enter full name"
+        />
+        <app-form-field-error
+          [control]="userForm.get('fullName')"
+          label="Full name"
+        ></app-form-field-error>
+      </label>
+
+      <label class="field">
+        <span>Email</span>
+        <input
+          type="email"
+          formControlName="email"
+          placeholder="name@example.com"
+        />
+        <app-form-field-error
+          [control]="userForm.get('email')"
+          label="Email"
+        ></app-form-field-error>
+      </label>
+
+      <label class="field">
+        <span>Role</span>
+        <select formControlName="role">
+          @for (option of roleOptions; track option.value) {
+            <option [value]="option.value">{{ option.label }}</option>
+          }
+        </select>
+        <app-form-field-error
+          [control]="userForm.get('role')"
+          label="Role"
+        ></app-form-field-error>
+      </label>
+    </div>
+
+    <div class="actions">
+      @if (!isCreateMode && isLearner) {
+        <button
+          type="button"
+          class="btn btn-secondary"
+          (click)="openSendReminderModal()"
+        >
+          Send Reminder Email
+        </button>
+      }
+      <button type="button" class="btn btn-secondary" (click)="onCancel()">
+        Cancel
+      </button>
+      <button type="submit" class="btn btn-primary" [disabled]="loading">
+        Save
+      </button>
+    </div>
+  </form>
+</app-dashboard-card>
+
+<app-send-reminder-modal
+  [isOpen]="isSendReminderModalOpen"
+  [learnerName]="userForm.get('fullName')?.value || 'this learner'"
+  [loading]="reminderSending"
+  [error]="reminderError"
+  (confirmed)="confirmSendReminder()"
+  (cancelled)="cancelSendReminder()"
+></app-send-reminder-modal>

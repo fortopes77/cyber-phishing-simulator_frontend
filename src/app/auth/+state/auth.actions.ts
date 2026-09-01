@@ -19,5 +19,21 @@ export const AuthActions = createActionGroup({
     'Refresh Token': props<{ token: string | undefined }>(),
     'Refresh Token Success': props<{ token: string }>(),
     'Refresh Token Failure': props<{ error: string }>(),
+    'Update Profile': props<{
+      firstName: string;
+      lastName: string;
+      username: string;
+      email: string;
+    }>(),
+    'Update Profile Success': props<{ user: any }>(),
+    'Update Profile Failure': props<{ error: string }>(),
+    // Self-service password change from ProfileModalComponent. Its
+    // success/failure are consumed directly via Actions$ in NavComponent
+    // (which tracks its own local saving/error state for the modal) rather
+    // than through auth.reducer, since neither outcome changes anything in
+    // AuthState.
+    'Reset Password': props<{ currentPassword: string; newPassword: string }>(),
+    'Reset Password Success': emptyProps(),
+    'Reset Password Failure': props<{ error: string }>(),
   },
 });

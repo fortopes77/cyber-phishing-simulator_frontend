@@ -75,8 +75,7 @@
     <button
       type="button"
       class="profile-card profile-toggle"
-      (click)="toggleProfileMenu()"
-      [attr.aria-expanded]="profileOpen"
+      (click)="openProfileModal()"
     >
       <div class="avatar">
         <fa-icon [icon]="fontAwesomeIcons.userIcon"></fa-icon>
@@ -88,19 +87,6 @@
         <div class="profile-email">{{ currentUser?.email }}</div>
       </div>
     </button>
-
-    @if (profileOpen) {
-      <div class="profile-menu">
-        <button type="button" class="profile-action" routerLink="/settings">
-          <fa-icon [icon]="fontAwesomeIcons.cogIcon"></fa-icon>
-          <span>Edit user</span>
-        </button>
-        <button type="button" class="profile-action" routerLink="/settings">
-          <fa-icon [icon]="fontAwesomeIcons.lockIcon"></fa-icon>
-          <span>Change password</span>
-        </button>
-      </div>
-    }
 
     <button type="button" class="profile-action sign-out" (click)="logout()">
       <fa-icon [icon]="fontAwesomeIcons.arrowRightIcon"></fa-icon>
@@ -114,3 +100,17 @@
   (confirmed)="confirmSignOut()"
   (cancelled)="cancelSignOut()"
 ></app-sign-out-confirmation-modal>
+
+<app-profile-modal
+  [isOpen]="profileModalOpen"
+  [user]="currentUser ?? null"
+  [profileSaving]="profileSaving"
+  [profileError]="profileError"
+  [profileSaved]="profileSaved"
+  [passwordSaving]="passwordSaving"
+  [passwordError]="passwordError"
+  [passwordSaved]="passwordSaved"
+  (closed)="closeProfileModal()"
+  (profileSubmitted)="saveProfile($event)"
+  (passwordSubmitted)="savePassword($event)"
+></app-profile-modal>

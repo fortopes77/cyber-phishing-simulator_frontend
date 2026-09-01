@@ -18,7 +18,14 @@
             {{ column.label }}
           </th>
           <td mat-cell *matCellDef="let row">
-            {{ getCellValue(column, row) }}
+            <ng-container
+              *ngIf="getCellTemplate(column.key) as cellTemplate; else plainCell"
+            >
+              <ng-container
+                *ngTemplateOutlet="cellTemplate; context: { $implicit: row, row: row }"
+              ></ng-container>
+            </ng-container>
+            <ng-template #plainCell>{{ getCellValue(column, row) }}</ng-template>
           </td>
         </ng-container>
       </ng-container>
@@ -51,22 +58,6 @@
             >
               ⋯
             </button>
-
-            <div
-              *ngIf="openMenuRowKey === getRowMenuKey(row)"
-              class="action-menu"
-              role="menu"
-            >
-              <button
-                *ngFor="let action of overflowActions"
-                type="button"
-                class="action-menu-item"
-                role="menuitem"
-                (click)="$event.stopPropagation(); handleAction(action, row)"
-              >
-                {{ action.label }}
-              </button>
-            </div>
           </div>
 
           <ng-container *ngIf="!shouldUseDropdown">
@@ -92,5 +83,68 @@
     </table>
   </div>
 
+  <div class="pagination" *ngIf="hasRows && totalPages > 1">
+    <div class="pagination-controls">
+      <button
+        type="button"
+        (click)="goToPage(1)"
+        [disabled]="pageIndex === 0"
+        aria-label="First page"
+      >
+        «
+      </button>
+      <button
+        type="button"
+        (click)="previousPage()"
+        [disabled]="pageIndex === 0"
+        aria-label="Previous page"
+      >
+        ‹
+      </button>
+      <button
+        *ngFor="let page of pageNumbers"
+        type="button"
+        class="pagination-page"
+        [class.active]="page === pageIndex + 1"
+        (click)="goToPage(page)"
+      >
+        {{ page }}
+      </button>
+      <button
+        type="button"
+        (click)="nextPage()"
+        [disabled]="pageIndex + 1 >= totalPages"
+        aria-label="Next page"
+      >
+        ›
+      </button>
+      <button
+        type="button"
+        (click)="goToPage(totalPages)"
+        [disabled]="pageIndex + 1 >= totalPages"
+        aria-label="Last page"
+      >
+        »
+      </button>
+    </div>
+    <div class="pagination-summary">
+      {{ tableDataSource.data.length }} of {{ rows.length }} records
+    </div>
+  </div>
+
   <p *ngIf="!hasRows" class="empty-state">{{ emptyMessage }}</p>
 </div>
+
+<ng-template #overflowMenuTemplate let-actions let-row="row">
+  <div class="action-menu" role="menu">
+    <button
+      *ngFor="let action of actions"
+      type="button"
+      class="action-menu-item"
+      role="menuitem"
+      (click)="handleAction(action, row)"
+    >
+      {{ action.label }}
+    </button>
+  </div>
+</ng-template>

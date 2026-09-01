@@ -7,6 +7,10 @@ export const selectModuleList = createSelector(
   selectModulesState,
   (state) => state.moduleList,
 );
+export const selectModule = createSelector(
+  selectModulesState,
+  (state) => state.module,
+);
 export const selectModulesLoading = createSelector(
   selectModulesState,
   (state) => state.loading,

@@ -1,0 +1,101 @@
+import { TestBed } from '@angular/core/testing';
+import {
+  HttpTestingController,
+  provideHttpClientTesting,
+} from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { ModulesService } from './modules.service';
+import { environment } from 'src/environments/environment.development';
+import { LearnerModule } from './module.model';
+
+describe('ModulesService', () => {
+  let service: ModulesService;
+  let httpMock: HttpTestingController;
+
+  const modules: LearnerModule[] = [
+    { moduleId: 1, moduleName: 'Phishing Awareness', description: 'Learn to spot phishing' },
+  ];
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    service = TestBed.inject(ModulesService);
+    httpMock = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => {
+    httpMock.verify();
+  });
+
+  it('should be created', () => {
+    expect(service).toBeTruthy();
+  });
+
+  it('should GET training-modules scoped to the org only when no userId is given', () => {
+    service.getModules().subscribe();
+
+    const req = httpMock.expectOne(
+      (request) => request.url === `${environment.apiUrl}training-modules`,
+    );
+    expect(req.request.method).toBe('GET');
+    expect(req.request.params.get('organisationId')).toBe('1');
+    expect(req.request.params.has('userId')).toBeFalse();
+    req.flush(modules);
+  });
+
+  it('should additionally scope the request to a specific learner when userId is given', () => {
+    service.getModules('u_1').subscribe();
+
+    const req = httpMock.expectOne(
+      (request) => request.url === `${environment.apiUrl}training-modules`,
+    );
+    expect(req.request.params.get('organisationId')).toBe('1');
+    expect(req.request.params.get('userId')).toBe('u_1');
+    req.flush(modules);
+  });
+
+  it('should GET a single module by id', () => {
+    service.getModuleDetails(1).subscribe();
+
+    const req = httpMock.expectOne(
+      `${environment.apiUrl}training-modules/1`,
+    );
+    expect(req.request.method).toBe('GET');
+    req.flush(modules[0]);
+  });
+
+  it('should POST a new module', () => {
+    const newModule = { moduleName: 'New Module', description: 'desc' };
+    service.createModule(newModule).subscribe();
+
+    const req = httpMock.expectOne(
+      `${environment.apiUrl}training-modules`,
+    );
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual(newModule);
+    req.flush({ moduleId: 2, ...newModule });
+  });
+
+  it('should PATCH an existing module', () => {
+    const updatedModule = { moduleName: 'Updated Module' };
+    service.updateModule(1, updatedModule).subscribe();
+
+    const req = httpMock.expectOne(
+      `${environment.apiUrl}training-modules/1`,
+    );
+    expect(req.request.method).toBe('PATCH');
+    expect(req.request.body).toEqual(updatedModule);
+    req.flush({ ...modules[0], ...updatedModule });
+  });
+
+  it('should DELETE a module', () => {
+    service.deleteModule(1).subscribe();
+
+    const req = httpMock.expectOne(
+      `${environment.apiUrl}training-modules/1`,
+    );
+    expect(req.request.method).toBe('DELETE');
+    req.flush({});
+  });
+});

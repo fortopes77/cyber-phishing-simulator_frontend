@@ -16,5 +16,11 @@ export class DataCardComponent {
   @Input() statistic?: Statistic;
   @Input() label?: string;
   //TODO: Turn this into an enum
-  @Input() dataType?: 'module' | 'scenario' | 'average' | 'total';
+  @Input() dataType?:
+    | 'module'
+    | 'scenario'
+    | 'average'
+    | 'total'
+    | 'success'
+    | 'danger';
 }

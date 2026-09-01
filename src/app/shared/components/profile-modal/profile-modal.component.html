@@ -1,0 +1,107 @@
+<app-modal [isOpen]="isOpen" title="My profile" (closed)="onClose()">
+  <section class="profile-section">
+    <h4>Profile details</h4>
+    @if (profileError) {
+      <p class="form-error">{{ profileError }}</p>
+    }
+
+    <form [formGroup]="profileForm" (ngSubmit)="onSubmitProfile()" class="profile-form">
+      <div class="name-row">
+        <label class="field">
+          <span>First name</span>
+          <input type="text" formControlName="firstName" />
+          <app-form-field-error
+            [control]="profileForm.get('firstName')"
+            label="First name"
+          ></app-form-field-error>
+        </label>
+
+        <label class="field">
+          <span>Last name</span>
+          <input type="text" formControlName="lastName" />
+          <app-form-field-error
+            [control]="profileForm.get('lastName')"
+            label="Last name"
+          ></app-form-field-error>
+        </label>
+      </div>
+
+      <label class="field">
+        <span>Username</span>
+        <input type="text" formControlName="username" />
+        <app-form-field-error
+          [control]="profileForm.get('username')"
+          label="Username"
+        ></app-form-field-error>
+      </label>
+
+      <label class="field">
+        <span>Email</span>
+        <input type="email" formControlName="email" />
+        <app-form-field-error
+          [control]="profileForm.get('email')"
+          label="Email"
+        ></app-form-field-error>
+      </label>
+
+      <div class="section-actions">
+        @if (profileSaved) {
+          <span class="saved-note">Saved</span>
+        }
+        <button type="submit" class="btn btn-primary" [disabled]="profileSaving">
+          {{ profileSaving ? 'Saving...' : 'Save profile' }}
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <hr class="section-divider" />
+
+  <section class="profile-section">
+    <h4>Change password</h4>
+    @if (passwordError) {
+      <p class="form-error">{{ passwordError }}</p>
+    }
+
+    <form [formGroup]="passwordForm" (ngSubmit)="onSubmitPassword()" class="profile-form">
+      <label class="field">
+        <span>Current password</span>
+        <input type="password" formControlName="currentPassword" autocomplete="current-password" />
+        <app-form-field-error
+          [control]="passwordForm.get('currentPassword')"
+          label="Current password"
+        ></app-form-field-error>
+      </label>
+
+      <label class="field">
+        <span>New password</span>
+        <input type="password" formControlName="newPassword" autocomplete="new-password" />
+        <app-form-field-error
+          [control]="passwordForm.get('newPassword')"
+          label="New password"
+        ></app-form-field-error>
+      </label>
+
+      <label class="field">
+        <span>Confirm new password</span>
+        <input type="password" formControlName="confirmPassword" autocomplete="new-password" />
+        <app-form-field-error
+          [control]="passwordForm.get('confirmPassword')"
+          label="Confirm password"
+        ></app-form-field-error>
+        @if (passwordForm.errors?.['passwordMismatch'] && passwordForm.get('confirmPassword')?.touched) {
+          <p class="field-error">Passwords don't match.</p>
+        }
+      </label>
+
+      <div class="section-actions">
+        @if (passwordSaved) {
+          <span class="saved-note">Saved</span>
+        }
+        <button type="submit" class="btn btn-primary" [disabled]="passwordSaving">
+          {{ passwordSaving ? 'Saving...' : 'Change password' }}
+        </button>
+      </div>
+    </form>
+  </section>
+</app-modal>

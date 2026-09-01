@@ -1,8 +1,104 @@
 <app-header
-  title="Learner Directory"
-  subtitle="Review the learners assigned to your training programs."
+  title="Learners"
+  subtitle="Manage and monitor learner progress"
+  [showCreateAction]="true"
+  [createActions]="createActions"
 ></app-header>
 
+<div class="learner-statistics">
+  <app-data-card
+    label="Total Learners"
+    [statistic]="{ singleValue: totalLearners }"
+    [icon]="fontAwesomeIcon.userGroupIcon"
+    dataType="total"
+  ></app-data-card>
+
+  <app-data-card
+    label="High Performers"
+    [statistic]="{ singleValue: highPerformers }"
+    [icon]="fontAwesomeIcon.awardIcon"
+    dataType="success"
+  ></app-data-card>
+
+  <app-data-card
+    label="Needs Attention"
+    [statistic]="{ singleValue: needsAttention }"
+    [icon]="fontAwesomeIcon.warningIcon"
+    dataType="danger"
+  ></app-data-card>
+
+  <app-data-card
+    label="Average Completion"
+    [statistic]="{ percentage: averageCompletion }"
+    [icon]="fontAwesomeIcon.chartColumnIcon"
+    dataType="average"
+  ></app-data-card>
+</div>
+
 <app-dashboard-card>
-  <app-list [columns]="columns" [rows]="rows" [actions]="actions"></app-list>
+  <div class="list-filters">
+    <app-date-range-picker
+      label="Last Active"
+      [startDate]="lastActiveRange.start"
+      [endDate]="lastActiveRange.end"
+      (rangeChange)="onLastActiveRangeChange($event)"
+    ></app-date-range-picker>
+  </div>
+
+  <app-list [columns]="columns" [rows]="filteredRows" [actions]="actions" [pageSize]="12">
+    <ng-template appListCell="learner" let-row>
+      <div class="learner-cell">
+        <span class="learner-avatar">
+          <fa-icon [icon]="fontAwesomeIcon.userIcon"></fa-icon>
+        </span>
+        <div class="learner-details">
+          <div class="learner-name">{{ row.fullName }}</div>
+          <div class="learner-email">{{ row.email }}</div>
+        </div>
+      </div>
+    </ng-template>
+
+    <ng-template appListCell="progress" let-row>
+      <app-progress-row label="" [value]="row.progress"></app-progress-row>
+    </ng-template>
+
+    <ng-template appListCell="avgScore" let-row>
+      <app-status-badge
+        [status]="row.avgScore + '%'"
+        [variant]="scoreVariant(row.avgScore)"
+      ></app-status-badge>
+    </ng-template>
+
+    <ng-template appListCell="weaknesses" let-row>
+      <div class="weakness-list">
+        <app-status-badge
+          *ngFor="let weakness of visibleWeaknesses(row)"
+          [status]="weakness"
+          variant="neutral"
+        ></app-status-badge>
+        <app-status-badge
+          *ngIf="overflowWeaknessCount(row) > 0"
+          [status]="'+' + overflowWeaknessCount(row)"
+          variant="neutral"
+        ></app-status-badge>
+      </div>
+    </ng-template>
+  </app-list>
 </app-dashboard-card>
+
+<app-delete-confirmation-modal
+  [isOpen]="isDeleteModalOpen"
+  [title]="selectedLearnerName"
+  [message]="'Are you sure you wish to delete'"
+  (confirmed)="confirmDelete()"
+  (cancelled)="cancelDelete()"
+></app-delete-confirmation-modal>
+
+<app-reset-password-modal
+  [isOpen]="isResetPasswordModalOpen"
+  [targetUserName]="selectedResetPasswordUserName"
+  [loading]="resetPasswordLoading"
+  [error]="resetPasswordError"
+  (submitted)="confirmResetPassword($event)"
+  (cancelled)="cancelResetPassword()"
+></app-reset-password-modal>

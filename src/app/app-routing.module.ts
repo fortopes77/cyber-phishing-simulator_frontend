@@ -16,6 +16,8 @@ import { LearnerListComponent } from './learner/components/learner-list/learner-
 import { CohortsListComponent } from './cohorts/components/cohorts-list/cohorts-list.component';
 import { LearnerModulesListComponent } from './modules/components/learner-modules-list/learner-modules-list.component';
 import { TrainerModulesListComponent } from './modules/components/trainer-modules-list/trainer-modules-list.component';
+import { ModuleEditComponent } from './modules/components/module-edit/module-edit.component';
+import { UserEditComponent } from './users/components/user-edit/user-edit.component';
 
 /**
  * Route-level access control. Every protected route declares the roles that
@@ -106,10 +108,34 @@ const routes: Routes = [
         data: { breadcrumb: 'Learners', roles: TRAINER_ROLES },
       },
       {
+        path: 'learners/:id/edit',
+        component: UserEditComponent,
+        canActivate: [AuthGuard],
+        data: { breadcrumb: 'Edit Learner', roles: TRAINER_ROLES },
+      },
+      {
+        path: 'learners/create',
+        component: UserEditComponent,
+        canActivate: [AuthGuard],
+        data: { breadcrumb: 'Add Learner', roles: TRAINER_ROLES },
+      },
+      {
         path: 'modules',
         component: TrainerModulesListComponent,
         canActivate: [AuthGuard],
         data: { breadcrumb: 'Modules', roles: TRAINER_ROLES },
+      },
+      {
+        path: 'modules/:id/edit',
+        component: ModuleEditComponent,
+        canActivate: [AuthGuard],
+        data: { breadcrumb: 'Edit Module', roles: TRAINER_ROLES },
+      },
+      {
+        path: 'modules/create',
+        component: ModuleEditComponent,
+        canActivate: [AuthGuard],
+        data: { breadcrumb: 'Create Module', roles: TRAINER_ROLES },
       },
       {
         path: 'cohorts',
@@ -157,6 +183,8 @@ const routes: Routes = [
     LearnerListComponent,
     CohortsListComponent,
     TrainerModulesListComponent,
+    ModuleEditComponent,
+    UserEditComponent,
   ],
   exports: [RouterModule],
   providers: [AuthGuard],

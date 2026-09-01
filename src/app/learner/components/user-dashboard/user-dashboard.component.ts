@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { iconLibrary } from 'src/app/shared/constants/font-awesome-icons.const';
 import { AuthService, User } from '../../../auth/auth.service';
 import { Store } from '@ngrx/store';
@@ -51,12 +52,14 @@ export class UserDashboardComponent implements OnInit {
     averageScore: 0,
   };
 
-  constructor(private store: Store) {}
+  constructor(
+    private store: Store,
+    private router: Router,
+  ) {}
 
   ngOnInit() {
     this.subscribeToAuthUser();
 
-    this.store.dispatch(ModulesActions.fetchList());
     this.store.dispatch(ScenarioActions.fetchList());
     this.store.dispatch(AttemptsActions.fetchUserAttempts());
 
@@ -97,27 +100,25 @@ export class UserDashboardComponent implements OnInit {
         };
       });
 
-      // "Continue Learning" surfaces the module already in progress, or
-      // the next not-yet-started one if nothing is in progress.
+      // "Continue Learning" only surfaces a module actually in progress -
+      // hidden entirely (not a fallback to a not-yet-started module) when
+      // the learner has nothing partway done.
       const inProgress = this.assignedModules.find(
         (m) => m.progressPercentage > 0 && m.progressPercentage < 100,
       );
-      const nextUp =
-        inProgress ??
-        this.assignedModules.find((m) => m.progressPercentage === 0);
 
-      this.continueLearning = nextUp
+      this.continueLearning = inProgress
         ? {
-            id: nextUp.id,
-            title: nextUp.title,
-            level: nextUp.level,
+            id: inProgress.id,
+            title: inProgress.title,
+            level: inProgress.level,
             completedScenarios: Math.round(
-              (nextUp.progressPercentage / 100) * nextUp.scenarios,
+              (inProgress.progressPercentage / 100) * inProgress.scenarios,
             ),
-            totalScenarios: nextUp.scenarios,
-            progressPercentage: nextUp.progressPercentage,
+            totalScenarios: inProgress.scenarios,
+            progressPercentage: inProgress.progressPercentage,
             icon: 'schedule',
-            route: nextUp.route,
+            route: inProgress.route,
           }
         : null;
 
@@ -162,13 +163,22 @@ export class UserDashboardComponent implements OnInit {
 
   subscribeToAuthUser() {
     this.store.select(selectAuthState).subscribe((authState) => {
-      if (authState?.isAuthenticated) {
+      if (authState?.isAuthenticated && authState.user) {
         this.currentUser = authState.user;
+        // Scoped to the logged-in learner so "Assigned Modules" only ever
+        // shows their own modules, not every module in the org.
+        this.store.dispatch(
+          ModulesActions.fetchList({ userId: authState.user.id }),
+        );
       }
     });
   }
 
   onAssignedModuleSelected(module: AssignedModule): void {
     console.log('Assigned module selected:', module.title);
+  }
+
+  viewAllModules(): void {
+    this.router.navigate(['/learner/modules']);
   }
 }

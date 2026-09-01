@@ -1,50 +1,68 @@
 <section class="module-results">
-  <div class="summary-card">
-    <div class="badge">Module Complete</div>
-    <h1>{{ moduleTitle }}</h1>
-    <p>You have successfully completed this module.</p>
+  @if (loading) {
+    <p class="status-message">Loading your results...</p>
+  } @else if (error) {
+    <p class="status-message error">Couldn't load your results - {{ error }}</p>
+  } @else if (result) {
+    <div class="summary-card">
+      <div class="badge" [class.passed]="result.passed" [class.failed]="!result.passed">
+        {{ result.passed ? "Passed" : "Not Passed" }}
+      </div>
+      <h1>{{ result.moduleName }}</h1>
+      <p>
+        {{
+          result.passed
+            ? "You have successfully completed this module."
+            : "You didn't reach the passing score for this module - you can retry it below."
+        }}
+      </p>
 
-    <div class="score-panel">
-      <div class="score-value">{{ scorePercentage }}%</div>
-      <div class="score-label">Correct Answers</div>
-      <div class="score-details">
-        {{ correctAnswers }} of {{ totalScenarios }} scenarios
+      <div class="score-panel">
+        <div class="score-value">{{ result.percentageScore }}%</div>
+        <div class="score-label">Score</div>
+        <div class="score-details">
+          {{ result.totalScore }} / {{ result.maxScore }} points - passing score
+          {{ result.passingScore }}%
+        </div>
       </div>
     </div>
-  </div>
 
-  <div class="details-card">
-    <h2>Results Overview</h2>
-    <p>
-      Review your decisions and continue strengthening your phishing awareness.
-    </p>
+    <div class="details-card">
+      <h2>Results Overview</h2>
+      <p>
+        Review your decisions and continue strengthening your phishing awareness.
+      </p>
 
-    <ul class="scenario-list">
-      @for (result of scenarioResults; track result) {
-        <li class="scenario-item">
-          <div class="scenario-title">{{ result.title }}</div>
-          <div class="scenario-answer">
-            <span class="label">Your answer:</span>
-            <strong>{{ result.answer }}</strong>
-          </div>
-          <div
-            class="scenario-outcome"
-            [class.correct]="result.correct"
-            [class.incorrect]="!result.correct"
+      <ul class="scenario-list">
+        @for (scenario of result.scenarioResults; track scenario.scenarioId) {
+          <li class="scenario-item">
+            <div class="scenario-title">{{ scenario.title }}</div>
+            <div class="scenario-answer">
+              <span class="label">Your answer:</span>
+              <strong>{{ scenario.decision }}</strong>
+            </div>
+            <div
+              class="scenario-outcome"
+              [class.correct]="scenario.correct"
+              [class.incorrect]="!scenario.correct"
             >
-            {{ result.correct ? "Correct" : "Incorrect" }}
-          </div>
-        </li>
-      }
-    </ul>
+              {{ scenario.correct ? "Correct" : "Incorrect" }}
+            </div>
+          </li>
+        }
+      </ul>
 
-    <div class="actions">
-      <button class="btn primary" type="button" (click)="retryModule()">
-        Retry Module
-      </button>
-      <button class="btn secondary" type="button" (click)="backToModules()">
-        Back to Dashboard
-      </button>
+      <div class="actions">
+        <button class="btn primary" type="button" (click)="retryModule()">
+          Retry Module
+        </button>
+        <button class="btn secondary" type="button" (click)="backToAssignedModules()">
+          Back to Assigned Modules
+        </button>
+        <button class="btn secondary" type="button" (click)="backToDashboard()">
+          Back to Dashboard
+        </button>
+      </div>
     </div>
-  </div>
+  }
 </section>

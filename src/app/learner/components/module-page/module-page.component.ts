@@ -49,7 +49,10 @@ export class ModulePageComponent implements OnInit {
       this.moduleId = moduleId;
 
       if (moduleId) {
-        this.store.dispatch(ModulesActions.fetchList());
+        // TODO: scope to the current learner's id once this page also needs
+        // to filter by assignment (see UserDashboardComponent for that
+        // wiring).
+        this.store.dispatch(ModulesActions.fetchList({}));
         this.store.dispatch(
           ScenarioActions.fetchScenariosByModule({ moduleId }),
         );

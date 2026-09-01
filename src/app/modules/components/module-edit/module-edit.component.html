@@ -1,0 +1,91 @@
+<app-header
+  [title]="isCreateMode ? 'Create Module' : 'Edit Module'"
+  [subtitle]="
+    isCreateMode
+      ? 'Add a new training module below.'
+      : 'Update the module details below and save your changes.'
+  "
+></app-header>
+
+<app-dashboard-card>
+  @if (error) {
+    <p class="module-edit-error">Something went wrong - {{ error }}</p>
+  }
+
+  <form class="module-form" [formGroup]="moduleForm" (ngSubmit)="onSubmit()">
+    <div class="form-grid">
+      <label class="field">
+        <span>Module name</span>
+        <input
+          type="text"
+          formControlName="moduleName"
+          placeholder="Enter module name"
+        />
+        <app-form-field-error
+          [control]="moduleForm.get('moduleName')"
+          label="Module name"
+        ></app-form-field-error>
+      </label>
+
+      <label class="field">
+        <span>Version</span>
+        <input
+          type="text"
+          formControlName="version"
+          placeholder="e.g. 1.0.0"
+        />
+        <app-form-field-error
+          [control]="moduleForm.get('version')"
+          label="Version"
+        ></app-form-field-error>
+      </label>
+
+      <label class="field field-full">
+        <span>Description</span>
+        <textarea
+          rows="4"
+          formControlName="description"
+          placeholder="Describe this module"
+        ></textarea>
+        <app-form-field-error
+          [control]="moduleForm.get('description')"
+          label="Description"
+        ></app-form-field-error>
+      </label>
+    </div>
+
+    <div class="actions">
+      <button type="button" class="btn btn-secondary" (click)="onCancel()">
+        Cancel
+      </button>
+      <button type="submit" class="btn btn-primary" [disabled]="loading">
+        Save
+      </button>
+    </div>
+  </form>
+
+  @if (!isCreateMode) {
+    <div class="module-scenarios">
+      <div class="module-scenarios-header">
+        <h2>Scenarios in this module</h2>
+        <button
+          type="button"
+          class="btn btn-secondary"
+          (click)="manageScenarios()"
+        >
+          Manage Scenarios
+        </button>
+      </div>
+
+      @if (moduleScenarios.length) {
+        <ul class="scenario-list">
+          @for (scenario of moduleScenarios; track scenario.id) {
+            <li>{{ scenario.title }}</li>
+          }
+        </ul>
+      } @else {
+        <p class="empty-state">No scenarios assigned to this module yet.</p>
+      }
+    </div>
+  }
+</app-dashboard-card>

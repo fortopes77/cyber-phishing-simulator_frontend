@@ -67,6 +67,46 @@ export class AuthEffects {
     ),
   );
 
+  updateProfile$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(AuthActions.updateProfile),
+      mergeMap(({ firstName, lastName, username, email }) =>
+        this.authService.updateProfile(firstName, lastName, username, email).pipe(
+          map((response: any) =>
+            AuthActions.updateProfileSuccess({
+              user: normalizeUser(response.user ?? response),
+            }),
+          ),
+          catchError((error) =>
+            of(
+              AuthActions.updateProfileFailure({
+                error: error.message || 'Failed to update profile',
+              }),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+
+  resetPassword$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(AuthActions.resetPassword),
+      mergeMap(({ currentPassword, newPassword }) =>
+        this.authService.resetPassword(currentPassword, newPassword).pipe(
+          map(() => AuthActions.resetPasswordSuccess()),
+          catchError((error) =>
+            of(
+              AuthActions.resetPasswordFailure({
+                error: error.message || 'Failed to reset password',
+              }),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+
   // A failed refresh means the session can no longer be trusted, regardless
   // of what triggered it (AuthGuard finding an expired token, or the HTTP
   // interceptor catching a 401) - this is the single place that reacts by
@@ -86,10 +126,17 @@ export class AuthEffects {
   // state after the reducer has applied the action rather than building the
   // payload from the action itself, so refreshTokenSuccess (which only
   // carries a new token) still persists alongside the existing user.
+  // updateProfileSuccess is included so an edited username/email survives a
+  // reload too, instead of session-bootstrap silently restoring the stale
+  // pre-edit values from storage.
   persistSession$ = createEffect(
     () =>
       this.actions$.pipe(
-        ofType(AuthActions.loginSuccess, AuthActions.refreshTokenSuccess),
+        ofType(
+          AuthActions.loginSuccess,
+          AuthActions.refreshTokenSuccess,
+          AuthActions.updateProfileSuccess,
+        ),
         withLatestFrom(this.store.select(selectAuthState)),
         tap(([, auth]) => {
           if (auth.user && auth.token) {

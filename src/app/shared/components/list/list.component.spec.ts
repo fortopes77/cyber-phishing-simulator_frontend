@@ -1,20 +1,30 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { OverlayContainer } from '@angular/cdk/overlay';
 
 import { ListComponent } from './list.component';
 
 describe('ListComponent', () => {
   let component: ListComponent;
   let fixture: ComponentFixture<ListComponent>;
+  let overlayContainer: OverlayContainer;
+  let overlayContainerElement: HTMLElement;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [ListComponent, NoopAnimationsModule],
     }).compileComponents();
 
+    overlayContainer = TestBed.inject(OverlayContainer);
+    overlayContainerElement = overlayContainer.getContainerElement();
+
     fixture = TestBed.createComponent(ListComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
+  });
+
+  afterEach(() => {
+    overlayContainer.ngOnDestroy();
   });
 
   it('should create', () => {
@@ -93,9 +103,41 @@ describe('ListComponent', () => {
     trigger.click();
     fixture.detectChanges();
 
-    const menuItems =
-      fixture.nativeElement.querySelectorAll('.action-menu-item');
+    // The menu is portaled into the CDK overlay container (appended
+    // directly to <body>) rather than rendered inside the component's own
+    // DOM subtree, so it's found there instead of via fixture.nativeElement.
+    const menuItems = overlayContainerElement.querySelectorAll(
+      '.action-menu-item',
+    );
     expect(menuItems.length).toBe(1);
     expect(menuItems[0].textContent).toContain('Delete');
+  });
+
+  it('should close the overflow menu when an item is clicked', () => {
+    component.columns = [{ key: 'name', label: 'Name' }];
+    component.rows = [{ name: 'Ada' }];
+    const deleteSpy = jasmine.createSpy('delete');
+    component.actions = [
+      { label: 'Edit', action: jasmine.createSpy('edit') },
+      { label: 'View', action: jasmine.createSpy('view') },
+      { label: 'Delete', action: deleteSpy },
+    ];
+
+    fixture.detectChanges();
+
+    const trigger = fixture.nativeElement.querySelector(
+      '.action-menu-trigger',
+    ) as HTMLElement;
+    trigger.click();
+    fixture.detectChanges();
+
+    const deleteItem = overlayContainerElement.querySelector(
+      '.action-menu-item',
+    ) as HTMLElement;
+    deleteItem.click();
+    fixture.detectChanges();
+
+    expect(deleteSpy).toHaveBeenCalled();
+    expect(overlayContainerElement.querySelectorAll('.action-menu-item').length).toBe(0);
   });
 });

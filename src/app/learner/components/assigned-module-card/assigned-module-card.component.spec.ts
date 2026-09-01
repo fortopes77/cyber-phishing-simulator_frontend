@@ -46,6 +46,14 @@ describe('AssignedModuleCardComponent', () => {
     expect(compiled.textContent).toContain('Learn to spot phishing');
   });
 
+  it('should render the completion percentage and the level/scenario count in the footer', () => {
+    const compiled: HTMLElement = fixture.nativeElement;
+    expect(compiled.textContent).toContain('50%');
+    expect(compiled.textContent).toContain('Beginner');
+    expect(compiled.textContent).toContain('4 scenarios');
+    expect(compiled.querySelector('.assigned-module-card__progress-bar')).toBeNull();
+  });
+
   it('should navigate to the module route and emit selected on click', () => {
     spyOn(component.selected, 'emit');
 

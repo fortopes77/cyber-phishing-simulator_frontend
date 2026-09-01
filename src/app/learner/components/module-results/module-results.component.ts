@@ -1,48 +1,73 @@
-import { Component } from '@angular/core';
-import { Router, RouterModule } from '@angular/router';
-
-interface ScenarioResult {
-  id: number;
-  title: string;
-  answer: string;
-  correct: boolean;
-}
+import { CommonModule } from '@angular/common';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { Store } from '@ngrx/store';
+import { ModuleResultsActions } from 'src/app/module-results/+state/module-results.actions';
+import {
+  selectModuleResult,
+  selectModuleResultError,
+  selectModuleResultLoading,
+} from 'src/app/module-results/+state/module-results.selectors';
+import { ModuleResult } from 'src/app/module-results/+state/module-result.model';
 
 @Component({
   selector: 'app-module-results',
   standalone: true,
-  imports: [RouterModule],
+  imports: [CommonModule, RouterModule],
   templateUrl: './module-results.component.html',
   styleUrls: ['./module-results.component.scss'],
 })
-export class ModuleResultsComponent {
-  moduleTitle = 'Email Phishing Basics';
-  scorePercentage = 100;
-  correctAnswers = 2;
-  totalScenarios = 2;
-  passingScore = 70;
-  scenarioResults: ScenarioResult[] = [
-    {
-      id: 1,
-      title: 'Urgent Password Reset',
-      answer: 'Suspicious',
-      correct: true,
-    },
-    {
-      id: 2,
-      title: 'IT Department Software Update',
-      answer: 'Safe',
-      correct: true,
-    },
-  ];
+export class ModuleResultsComponent implements OnInit {
+  moduleId: number | null = null;
+  result: ModuleResult | null = null;
+  loading = false;
+  error: string | null = null;
 
-  constructor(private router: Router) {}
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private store: Store,
+  ) {}
 
-  retryModule(): void {
-    this.router.navigate(['/learner/modules/1']);
+  ngOnInit(): void {
+    // continueToNext() in ScenarioChoiceComponent navigates here with
+    // ?moduleId=... once the learner has finished every scenario in the
+    // module - a query param rather than a route param, since /learner/results
+    // isn't scoped under a particular module's path.
+    const moduleIdParam = this.route.snapshot.queryParamMap.get('moduleId');
+    this.moduleId = moduleIdParam ? Number(moduleIdParam) : null;
+
+    if (this.moduleId) {
+      this.store.dispatch(
+        ModuleResultsActions.fetchModuleResult({ moduleId: this.moduleId }),
+      );
+    }
+
+    this.store.select(selectModuleResult).subscribe((result) => {
+      this.result = result;
+    });
+
+    this.store.select(selectModuleResultLoading).subscribe((loading) => {
+      this.loading = loading;
+    });
+
+    this.store.select(selectModuleResultError).subscribe((error) => {
+      this.error = error;
+    });
   }
 
-  backToModules(): void {
+  retryModule(): void {
+    if (this.moduleId == null) {
+      return;
+    }
+    this.router.navigate(['/learner/modules', this.moduleId]);
+  }
+
+  backToAssignedModules(): void {
+    this.router.navigate(['/learner/modules']);
+  }
+
+  backToDashboard(): void {
     this.router.navigate(['/learner/dashboard']);
   }
 }

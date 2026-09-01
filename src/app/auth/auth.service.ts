@@ -7,6 +7,8 @@ export interface User {
   username: string;
   email: string;
   role: 'trainer' | 'user';
+  firstName?: string;
+  lastName?: string;
 }
 
 /**
@@ -61,5 +63,25 @@ export class AuthService {
 
   getFeedback(payload: any) {
     return this.http.post(`${this.apiEndpoint}feedback`, payload);
+  }
+
+  // ASSUMPTION: no "update my profile"/"change my password" controller was
+  // included in this upload - these mirror the auth/login, auth/refresh
+  // naming convention. Update the path/payload mapping once a real contract
+  // is available.
+  updateProfile(firstName: string, lastName: string, username: string, email: string) {
+    return this.http.patch(`${this.apiEndpoint}auth/profile`, {
+      firstName,
+      lastName,
+      username,
+      email,
+    });
+  }
+
+  resetPassword(currentPassword: string, newPassword: string) {
+    return this.http.post(`${this.apiEndpoint}auth/reset-password`, {
+      currentPassword,
+      newPassword,
+    });
   }
 }

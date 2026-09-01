@@ -1,3 +1,18 @@
+.dashboard-error {
+  background: #fdecec;
+  border: 1px solid #f3c6c6;
+  color: #b3261e;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+}
+
+.empty-state {
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
 .dashboard-statistics {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));

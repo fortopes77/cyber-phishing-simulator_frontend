@@ -1,0 +1,12 @@
+<app-modal [isOpen]="isOpen" title="Send reminder email" (closed)="onCancel()">
+  <p>Send {{ learnerName }} a reminder email to complete their assigned modules?</p>
+  @if (error) {
+    <p class="form-error">{{ error }}</p>
+  }
+  <div modal-footer class="modal-actions">
+    <button type="button" class="btn btn-secondary" (click)="onCancel()">Cancel</button>
+    <button type="button" class="btn btn-primary" [disabled]="loading" (click)="onConfirm()">
+      {{ loading ? 'Sending...' : 'Send reminder' }}
+    </button>
+  </div>
+</app-modal>

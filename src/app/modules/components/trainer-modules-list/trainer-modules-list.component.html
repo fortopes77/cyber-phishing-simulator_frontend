@@ -1,6 +1,8 @@
 <app-header
   title="Modules"
   subtitle="All training modules available to your learners."
+  [showCreateAction]="true"
+  [createActions]="createActions"
 ></app-header>
 
 <app-dashboard-card>
@@ -21,3 +23,11 @@
     emptyMessage="No modules found."
   ></app-list>
 </app-dashboard-card>
+
+<app-delete-confirmation-modal
+  [isOpen]="isDeleteModalOpen"
+  [title]="selectedModuleName"
+  [message]="'Are you sure you wish to delete'"
+  (confirmed)="confirmDelete()"
+  (cancelled)="cancelDelete()"
+></app-delete-confirmation-modal>

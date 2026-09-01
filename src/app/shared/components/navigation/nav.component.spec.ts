@@ -2,7 +2,10 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { provideMockStore, MockStore } from '@ngrx/store/testing';
+import { provideMockActions } from '@ngrx/effects/testing';
+import { Observable, of } from 'rxjs';
 import { AuthService } from '../../../auth/auth.service';
+import { AuthActions } from '../../../auth/+state/auth.actions';
 import { selectAuthState } from '../../../auth/+state/auth.selectors';
 
 import { NavComponent } from './nav.component';
@@ -11,9 +14,11 @@ describe('NavComponent', () => {
   let component: NavComponent;
   let fixture: ComponentFixture<NavComponent>;
   let store: MockStore;
+  let actions$: Observable<any>;
 
   beforeEach(async () => {
     const authServiceSpy = jasmine.createSpyObj('AuthService', ['getFeedback']);
+    actions$ = of();
 
     await TestBed.configureTestingModule({
       imports: [NavComponent, RouterTestingModule],
@@ -31,10 +36,12 @@ describe('NavComponent', () => {
             },
           ],
         }),
+        provideMockActions(() => actions$),
       ],
     }).compileComponents();
 
     store = TestBed.inject(MockStore);
+    spyOn(store, 'dispatch');
     fixture = TestBed.createComponent(NavComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
@@ -74,5 +81,82 @@ describe('NavComponent', () => {
 
     expect(component.signOutModalOpen).toBeFalse();
     expect(router.navigate).not.toHaveBeenCalled();
+  });
+
+  it('should open the profile modal when the account card is clicked', () => {
+    component.openProfileModal();
+    expect(component.profileModalOpen).toBeTrue();
+  });
+
+  it('should dispatch updateProfile and mark saving on saveProfile', () => {
+    component.saveProfile({
+      firstName: 'Ava',
+      lastName: 'Morales',
+      username: 'ava',
+      email: 'ava@example.com',
+    });
+
+    expect(component.profileSaving).toBeTrue();
+    expect(store.dispatch).toHaveBeenCalledWith(
+      AuthActions.updateProfile({
+        firstName: 'Ava',
+        lastName: 'Morales',
+        username: 'ava',
+        email: 'ava@example.com',
+      }),
+    );
+  });
+
+  it('should dispatch resetPassword and mark saving on savePassword', () => {
+    component.savePassword({ currentPassword: 'old', newPassword: 'new' });
+
+    expect(component.passwordSaving).toBeTrue();
+    expect(store.dispatch).toHaveBeenCalledWith(
+      AuthActions.resetPassword({ currentPassword: 'old', newPassword: 'new' }),
+    );
+  });
+
+  it('should clear saving and mark saved when updateProfileSuccess is seen', () => {
+    actions$ = of(AuthActions.updateProfileSuccess({ user: { id: '1' } as any }));
+    fixture = TestBed.createComponent(NavComponent);
+    component = fixture.componentInstance;
+    component.profileSaving = true;
+    fixture.detectChanges();
+
+    expect(component.profileSaving).toBeFalse();
+    expect(component.profileSaved).toBeTrue();
+  });
+
+  it('should surface the error when updateProfileFailure is seen', () => {
+    actions$ = of(AuthActions.updateProfileFailure({ error: 'Email already in use' }));
+    fixture = TestBed.createComponent(NavComponent);
+    component = fixture.componentInstance;
+    component.profileSaving = true;
+    fixture.detectChanges();
+
+    expect(component.profileSaving).toBeFalse();
+    expect(component.profileError).toBe('Email already in use');
+  });
+
+  it('should clear saving and mark saved when resetPasswordSuccess is seen', () => {
+    actions$ = of(AuthActions.resetPasswordSuccess());
+    fixture = TestBed.createComponent(NavComponent);
+    component = fixture.componentInstance;
+    component.passwordSaving = true;
+    fixture.detectChanges();
+
+    expect(component.passwordSaving).toBeFalse();
+    expect(component.passwordSaved).toBeTrue();
+  });
+
+  it('should surface the error when resetPasswordFailure is seen', () => {
+    actions$ = of(AuthActions.resetPasswordFailure({ error: 'Current password is incorrect' }));
+    fixture = TestBed.createComponent(NavComponent);
+    component = fixture.componentInstance;
+    component.passwordSaving = true;
+    fixture.detectChanges();
+
+    expect(component.passwordSaving).toBeFalse();
+    expect(component.passwordError).toBe('Current password is incorrect');
   });
 });

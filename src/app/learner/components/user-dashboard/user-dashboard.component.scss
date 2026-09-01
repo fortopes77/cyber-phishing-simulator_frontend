@@ -7,6 +7,9 @@
     margin: 0 0 10px 0;
     font-size: 32px;
     color: #333;
+    text-decoration: underline;
+    text-decoration-color: #667eea;
+    text-underline-offset: 6px;
   }
 
   .user-info {
@@ -26,6 +29,12 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 20px;
+}
+
+.empty-state {
+  color: #6b7280;
+  font-size: 14px;
+  margin-top: 16px;
 }
 
 .assigned-modules-grid {

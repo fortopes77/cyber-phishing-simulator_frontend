@@ -53,7 +53,9 @@ export class LearnerModulesListComponent implements OnInit {
   constructor(private store: Store) {}
 
   ngOnInit(): void {
-    this.store.dispatch(ModulesActions.fetchList());
+    // TODO: scope to the current learner's id once this list also needs to
+    // filter by assignment (see UserDashboardComponent for that wiring).
+    this.store.dispatch(ModulesActions.fetchList({}));
     // Scenarios carry a moduleId (see scenario.service.ts createScenario
     // payload), so fetching the full list lets us group by module to work
     // out scenario counts, difficulty, and progress without a dedicated

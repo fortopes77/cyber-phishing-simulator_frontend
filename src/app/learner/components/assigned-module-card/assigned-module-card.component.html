@@ -1,25 +1,17 @@
 <button class="assigned-module-card" type="button" (click)="onClick()">
   <div class="assigned-module-card__top">
-    <div>
-      <app-status-badge
-        class="assigned-module-card__status"
-        [status]="module.status"
-      ></app-status-badge>
-      <h3>{{ module.title }}</h3>
-    </div>
-
-    <span class="assigned-module-card__level">{{ module.level }}</span>
+    <app-status-badge [status]="module.status"></app-status-badge>
+    <span class="assigned-module-card__percentage"
+      >{{ module.progressPercentage }}%</span
+    >
   </div>
+
+  <h3>{{ module.title }}</h3>
 
   <p class="assigned-module-card__description">{{ module.description }}</p>
 
   <div class="assigned-module-card__footer">
+    <span class="assigned-module-card__level">{{ module.level }}</span>
     <span>{{ module.scenarios }} scenarios</span>
-    <div class="assigned-module-card__progress-bar">
-      <div
-        class="assigned-module-card__progress-fill"
-        [style.width.%]="module.progressPercentage"
-      ></div>
-    </div>
   </div>
 </button>

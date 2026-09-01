@@ -95,6 +95,47 @@ describe('authReducer', () => {
     expect(state.tokenExpiresAt).toBeGreaterThan(1);
   });
 
+  it('should set loading true on updateProfile', () => {
+    const state = authReducer(
+      initialAuthState,
+      AuthActions.updateProfile({
+        firstName: 'Ava',
+        lastName: 'Morales',
+        username: 'ava',
+        email: 'ava@example.com',
+      }),
+    );
+    expect(state.loading).toBeTrue();
+  });
+
+  it('should store the updated user on updateProfileSuccess', () => {
+    const updatedUser = {
+      id: '1',
+      username: 'ava.updated',
+      email: 'ava.updated@example.com',
+      role: 'user',
+    } as any;
+
+    const state = authReducer(
+      { ...initialAuthState, loading: true },
+      AuthActions.updateProfileSuccess({ user: updatedUser }),
+    );
+
+    expect(state.user).toEqual(updatedUser);
+    expect(state.loading).toBeFalse();
+    expect(state.error).toBeUndefined();
+  });
+
+  it('should store the error on updateProfileFailure', () => {
+    const state = authReducer(
+      { ...initialAuthState, loading: true },
+      AuthActions.updateProfileFailure({ error: 'Email already in use' }),
+    );
+
+    expect(state.error).toBe('Email already in use');
+    expect(state.loading).toBeFalse();
+  });
+
   it('should clear the session on refreshTokenFailure', () => {
     const startState = {
       user: { id: '1' } as any,
