@@ -16,7 +16,7 @@ export class ModulesEffects {
     this.actions$.pipe(
       ofType(ModulesActions.fetchList),
       mergeMap((action) =>
-        this.modulesService.getModules(action.userId).pipe(
+        this.modulesService.getModules(action.assignedToMe).pipe(
           map((response: LearnerModule[] | { modules: LearnerModule[] }) =>
             ModulesActions.fetchListSuccess({
               modules: (Array.isArray(response)

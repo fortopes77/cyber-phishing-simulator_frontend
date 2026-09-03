@@ -1,13 +1,26 @@
 import { attemptsReducer, initialAttemptsState } from './attempts.reducer';
 import { AttemptsActions } from './attempts.actions';
-import { Attempt } from './attempt.model';
+import { ModuleAttempt } from './attempt.model';
 
 describe('attemptsReducer', () => {
-  const attempt: Attempt = {
-    id: 'a1',
-    scenarioId: 's_001',
-    decision: 'Report',
-    correct: true,
+  const attempt: ModuleAttempt = {
+    id: 1,
+    moduleId: 2,
+    status: 'IN_PROGRESS',
+    totalScore: 0,
+    maxPossibleScore: 0,
+    percentageScore: 0,
+    scenariosCompleted: 0,
+    totalScenarios: 0,
+    passed: false,
+    completedAt: null,
+  };
+
+  const completedAttempt: ModuleAttempt = {
+    ...attempt,
+    status: 'COMPLETED',
+    passed: true,
+    completedAt: '2026-09-02T00:21:44.856Z',
   };
 
   it('should return the initial state', () => {
@@ -15,37 +28,54 @@ describe('attemptsReducer', () => {
     expect(state).toEqual(initialAttemptsState);
   });
 
-  it('should set loading true on fetchUserAttempts', () => {
+  it('should set loading true and clear any error on startAttempt', () => {
     const state = attemptsReducer(
-      initialAttemptsState,
-      AttemptsActions.fetchUserAttempts(),
+      { ...initialAttemptsState, error: 'Previous failure' },
+      AttemptsActions.startAttempt({ moduleId: 2 }),
     );
     expect(state.loading).toBeTrue();
+    expect(state.error).toBeNull();
   });
 
-  it('should store attempts and clear loading on fetch success', () => {
+  it('should store the attempt and clear loading on startAttemptSuccess', () => {
     const state = attemptsReducer(
       { ...initialAttemptsState, loading: true },
-      AttemptsActions.fetchUserAttemptsSuccess({ attempts: [attempt] }),
+      AttemptsActions.startAttemptSuccess({ attempt }),
     );
-    expect(state.attempts).toEqual([attempt]);
+    expect(state.currentAttempt).toEqual(attempt);
     expect(state.loading).toBeFalse();
   });
 
-  it('should store the error and clear loading on fetch failure', () => {
+  it('should store the error and clear loading on startAttemptFailure', () => {
     const state = attemptsReducer(
       { ...initialAttemptsState, loading: true },
-      AttemptsActions.fetchUserAttemptsFailure({ error: 'Failed' }),
+      AttemptsActions.startAttemptFailure({ error: 'Failed' }),
     );
     expect(state.error).toBe('Failed');
     expect(state.loading).toBeFalse();
   });
 
-  it('should append the new attempt on createAttemptSuccess', () => {
+  it('should store the error on submitScenarioAttemptFailure', () => {
     const state = attemptsReducer(
       initialAttemptsState,
-      AttemptsActions.createAttemptSuccess({ attempt }),
+      AttemptsActions.submitScenarioAttemptFailure({ error: 'Failed' }),
     );
-    expect(state.attempts).toEqual([attempt]);
+    expect(state.error).toBe('Failed');
+  });
+
+  it('should update currentAttempt on finalizeAttemptSuccess', () => {
+    const state = attemptsReducer(
+      { ...initialAttemptsState, currentAttempt: attempt },
+      AttemptsActions.finalizeAttemptSuccess({ attempt: completedAttempt }),
+    );
+    expect(state.currentAttempt).toEqual(completedAttempt);
+  });
+
+  it('should store the error on finalizeAttemptFailure', () => {
+    const state = attemptsReducer(
+      initialAttemptsState,
+      AttemptsActions.finalizeAttemptFailure({ error: 'Failed' }),
+    );
+    expect(state.error).toBe('Failed');
   });
 });

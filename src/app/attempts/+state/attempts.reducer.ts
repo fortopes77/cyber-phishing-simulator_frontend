@@ -1,37 +1,49 @@
 import { createReducer, on } from '@ngrx/store';
 import { AttemptsActions } from './attempts.actions';
-import { Attempt } from './attempt.model';
+import { ModuleAttempt } from './attempt.model';
 
 export interface AttemptsState {
-  attempts: Attempt[];
+  // The in-progress (or last-finalized) module attempt for the current
+  // scenario-answering session. There's no "resume across a page refresh"
+  // support - a fresh visit starts a fresh attempt.
+  currentAttempt: ModuleAttempt | null;
   loading: boolean;
   error: string | null;
 }
 
 export const initialAttemptsState: AttemptsState = {
-  attempts: [],
+  currentAttempt: null,
   loading: false,
   error: null,
 };
 
 export const attemptsReducer = createReducer(
   initialAttemptsState,
-  on(AttemptsActions.fetchUserAttempts, (state) => ({
+  on(AttemptsActions.startAttempt, (state) => ({
     ...state,
     loading: true,
+    error: null,
   })),
-  on(AttemptsActions.fetchUserAttemptsSuccess, (state, { attempts }) => ({
+  on(AttemptsActions.startAttemptSuccess, (state, { attempt }) => ({
     ...state,
-    attempts,
+    currentAttempt: attempt,
     loading: false,
   })),
-  on(AttemptsActions.fetchUserAttemptsFailure, (state, { error }) => ({
+  on(AttemptsActions.startAttemptFailure, (state, { error }) => ({
     ...state,
     loading: false,
     error,
   })),
-  on(AttemptsActions.createAttemptSuccess, (state, { attempt }) => ({
+  on(AttemptsActions.submitScenarioAttemptFailure, (state, { error }) => ({
     ...state,
-    attempts: [...state.attempts, attempt],
+    error,
+  })),
+  on(AttemptsActions.finalizeAttemptSuccess, (state, { attempt }) => ({
+    ...state,
+    currentAttempt: attempt,
+  })),
+  on(AttemptsActions.finalizeAttemptFailure, (state, { error }) => ({
+    ...state,
+    error,
   })),
 );

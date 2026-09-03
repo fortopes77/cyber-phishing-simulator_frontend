@@ -11,22 +11,17 @@ export class ModulesService {
 
   constructor(private http: HttpClient) {}
 
-  // ASSUMPTION: no NestJS module controller was included in this upload, so
-  // this mirrors the shape of src/mock/module-list-learner.json
-  // (moduleId/moduleName/description/hasUserCompleted/score/timeSpent).
-  // Update the path/mapping in modules.effects.ts if your real endpoint
-  // differs. `userId`, when supplied, asks for just that learner's assigned
-  // modules (see PHISH-311 "Module Assignment") rather than every module in
-  // the org - omitted entirely for trainer-facing catalog views.
-  getModules(userId?: string) {
+  // Confirmed live via GET /api-json: GET /training-modules takes a single
+  // optional `assignedToMe` boolean - "List training modules, optionally
+  // filtered to the current user's assigned modules" - self-scoped via the
+  // JWT, no userId/organisationId needed. Verified live: assignedToMe=true
+  // returns [] for a learner with no assignments while omitting it (or
+  // false) returns every module in the org.
+  getModules(assignedToMe?: boolean) {
     // Authorization header is attached by authInterceptor from the store.
     return this.http.get<LearnerModule[] | { modules: LearnerModule[] }>(
       `${this.apiEndpoint}training-modules`,
-      {
-        params: userId
-          ? { organisationId: 1, userId }
-          : { organisationId: 1 },
-      },
+      assignedToMe ? { params: { assignedToMe: true } } : {},
     );
   }
 

@@ -5,7 +5,7 @@ import { provideMockStore, MockStore } from '@ngrx/store/testing';
 import { of } from 'rxjs';
 import { ModulePageComponent } from './module-page.component';
 import { selectScenarioList } from 'src/app/scenario/+state/scenario.selectors';
-import { selectAttempts } from 'src/app/attempts/+state/attempts.selectors';
+import { selectMyResults } from 'src/app/results/+state/results.selectors';
 import { selectModuleList } from 'src/app/modules/+state/modules.selectors';
 
 describe('ModulePageComponent', () => {
@@ -18,12 +18,13 @@ describe('ModulePageComponent', () => {
     { moduleId: 1, moduleName: 'Phishing Awareness', description: 'Learn to spot phishing' },
   ];
   const scenarios = [
-    { id: 's_001', moduleId: 1, title: 'Urgent Password Reset', difficulty: 'easy' },
-    { id: 's_002', moduleId: 1, title: 'IT Department Software Update', difficulty: 'medium' },
+    { id: 1, moduleId: 1, title: 'Urgent Password Reset', difficulty: 'easy' },
+    { id: 2, moduleId: 1, title: 'IT Department Software Update', difficulty: 'medium' },
   ];
-  const attempts = [
-    { id: 'a1', scenarioId: 's_001', decision: 'Report', correct: true },
-  ];
+  const results = {
+    scenarioResults: [{ scenarioId: '1', moduleId: 1, correct: true }],
+    averageScore: null,
+  };
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -39,7 +40,7 @@ describe('ModulePageComponent', () => {
           selectors: [
             { selector: selectModuleList, value: modules },
             { selector: selectScenarioList, value: scenarios },
-            { selector: selectAttempts, value: attempts },
+            { selector: selectMyResults, value: results },
           ],
         }),
       ],
@@ -67,13 +68,13 @@ describe('ModulePageComponent', () => {
     expect(component.title).toBe('Phishing Awareness');
   });
 
-  it('should dispatch actions to load the module, its scenarios, and attempts', () => {
+  it('should dispatch actions to load the module, its scenarios, and results', () => {
     expect(store.dispatch).toHaveBeenCalledWith(
       jasmine.objectContaining({ moduleId: 1 }),
     );
   });
 
-  it('should compute progress from completed attempts scoped to the module', () => {
+  it('should compute progress from GET /results/me scoped to the module', () => {
     expect(component.scenarios.length).toBe(2);
     expect(component.completedCount).toBe(1);
     expect(component.progressPercentage).toBe(50);
@@ -83,9 +84,6 @@ describe('ModulePageComponent', () => {
   it('should navigate to the next incomplete scenario on continue', () => {
     component.continueModule();
 
-    expect(router.navigate).toHaveBeenCalledWith([
-      '/learner/scenarios',
-      's_002',
-    ]);
+    expect(router.navigate).toHaveBeenCalledWith(['/learner/scenarios', 2]);
   });
 });

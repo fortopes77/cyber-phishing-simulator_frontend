@@ -17,6 +17,8 @@ import { modulesReducer } from '../../+state/modules.reducer';
 import { ModulesEffects } from '../../+state/modules.effects';
 import { scenarioReducer } from 'src/app/scenario/+state/scenario.reducer';
 import { ScenarioEffects } from 'src/app/scenario/+state/scenario.effects';
+import { AuthModule } from 'src/app/auth/auth.module';
+import { UsersModule } from 'src/app/users/users.module';
 import { environment } from 'src/environments/environment.development';
 
 // Full-stack check (real Router + real NgRx Store/Effects + HttpTestingController)
@@ -56,6 +58,13 @@ describe('Trainer modules list -> module edit (integration)', () => {
         StoreModule.forFeature('scenario', scenarioReducer),
         EffectsModule.forRoot([]),
         EffectsModule.forFeature([ModulesEffects, ScenarioEffects]),
+        // ModuleEditComponent now also reads the signed-in trainer's
+        // organisationId (to fetch the org's learners for its "assign
+        // learners" panel) - both features need to be registered for real,
+        // the same as AppModule does, or selectAuthState resolves to
+        // undefined and crashes the subscription.
+        AuthModule,
+        UsersModule,
       ],
       providers: [provideHttpClient(), provideHttpClientTesting()],
     }).compileComponents();

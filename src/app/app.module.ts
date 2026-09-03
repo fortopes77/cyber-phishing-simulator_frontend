@@ -35,6 +35,7 @@ import { FeedbackModule } from './feedback/feedback.module';
 import { AdminModule } from './admin/admin.module';
 import { UsersModule } from './users/users.module';
 import { ModuleResultsModule } from './module-results/module-results.module';
+import { ResultsModule } from './results/results.module';
 import { authInterceptor } from './auth/auth.interceptor';
 
 @NgModule({
@@ -60,6 +61,7 @@ import { authInterceptor } from './auth/auth.interceptor';
     AdminModule,
     UsersModule,
     ModuleResultsModule,
+    ResultsModule,
     StoreModule.forRoot({}),
     EffectsModule.forRoot([]),
     DataCardComponent,

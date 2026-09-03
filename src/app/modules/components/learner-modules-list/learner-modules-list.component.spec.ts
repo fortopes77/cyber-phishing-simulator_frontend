@@ -1,9 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { RouterTestingModule } from '@angular/router/testing';
 import { provideMockStore, MockStore } from '@ngrx/store/testing';
 import { LearnerModulesListComponent } from './learner-modules-list.component';
+import { ModulesActions } from 'src/app/modules/+state/modules.actions';
 import { selectModuleList } from 'src/app/modules/+state/modules.selectors';
 import { selectScenarioList } from 'src/app/scenario/+state/scenario.selectors';
-import { selectAttempts } from 'src/app/attempts/+state/attempts.selectors';
+import { selectMyResults } from 'src/app/results/+state/results.selectors';
 
 describe('LearnerModulesListComponent', () => {
   let component: LearnerModulesListComponent;
@@ -14,20 +16,23 @@ describe('LearnerModulesListComponent', () => {
     { moduleId: 1, moduleName: 'Phishing Awareness', description: 'Learn to spot phishing' },
   ];
   const scenarios = [
-    { id: 's_001', moduleId: 1, difficulty: 'easy' },
-    { id: 's_002', moduleId: 1, difficulty: 'easy' },
+    { id: 1, moduleId: 1, difficulty: 'easy' },
+    { id: 2, moduleId: 1, difficulty: 'easy' },
   ];
-  const attempts = [{ id: 'a1', scenarioId: 's_001', decision: 'Report', correct: true }];
+  const results = {
+    scenarioResults: [{ scenarioId: '1', moduleId: 1, correct: true }],
+    averageScore: null,
+  };
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [LearnerModulesListComponent],
+      imports: [LearnerModulesListComponent, RouterTestingModule],
       providers: [
         provideMockStore({
           selectors: [
             { selector: selectModuleList, value: modules },
             { selector: selectScenarioList, value: scenarios },
-            { selector: selectAttempts, value: attempts },
+            { selector: selectMyResults, value: results },
           ],
         }),
       ],
@@ -43,6 +48,12 @@ describe('LearnerModulesListComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('should fetch only the modules assigned to the signed-in learner', () => {
+    expect(store.dispatch).toHaveBeenCalledWith(
+      ModulesActions.fetchList({ assignedToMe: true }),
+    );
   });
 
   it('should map modules with scenario counts and progress from the store', () => {

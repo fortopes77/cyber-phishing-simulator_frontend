@@ -12,7 +12,7 @@ import {
   selectScenarioList,
 } from '../../+state/scenario.selectors';
 import { AttemptsActions } from 'src/app/attempts/+state/attempts.actions';
-import { Attempt } from 'src/app/attempts/+state/attempt.model';
+import { ScenarioAttemptResult } from 'src/app/attempts/+state/attempt.model';
 import { FeedbackActions } from 'src/app/feedback/+state/feedback.actions';
 import {
   selectFeedback,
@@ -76,10 +76,18 @@ export class ScenarioChoiceComponent implements OnInit, OnDestroy {
   // and the AI-generated feedback for that decision.
   phase: 'deciding' | 'result' = 'deciding';
   selectedDecision: string | null = null;
-  attempt: Attempt | null = null;
+  scenarioResult: ScenarioAttemptResult | null = null;
   submitting = false;
   feedbackContent: string | null = null;
   feedbackLoading = false;
+
+  // The module attempt session backing this walkthrough - started on the
+  // first decision in a module and reused for every scenario after that
+  // (see selectDecision), finalized once the learner finishes or leaves.
+  private currentAttemptId: number | null = null;
+  private currentAttemptModuleId: number | null = null;
+  private pendingDecision: string | null = null;
+  private scenarioOpenedAt = new Date();
 
   private destroy$ = new Subject<void>();
   private orderedScenarioIds: Array<number | string> = [];
@@ -108,8 +116,9 @@ export class ScenarioChoiceComponent implements OnInit, OnDestroy {
       this.scenarioId = idValue;
       this.phase = 'deciding';
       this.selectedDecision = null;
-      this.attempt = null;
+      this.scenarioResult = null;
       this.feedbackContent = null;
+      this.scenarioOpenedAt = new Date();
 
       this.store.dispatch(
         ScenarioActions.fetchScenarioDetails({ scenarioId: String(idValue) }),
@@ -144,19 +153,48 @@ export class ScenarioChoiceComponent implements OnInit, OnDestroy {
         }
       });
 
-    // When the attempt has been recorded, we know whether the decision was
-    // correct and can ask the AI service for feedback tailored to it.
+    // Starting a module attempt is deferred until the first decision (see
+    // selectDecision) - once it resolves, submit whichever decision was
+    // waiting on it.
     this.actions$
-      .pipe(ofType(AttemptsActions.createAttemptSuccess), takeUntil(this.destroy$))
+      .pipe(ofType(AttemptsActions.startAttemptSuccess), takeUntil(this.destroy$))
       .subscribe(({ attempt }) => {
-        this.submitting = false;
-        this.attempt = attempt;
-        this.phase = 'result';
-        this.requestFeedback(attempt);
+        this.currentAttemptId = attempt.id;
+        this.currentAttemptModuleId = attempt.moduleId;
+
+        if (this.pendingDecision) {
+          const decision = this.pendingDecision;
+          this.pendingDecision = null;
+          this.dispatchScenarioAttempt(attempt.id, decision);
+        }
       });
 
     this.actions$
-      .pipe(ofType(AttemptsActions.createAttemptFailure), takeUntil(this.destroy$))
+      .pipe(ofType(AttemptsActions.startAttemptFailure), takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.submitting = false;
+        this.pendingDecision = null;
+      });
+
+    // The attempt is graded immediately - no need to wait for the module
+    // attempt to be finalized to know whether this decision was correct.
+    this.actions$
+      .pipe(
+        ofType(AttemptsActions.submitScenarioAttemptSuccess),
+        takeUntil(this.destroy$),
+      )
+      .subscribe(({ result }) => {
+        this.submitting = false;
+        this.scenarioResult = result;
+        this.phase = 'result';
+        this.requestFeedback(result);
+      });
+
+    this.actions$
+      .pipe(
+        ofType(AttemptsActions.submitScenarioAttemptFailure),
+        takeUntil(this.destroy$),
+      )
       .subscribe(() => {
         this.submitting = false;
       });
@@ -193,49 +231,74 @@ export class ScenarioChoiceComponent implements OnInit, OnDestroy {
   }
 
   selectDecision(decision: string): void {
-    if (this.submitting) {
+    if (this.submitting || this.scenario.moduleId == null) {
       return;
     }
 
     this.selectedDecision = decision;
     this.submitting = true;
 
+    // Reuse the in-progress attempt if we're still in the same module;
+    // otherwise (first decision, or the module changed) start a new one and
+    // submit this decision once it resolves.
+    if (
+      this.currentAttemptId != null &&
+      this.currentAttemptModuleId === this.scenario.moduleId
+    ) {
+      this.dispatchScenarioAttempt(this.currentAttemptId, decision);
+    } else {
+      this.pendingDecision = decision;
+      this.store.dispatch(
+        AttemptsActions.startAttempt({ moduleId: this.scenario.moduleId }),
+      );
+    }
+  }
+
+  private dispatchScenarioAttempt(attemptId: number, decision: string): void {
+    const completedAt = new Date();
+    const timeTakenSeconds = Math.max(
+      0,
+      Math.round((completedAt.getTime() - this.scenarioOpenedAt.getTime()) / 1000),
+    );
+
     this.store.dispatch(
-      AttemptsActions.createAttempt({
-        attempt: {
-          scenarioId: String(this.scenarioId),
-          decision,
-          // Only sent for a "detailed" scenario (scored against
-          // correctCues) - omitted entirely when the learner selected no
-          // text, which is the normal case for a "simple" scenario.
-          selectedCues: this.selectedCues.length ? this.selectedCues : undefined,
+      AttemptsActions.submitScenarioAttempt({
+        attemptId,
+        scenarioAttempt: {
+          scenarioId: Number(this.scenarioId),
+          moduleId: this.scenario.moduleId!,
+          // No retry flow is wired up in the UI yet - every submission is
+          // this scenario's first attempt within this module attempt.
+          attemptNumber: 1,
+          response: decision,
+          timeTakenSeconds,
+          startedAt: this.scenarioOpenedAt.toISOString(),
+          completedAt: completedAt.toISOString(),
+          // Confirmed live: the backend wants a string here, not an array -
+          // see the ASSUMPTION note on ScenarioAttemptInput.
+          selectedCues: this.selectedCues.join(','),
         },
       }),
     );
   }
 
-  private requestFeedback(attempt: Attempt): void {
+  private requestFeedback(result: ScenarioAttemptResult): void {
     this.store.dispatch(
       FeedbackActions.requestFeedback({
         request: {
           scenarioContent: this.scenario.content,
           decision: this.selectedDecision ?? '',
-          correct: attempt.correct,
-          // correctAnswer/missedCues are mutually exclusive on the graded
-          // attempt (see attempt.model.ts) - only whichever the scenario's
-          // answer mode produced is sent, so the AI feedback can explain a
-          // wrong decision or point out exactly which cues were missed.
-          correctAnswer: attempt.correctAnswer,
+          correct: result.correct,
           selectedCues: this.selectedCues.length ? this.selectedCues : undefined,
-          missedCues: attempt.missedCues?.length ? attempt.missedCues : undefined,
-          attemptId: attempt.id,
+          missedCues: result.missedCues.length ? result.missedCues : undefined,
+          attemptId: String(result.attemptId),
         },
       }),
     );
   }
 
   get isCorrect(): boolean {
-    return !!this.attempt?.correct;
+    return !!this.scenarioResult?.correct;
   }
 
   get progressPercentage(): number {
@@ -292,6 +355,7 @@ export class ScenarioChoiceComponent implements OnInit, OnDestroy {
       return;
     }
 
+    this.finalizeCurrentAttempt();
     this.router.navigate(['/learner/results'], {
       queryParams: { moduleId: this.scenario.moduleId },
     });
@@ -302,11 +366,23 @@ export class ScenarioChoiceComponent implements OnInit, OnDestroy {
   }
 
   closeSession(): void {
+    this.finalizeCurrentAttempt();
+
     if (this.scenario.moduleId != null) {
       this.router.navigate(['/learner/modules', this.scenario.moduleId]);
       return;
     }
 
     this.router.navigate(['/learner/dashboard']);
+  }
+
+  // Locks in whatever scenarios were actually submitted this session,
+  // whether the learner finished the module or left partway through.
+  private finalizeCurrentAttempt(): void {
+    if (this.currentAttemptId != null) {
+      this.store.dispatch(
+        AttemptsActions.finalizeAttempt({ attemptId: this.currentAttemptId }),
+      );
+    }
   }
 }

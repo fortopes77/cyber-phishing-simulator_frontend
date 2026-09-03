@@ -3,6 +3,7 @@ import { catchError, map, mergeMap, of } from 'rxjs';
 import { ScenarioActions } from './scenario.actions';
 import { ScenarioService } from './scenario.service';
 import { Injectable } from '@angular/core';
+import { normalizeScenario } from '../models/scenario.model';
 
 @Injectable()
 export class ScenarioEffects {
@@ -17,7 +18,11 @@ export class ScenarioEffects {
       mergeMap(() =>
         this.scenarioService.getScenarios().pipe(
           map((list: any) =>
-            ScenarioActions.fetchListSuccess({ scenarios: list }),
+            ScenarioActions.fetchListSuccess({
+              scenarios: (Array.isArray(list) ? list : (list?.scenarios ?? [])).map(
+                normalizeScenario,
+              ),
+            }),
           ),
           catchError((error) =>
             of(
@@ -37,7 +42,9 @@ export class ScenarioEffects {
         this.scenarioService.getScenariosByModule(action.moduleId).pipe(
           map((list: any) =>
             ScenarioActions.fetchScenariosByModuleSuccess({
-              scenarios: Array.isArray(list) ? list : (list?.scenarios ?? []),
+              scenarios: (Array.isArray(list) ? list : (list?.scenarios ?? [])).map(
+                normalizeScenario,
+              ),
             }),
           ),
           catchError((error) =>
@@ -57,7 +64,9 @@ export class ScenarioEffects {
       mergeMap((action) =>
         this.scenarioService.getScenarioDetails(action.scenarioId).pipe(
           map((scenario: any) =>
-            ScenarioActions.fetchScenarioDetailsSuccess({ scenario }),
+            ScenarioActions.fetchScenarioDetailsSuccess({
+              scenario: normalizeScenario(scenario),
+            }),
           ),
           catchError((error) =>
             of(
@@ -95,7 +104,9 @@ export class ScenarioEffects {
       mergeMap((action) =>
         this.scenarioService.createScenario(action.scenario).pipe(
           map((scenario: any) =>
-            ScenarioActions.createScenarioSuccess({ scenario }),
+            ScenarioActions.createScenarioSuccess({
+              scenario: normalizeScenario(scenario),
+            }),
           ),
           catchError((error) =>
             of(
@@ -116,7 +127,9 @@ export class ScenarioEffects {
           .updateScenario(action.scenarioId, action.updatedScenario)
           .pipe(
             map((scenario: any) =>
-              ScenarioActions.updateScenarioSuccess({ scenario }),
+              ScenarioActions.updateScenarioSuccess({
+                scenario: normalizeScenario(scenario),
+              }),
             ),
             catchError((error) =>
               of(

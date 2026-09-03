@@ -5,8 +5,8 @@ import { Store } from '@ngrx/store';
 import { combineLatest } from 'rxjs';
 import { ScenarioActions } from 'src/app/scenario/+state/scenario.actions';
 import { selectScenarioList } from 'src/app/scenario/+state/scenario.selectors';
-import { AttemptsActions } from 'src/app/attempts/+state/attempts.actions';
-import { selectAttempts } from 'src/app/attempts/+state/attempts.selectors';
+import { ResultsActions } from 'src/app/results/+state/results.actions';
+import { selectMyResults } from 'src/app/results/+state/results.selectors';
 import { ModulesActions } from 'src/app/modules/+state/modules.actions';
 import { selectModuleList } from 'src/app/modules/+state/modules.selectors';
 
@@ -56,22 +56,22 @@ export class ModulePageComponent implements OnInit {
         this.store.dispatch(
           ScenarioActions.fetchScenariosByModule({ moduleId }),
         );
-        this.store.dispatch(AttemptsActions.fetchUserAttempts());
+        this.store.dispatch(ResultsActions.fetchMyResults());
       }
     });
 
     combineLatest([
       this.store.select(selectModuleList),
       this.store.select(selectScenarioList),
-      this.store.select(selectAttempts),
-    ]).subscribe(([moduleList, scenarioList, attempts]) => {
+      this.store.select(selectMyResults),
+    ]).subscribe(([moduleList, scenarioList, results]) => {
       const currentModule = (moduleList ?? []).find(
         (module: any) => module.moduleId === this.moduleId,
       );
       this.title = currentModule?.moduleName ?? 'Module';
 
       const completedScenarioIds = new Set(
-        attempts.map((attempt) => attempt.scenarioId),
+        (results?.scenarioResults ?? []).map((result) => result.scenarioId),
       );
 
       // scenarioList is scoped to this module via fetchScenariosByModule,
@@ -89,7 +89,7 @@ export class ModulePageComponent implements OnInit {
         title: scenario.title,
         type: scenario.type ?? scenario.category ?? 'Email',
         difficulty: scenario.difficulty,
-        status: completedScenarioIds.has(scenario.id)
+        status: completedScenarioIds.has(String(scenario.id))
           ? 'Completed'
           : 'Not Started',
       }));

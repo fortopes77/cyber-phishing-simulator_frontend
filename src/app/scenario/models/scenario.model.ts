@@ -232,3 +232,27 @@ export function toScenarioPayload(source: Record<string, any>): ScenarioPayload 
 
   return payload;
 }
+
+/**
+ * Confirmed live against GET /scenarios, GET /scenarios/{id} and GET
+ * /scenarios?moduleId=X: every scenario response identifies itself via
+ * `scenarioId`, not `id` - every consumer in this app (module-page,
+ * scenario-page, scenario-choice, the trainer scenario list/edit screens)
+ * reads `.id`, so without this every one of them silently got `undefined`
+ * for a scenario's id (breaking routing, attempt matching, and the
+ * moduleScenarios/isAssignedToThisModule lookups keyed on it). Mirrors
+ * normalizeModule's id fallback - normalize once here, at the boundary,
+ * rather than teach every consumer a second field name. Also confirmed live:
+ * the list/detail responses no longer include category/difficulty/
+ * scenarioDescription/correctAnswer/correctCues at all (a learner is never
+ * sent the answer up front) - callers that read those fields need to keep
+ * tolerating them being absent.
+ */
+export function normalizeScenario(raw: any): any {
+  const rawId = raw?.id ?? raw?.scenarioId;
+
+  return {
+    ...raw,
+    id: rawId != null ? Number(rawId) : raw?.id,
+  };
+}

@@ -44,12 +44,12 @@ describe('ModulesEffects', () => {
     ) as jasmine.SpyObj<ModulesService>;
   });
 
-  it('should pass the userId from the action through to the service', (done) => {
+  it('should pass assignedToMe from the action through to the service', (done) => {
     modulesService.getModules.and.returnValue(of(modules));
-    actions$ = of(ModulesActions.fetchList({ userId: 'u_1' }));
+    actions$ = of(ModulesActions.fetchList({ assignedToMe: true }));
 
     effects.fetchModules$.subscribe((action) => {
-      expect(modulesService.getModules).toHaveBeenCalledWith('u_1');
+      expect(modulesService.getModules).toHaveBeenCalledWith(true);
       expect(action).toEqual(ModulesActions.fetchListSuccess({ modules }));
       done();
     });

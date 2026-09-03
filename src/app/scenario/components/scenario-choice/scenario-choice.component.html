@@ -116,18 +116,13 @@
       </div>
     </div>
 
-    <div class="cues-summary" *ngIf="!isCorrect && attempt?.missedCues?.length">
+    <div class="cues-summary" *ngIf="!isCorrect && scenarioResult?.missedCues?.length">
       <div class="cues-summary__title">Cues you missed</div>
       <div class="cues-summary__list">
-        <span class="cue-chip cue-chip--missed" *ngFor="let cue of attempt?.missedCues">{{
+        <span class="cue-chip cue-chip--missed" *ngFor="let cue of scenarioResult?.missedCues">{{
           cue
         }}</span>
       </div>
-    </div>
-
-    <div class="correct-answer-summary" *ngIf="!isCorrect && attempt?.correctAnswer">
-      <span class="correct-answer-summary__label">Correct answer:</span>
-      {{ attempt?.correctAnswer }}
     </div>
 
     <div class="feedback-panel">

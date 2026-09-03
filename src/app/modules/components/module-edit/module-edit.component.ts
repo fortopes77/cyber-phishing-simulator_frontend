@@ -198,7 +198,7 @@ export class ModuleEditComponent implements OnInit {
     this.store
       .select(selectAuthState)
       .pipe(
-        map((auth) => auth.user?.organisationId),
+        map((auth) => auth?.user?.organisationId),
         filter((organisationId): organisationId is number => organisationId != null),
         take(1),
       )

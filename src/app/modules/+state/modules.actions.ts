@@ -4,10 +4,13 @@ import { LearnerModule } from './module.model';
 export const ModulesActions = createActionGroup({
   source: 'Modules',
   events: {
-    // userId scopes the request to a specific learner's assigned modules
-    // (e.g. the learner dashboard) - omit it (pass {}) for a trainer-facing
-    // catalog view that should see every module in the org.
-    fetchList: props<{ userId?: string }>(),
+    // assignedToMe: true scopes the request to the signed-in learner's own
+    // assigned modules (e.g. the learner dashboard) - self-scoped via the
+    // JWT, no userId needed. Omit it (pass {}) for a trainer-facing catalog
+    // view that should see every module in the org. Confirmed live against
+    // GET /api-json: "List training modules, optionally filtered to the
+    // current user's assigned modules".
+    fetchList: props<{ assignedToMe?: boolean }>(),
     fetchListSuccess: props<{ modules: LearnerModule[] }>(),
     fetchListFailure: props<{ error: string }>(),
     fetchModuleDetails: props<{ moduleId: number }>(),

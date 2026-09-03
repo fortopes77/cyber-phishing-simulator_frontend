@@ -3,7 +3,7 @@ import { catchError, map, mergeMap, of } from 'rxjs';
 import { Injectable } from '@angular/core';
 import { AttemptsActions } from './attempts.actions';
 import { AttemptsService } from './attempts.service';
-import { Attempt } from './attempt.model';
+import { normalizeModuleAttempt, normalizeScenarioAttemptResult } from './attempt.model';
 
 @Injectable()
 export class AttemptsEffects {
@@ -12,22 +12,20 @@ export class AttemptsEffects {
     private attemptsService: AttemptsService,
   ) {}
 
-  fetchUserAttempts$ = createEffect(() =>
+  startAttempt$ = createEffect(() =>
     this.actions$.pipe(
-      ofType(AttemptsActions.fetchUserAttempts),
-      mergeMap(() =>
-        this.attemptsService.getUserAttempts().pipe(
-          map((response: { attempts: Attempt[] } | Attempt[]) =>
-            AttemptsActions.fetchUserAttemptsSuccess({
-              attempts: Array.isArray(response)
-                ? response
-                : response.attempts,
+      ofType(AttemptsActions.startAttempt),
+      mergeMap((action) =>
+        this.attemptsService.startAttempt(action.moduleId).pipe(
+          map((raw) =>
+            AttemptsActions.startAttemptSuccess({
+              attempt: normalizeModuleAttempt(raw),
             }),
           ),
           catchError((error) =>
             of(
-              AttemptsActions.fetchUserAttemptsFailure({
-                error: error.message || 'Failed to fetch attempts',
+              AttemptsActions.startAttemptFailure({
+                error: error.message || 'Failed to start attempt',
               }),
             ),
           ),
@@ -36,20 +34,44 @@ export class AttemptsEffects {
     ),
   );
 
-  createAttempt$ = createEffect(() =>
+  submitScenarioAttempt$ = createEffect(() =>
     this.actions$.pipe(
-      ofType(AttemptsActions.createAttempt),
+      ofType(AttemptsActions.submitScenarioAttempt),
       mergeMap((action) =>
-        this.attemptsService.createAttempt(action.attempt).pipe(
-          map((response) =>
-            AttemptsActions.createAttemptSuccess({
-              attempt: response.attempt,
+        this.attemptsService
+          .submitScenarioAttempt(action.attemptId, action.scenarioAttempt)
+          .pipe(
+            map((raw) =>
+              AttemptsActions.submitScenarioAttemptSuccess({
+                result: normalizeScenarioAttemptResult(raw),
+              }),
+            ),
+            catchError((error) =>
+              of(
+                AttemptsActions.submitScenarioAttemptFailure({
+                  error: error.message || 'Failed to submit scenario attempt',
+                }),
+              ),
+            ),
+          ),
+      ),
+    ),
+  );
+
+  finalizeAttempt$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(AttemptsActions.finalizeAttempt),
+      mergeMap((action) =>
+        this.attemptsService.finalizeAttempt(action.attemptId).pipe(
+          map((raw) =>
+            AttemptsActions.finalizeAttemptSuccess({
+              attempt: normalizeModuleAttempt(raw),
             }),
           ),
           catchError((error) =>
             of(
-              AttemptsActions.createAttemptFailure({
-                error: error.message || 'Failed to create attempt',
+              AttemptsActions.finalizeAttemptFailure({
+                error: error.message || 'Failed to finalize attempt',
               }),
             ),
           ),

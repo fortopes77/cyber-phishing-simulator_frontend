@@ -2,6 +2,7 @@ import {
   normalizeCategory,
   normalizeDifficulty,
   normalizeInteractionType,
+  normalizeScenario,
   toScenarioPayload,
   ScenarioCategory,
   ScenarioDifficulty,
@@ -9,6 +10,44 @@ import {
 } from './scenario.model';
 
 describe('scenario.model', () => {
+  describe('normalizeScenario', () => {
+    it('should fall back to `scenarioId` when `id` is missing - the real GET /scenarios shape, confirmed live', () => {
+      const result = normalizeScenario({
+        scenarioId: 1,
+        moduleId: 1,
+        title: 'Fake Invoice',
+      });
+
+      expect(result.id).toBe(1);
+    });
+
+    it('should prefer an existing `id` over `scenarioId` when both are present', () => {
+      const result = normalizeScenario({ id: 5, scenarioId: 1 });
+
+      expect(result.id).toBe(5);
+    });
+
+    it('should coerce a string scenarioId to a number', () => {
+      const result = normalizeScenario({ scenarioId: '7' });
+
+      expect(result.id).toBe(7);
+      expect(typeof result.id).toBe('number');
+    });
+
+    it('should preserve every other field unchanged', () => {
+      const result = normalizeScenario({
+        scenarioId: 1,
+        moduleId: 1,
+        title: 'Fake Invoice',
+        content: 'Dear customer...',
+      });
+
+      expect(result.moduleId).toBe(1);
+      expect(result.title).toBe('Fake Invoice');
+      expect(result.content).toBe('Dear customer...');
+    });
+  });
+
   describe('normalizeCategory', () => {
     it('should uppercase a matching category', () => {
       expect(normalizeCategory('phishing')).toBe(ScenarioCategory.Phishing);

@@ -8,7 +8,8 @@ import { selectAuthState } from 'src/app/auth/+state/auth.selectors';
 import { ModulesActions } from 'src/app/modules/+state/modules.actions';
 import { selectModuleList } from 'src/app/modules/+state/modules.selectors';
 import { selectScenarioList } from 'src/app/scenario/+state/scenario.selectors';
-import { selectAttempts } from 'src/app/attempts/+state/attempts.selectors';
+import { ResultsActions } from 'src/app/results/+state/results.actions';
+import { selectMyResults } from 'src/app/results/+state/results.selectors';
 import { DataCardComponent } from 'src/app/shared/components/data-card/data-card.component';
 import { DashboardCardComponent } from 'src/app/shared/components/dashboard-card/dashboard-card.component';
 import { LearningProgressCardComponent } from '../learning-progress-card/learning-progress-card.component';
@@ -31,10 +32,13 @@ describe('UserDashboardComponent', () => {
     { moduleId: 1, moduleName: 'Phishing Awareness', description: 'Learn to spot phishing' },
   ];
   const scenarios = [
-    { id: 's_001', moduleId: 1, difficulty: 'easy' },
-    { id: 's_002', moduleId: 1, difficulty: 'easy' },
+    { id: 1, moduleId: 1, difficulty: 'easy' },
+    { id: 2, moduleId: 1, difficulty: 'easy' },
   ];
-  const attempts = [{ id: 'a1', scenarioId: 's_001', decision: 'Report', correct: true }];
+  const results = {
+    scenarioResults: [{ scenarioId: '1', moduleId: 1, correct: true }],
+    averageScore: null,
+  };
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -57,7 +61,7 @@ describe('UserDashboardComponent', () => {
             },
             { selector: selectModuleList, value: modules },
             { selector: selectScenarioList, value: scenarios },
-            { selector: selectAttempts, value: attempts },
+            { selector: selectMyResults, value: results },
           ],
         }),
       ],
@@ -77,10 +81,14 @@ describe('UserDashboardComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should dispatch fetchList scoped to the logged-in user once known', () => {
+  it('should dispatch fetchList scoped to the signed-in learner', () => {
     expect(store.dispatch).toHaveBeenCalledWith(
-      ModulesActions.fetchList({ userId: 'u_1' }),
+      ModulesActions.fetchList({ assignedToMe: true }),
     );
+  });
+
+  it('should dispatch fetchMyResults on init', () => {
+    expect(store.dispatch).toHaveBeenCalledWith(ResultsActions.fetchMyResults());
   });
 
   it('should compute assigned modules with progress from the store', () => {
@@ -94,10 +102,34 @@ describe('UserDashboardComponent', () => {
     expect(component.continueLearning?.progressPercentage).toBe(50);
   });
 
-  it('should compute dashboard stats from scenarios and attempts', () => {
+  it('should compute dashboard stats from GET /results/me', () => {
     expect(component.stats.scenariosCompleted).toBe(1);
     expect(component.stats.totalScenarios).toBe(2);
     expect(component.stats.averageScore).toBe(100);
+  });
+
+  it("should use the backend's own averageScore when GET /results/me provides one", () => {
+    store.overrideSelector(selectMyResults, {
+      scenarioResults: [{ scenarioId: '1', moduleId: 1, correct: true }],
+      averageScore: 88,
+    });
+    store.refreshState();
+
+    expect(component.stats.averageScore).toBe(88);
+  });
+
+  it('should derive averageScore from the individual scenario results when the backend sends none', () => {
+    store.overrideSelector(selectMyResults, {
+      scenarioResults: [
+        { scenarioId: '1', moduleId: 1, correct: true },
+        { scenarioId: '2', moduleId: 1, correct: false },
+      ],
+      averageScore: null,
+    });
+    store.refreshState();
+
+    expect(component.stats.scenariosCompleted).toBe(2);
+    expect(component.stats.averageScore).toBe(50);
   });
 
   it('should navigate to the modules list when View All is clicked', () => {
@@ -106,19 +138,23 @@ describe('UserDashboardComponent', () => {
   });
 
   it('should hide Continue Learning when nothing is partway in progress', () => {
-    // No attempts at all -> every module sits at 0% (not started), which
-    // should no longer surface as "continue learning".
-    store.overrideSelector(selectAttempts, []);
+    store.overrideSelector(selectMyResults, {
+      scenarioResults: [],
+      averageScore: null,
+    });
     store.refreshState();
 
     expect(component.continueLearning).toBeNull();
   });
 
   it('should hide Continue Learning when every module is already complete', () => {
-    store.overrideSelector(selectAttempts, [
-      { id: 'a1', scenarioId: 's_001', decision: 'Report', correct: true },
-      { id: 'a2', scenarioId: 's_002', decision: 'Report', correct: true },
-    ]);
+    store.overrideSelector(selectMyResults, {
+      scenarioResults: [
+        { scenarioId: '1', moduleId: 1, correct: true },
+        { scenarioId: '2', moduleId: 1, correct: true },
+      ],
+      averageScore: null,
+    });
     store.refreshState();
 
     expect(component.continueLearning).toBeNull();
@@ -127,7 +163,7 @@ describe('UserDashboardComponent', () => {
   it('should default every stat to 0 when there is no data to work with', () => {
     store.overrideSelector(selectModuleList, []);
     store.overrideSelector(selectScenarioList, []);
-    store.overrideSelector(selectAttempts, []);
+    store.overrideSelector(selectMyResults, { scenarioResults: [], averageScore: null });
     store.refreshState();
 
     expect(component.stats).toEqual({

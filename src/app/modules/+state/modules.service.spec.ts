@@ -32,26 +32,24 @@ describe('ModulesService', () => {
     expect(service).toBeTruthy();
   });
 
-  it('should GET training-modules scoped to the org only when no userId is given', () => {
+  it('should GET every module in the org when assignedToMe is not given', () => {
     service.getModules().subscribe();
 
     const req = httpMock.expectOne(
       (request) => request.url === `${environment.apiUrl}training-modules`,
     );
     expect(req.request.method).toBe('GET');
-    expect(req.request.params.get('organisationId')).toBe('1');
-    expect(req.request.params.has('userId')).toBeFalse();
+    expect(req.request.params.has('assignedToMe')).toBeFalse();
     req.flush(modules);
   });
 
-  it('should additionally scope the request to a specific learner when userId is given', () => {
-    service.getModules('u_1').subscribe();
+  it('should scope the request to the signed-in learner when assignedToMe is true', () => {
+    service.getModules(true).subscribe();
 
     const req = httpMock.expectOne(
       (request) => request.url === `${environment.apiUrl}training-modules`,
     );
-    expect(req.request.params.get('organisationId')).toBe('1');
-    expect(req.request.params.get('userId')).toBe('u_1');
+    expect(req.request.params.get('assignedToMe')).toBe('true');
     req.flush(modules);
   });
 

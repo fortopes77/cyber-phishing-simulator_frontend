@@ -10,6 +10,7 @@ import {
   selectScenarioList,
 } from '../../+state/scenario.selectors';
 import { AttemptsActions } from 'src/app/attempts/+state/attempts.actions';
+import { ModuleAttempt } from 'src/app/attempts/+state/attempt.model';
 import {
   selectFeedback,
   selectFeedbackLoading,
@@ -27,14 +28,28 @@ describe('ScenarioChoiceComponent', () => {
   let actionsSubject: Subject<any>;
 
   // Matches the shape a learner actually receives (see scenario.model.ts) -
-  // the scenarios API has no `options` field.
+  // scenario ids are numeric (normalizeScenario), and the API has no
+  // `options` field.
   const scenario = {
-    id: 's_002',
+    id: 2,
     moduleId: 1,
     title: 'IT Department Software Update',
     content: 'Please install the attached update immediately.',
   };
-  const scenarioList = [{ id: 's_001' }, scenario];
+  const scenarioList = [{ id: 1 }, scenario];
+
+  const startedAttempt: ModuleAttempt = {
+    id: 5,
+    moduleId: 1,
+    status: 'IN_PROGRESS',
+    totalScore: 0,
+    maxPossibleScore: 0,
+    percentageScore: 0,
+    scenariosCompleted: 0,
+    totalScenarios: 0,
+    passed: false,
+    completedAt: null,
+  };
 
   beforeEach(async () => {
     actionsSubject = new Subject();
@@ -45,7 +60,7 @@ describe('ScenarioChoiceComponent', () => {
         {
           provide: ActivatedRoute,
           useValue: {
-            paramMap: of(convertToParamMap({ id: 's_002' })),
+            paramMap: of(convertToParamMap({ id: '2' })),
           },
         },
         { provide: Actions, useValue: actionsSubject },
@@ -84,47 +99,86 @@ describe('ScenarioChoiceComponent', () => {
     expect(component.decisionOptions).toEqual(['Safe', 'Suspicious']);
   });
 
-  it('should dispatch createAttempt when a decision is selected', () => {
+  it('should start a module attempt on the first decision', () => {
     component.selectDecision('Suspicious');
 
     expect(component.submitting).toBeTrue();
     expect(store.dispatch).toHaveBeenCalledWith(
-      AttemptsActions.createAttempt({
-        attempt: {
-          scenarioId: 's_002',
-          decision: 'Suspicious',
-          selectedCues: undefined,
-        },
-      }),
+      AttemptsActions.startAttempt({ moduleId: 1 }),
     );
   });
 
-  it('should forward the cues highlighted on the scenario page as selectedCues', () => {
+  it('should submit the scenario attempt once the module attempt starts, with the cues joined as a string', () => {
     component.selectedCues = ['Urgent language', 'Suspicious link'];
-
     component.selectDecision('Suspicious');
+
+    actionsSubject.next(AttemptsActions.startAttemptSuccess({ attempt: startedAttempt }));
 
     expect(store.dispatch).toHaveBeenCalledWith(
-      AttemptsActions.createAttempt({
-        attempt: {
-          scenarioId: 's_002',
-          decision: 'Suspicious',
-          selectedCues: ['Urgent language', 'Suspicious link'],
-        },
+      jasmine.objectContaining({
+        type: AttemptsActions.submitScenarioAttempt.type,
+        attemptId: 5,
+        scenarioAttempt: jasmine.objectContaining({
+          scenarioId: 2,
+          moduleId: 1,
+          attemptNumber: 1,
+          response: 'Suspicious',
+          selectedCues: 'Urgent language,Suspicious link',
+        }),
       }),
     );
   });
 
-  it('should switch to the result phase and request feedback on createAttemptSuccess', () => {
+  it('should send an empty selectedCues string when nothing was highlighted', () => {
     component.selectDecision('Suspicious');
+    actionsSubject.next(AttemptsActions.startAttemptSuccess({ attempt: startedAttempt }));
 
-    const attempt = {
-      id: 'a_1',
-      scenarioId: 's_002',
-      decision: 'Suspicious',
-      correct: true,
-    };
-    actionsSubject.next(AttemptsActions.createAttemptSuccess({ attempt }));
+    expect(store.dispatch).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        type: AttemptsActions.submitScenarioAttempt.type,
+        attemptId: 5,
+        scenarioAttempt: jasmine.objectContaining({ selectedCues: '' }),
+      }),
+    );
+  });
+
+  it('should reuse the in-progress attempt for a second decision in the same module without starting a new one', () => {
+    component.selectDecision('Suspicious');
+    actionsSubject.next(AttemptsActions.startAttemptSuccess({ attempt: startedAttempt }));
+    (store.dispatch as jasmine.Spy).calls.reset();
+
+    component.submitting = false;
+    component.selectDecision('Safe');
+
+    expect(store.dispatch).not.toHaveBeenCalledWith(
+      jasmine.objectContaining({ type: AttemptsActions.startAttempt.type }),
+    );
+    expect(store.dispatch).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        type: AttemptsActions.submitScenarioAttempt.type,
+        attemptId: 5,
+        scenarioAttempt: jasmine.objectContaining({ response: 'Safe' }),
+      }),
+    );
+  });
+
+  it('should switch to the result phase and request feedback once the scenario attempt is graded', () => {
+    component.selectDecision('Suspicious');
+    actionsSubject.next(AttemptsActions.startAttemptSuccess({ attempt: startedAttempt }));
+
+    actionsSubject.next(
+      AttemptsActions.submitScenarioAttemptSuccess({
+        result: {
+          attemptId: 5,
+          scenarioId: '2',
+          moduleId: 1,
+          response: 'Suspicious',
+          correct: true,
+          score: 100,
+          missedCues: [],
+        },
+      }),
+    );
 
     expect(component.phase).toBe('result');
     expect(component.isCorrect).toBeTrue();
@@ -138,14 +192,18 @@ describe('ScenarioChoiceComponent', () => {
   it('should request AI feedback with the decision, selected cues and graded outcome', () => {
     component.selectedCues = ['Urgent language', 'Suspicious link'];
     component.selectDecision('Suspicious');
+    actionsSubject.next(AttemptsActions.startAttemptSuccess({ attempt: startedAttempt }));
 
     actionsSubject.next(
-      AttemptsActions.createAttemptSuccess({
-        attempt: {
-          id: 'a_1',
-          scenarioId: 's_002',
-          decision: 'Suspicious',
+      AttemptsActions.submitScenarioAttemptSuccess({
+        result: {
+          attemptId: 5,
+          scenarioId: '2',
+          moduleId: 1,
+          response: 'Suspicious',
           correct: true,
+          score: 100,
+          missedCues: [],
         },
       }),
     );
@@ -156,26 +214,27 @@ describe('ScenarioChoiceComponent', () => {
           scenarioContent: 'Please install the attached update immediately.',
           decision: 'Suspicious',
           correct: true,
-          correctAnswer: undefined,
           selectedCues: ['Urgent language', 'Suspicious link'],
           missedCues: undefined,
-          attemptId: 'a_1',
+          attemptId: '5',
         },
       }),
     );
   });
 
-  it('should pass the graded correctAnswer/missedCues through to the feedback request', () => {
+  it('should pass the missedCues through to the feedback request', () => {
     component.selectDecision('Safe');
+    actionsSubject.next(AttemptsActions.startAttemptSuccess({ attempt: startedAttempt }));
 
     actionsSubject.next(
-      AttemptsActions.createAttemptSuccess({
-        attempt: {
-          id: 'a_3',
-          scenarioId: 's_002',
-          decision: 'Safe',
+      AttemptsActions.submitScenarioAttemptSuccess({
+        result: {
+          attemptId: 5,
+          scenarioId: '2',
+          moduleId: 1,
+          response: 'Safe',
           correct: false,
-          correctAnswer: 'Suspicious',
+          score: 0,
           missedCues: ['Urgent deadline', 'Mismatched sender domain'],
         },
       }),
@@ -184,23 +243,26 @@ describe('ScenarioChoiceComponent', () => {
     expect(store.dispatch).toHaveBeenCalledWith(
       jasmine.objectContaining({
         request: jasmine.objectContaining({
-          correctAnswer: 'Suspicious',
           missedCues: ['Urgent deadline', 'Mismatched sender domain'],
         }),
       }),
     );
   });
 
-  it('should show incorrect result when the attempt was wrong', () => {
+  it('should show incorrect result when the graded response was wrong', () => {
     component.selectDecision('Safe');
+    actionsSubject.next(AttemptsActions.startAttemptSuccess({ attempt: startedAttempt }));
 
     actionsSubject.next(
-      AttemptsActions.createAttemptSuccess({
-        attempt: {
-          id: 'a_2',
-          scenarioId: 's_002',
-          decision: 'Safe',
+      AttemptsActions.submitScenarioAttemptSuccess({
+        result: {
+          attemptId: 5,
+          scenarioId: '2',
+          moduleId: 1,
+          response: 'Safe',
           correct: false,
+          score: 0,
+          missedCues: [],
         },
       }),
     );
@@ -208,17 +270,19 @@ describe('ScenarioChoiceComponent', () => {
     expect(component.isCorrect).toBeFalse();
   });
 
-  it('should render the missed cues and correct answer for a wrong attempt', () => {
+  it('should render the missed cues for a wrong attempt', () => {
     component.selectDecision('Safe');
+    actionsSubject.next(AttemptsActions.startAttemptSuccess({ attempt: startedAttempt }));
 
     actionsSubject.next(
-      AttemptsActions.createAttemptSuccess({
-        attempt: {
-          id: 'a_4',
-          scenarioId: 's_002',
-          decision: 'Safe',
+      AttemptsActions.submitScenarioAttemptSuccess({
+        result: {
+          attemptId: 5,
+          scenarioId: '2',
+          moduleId: 1,
+          response: 'Safe',
           correct: false,
-          correctAnswer: 'Suspicious',
+          score: 0,
           missedCues: ['Urgent deadline'],
         },
       }),
@@ -228,33 +292,45 @@ describe('ScenarioChoiceComponent', () => {
     const text = fixture.nativeElement.textContent;
     expect(text).toContain('Cues you missed');
     expect(text).toContain('Urgent deadline');
-    expect(text).toContain('Correct answer:');
-    expect(text).toContain('Suspicious');
   });
 
-  it('should not render missed cues or correct answer for a correct attempt', () => {
+  it('should not render missed cues for a correct attempt', () => {
     component.selectDecision('Suspicious');
+    actionsSubject.next(AttemptsActions.startAttemptSuccess({ attempt: startedAttempt }));
 
     actionsSubject.next(
-      AttemptsActions.createAttemptSuccess({
-        attempt: {
-          id: 'a_5',
-          scenarioId: 's_002',
-          decision: 'Suspicious',
+      AttemptsActions.submitScenarioAttemptSuccess({
+        result: {
+          attemptId: 5,
+          scenarioId: '2',
+          moduleId: 1,
+          response: 'Suspicious',
           correct: true,
-          correctAnswer: 'Suspicious',
+          score: 100,
+          missedCues: [],
         },
       }),
     );
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.textContent).not.toContain('Correct answer:');
+    expect(fixture.nativeElement.textContent).not.toContain('Cues you missed');
   });
 
-  it('should stop submitting on createAttemptFailure', () => {
+  it('should stop submitting if starting the attempt fails', () => {
     component.selectDecision('Suspicious');
     actionsSubject.next(
-      AttemptsActions.createAttemptFailure({ error: 'Network error' }),
+      AttemptsActions.startAttemptFailure({ error: 'Network error' }),
+    );
+
+    expect(component.submitting).toBeFalse();
+    expect(component.phase).toBe('deciding');
+  });
+
+  it('should stop submitting if grading the scenario attempt fails', () => {
+    component.selectDecision('Suspicious');
+    actionsSubject.next(AttemptsActions.startAttemptSuccess({ attempt: startedAttempt }));
+    actionsSubject.next(
+      AttemptsActions.submitScenarioAttemptFailure({ error: 'Network error' }),
     );
 
     expect(component.submitting).toBeFalse();
@@ -262,35 +338,45 @@ describe('ScenarioChoiceComponent', () => {
   });
 
   it('should navigate to the next scenario in the module', () => {
-    component.scenarioId = 's_001';
+    component.scenarioId = 1;
 
     component.continueToNext();
 
-    expect(router.navigate).toHaveBeenCalledWith([
-      '/learner/scenarios',
-      's_002',
-    ]);
+    expect(router.navigate).toHaveBeenCalledWith(['/learner/scenarios', 2]);
   });
 
-  it('should navigate to the results screen after the last scenario', () => {
-    component.selectedDecision = 'Report';
-    (component as any).orderedScenarioIds = ['s_001', 's_002'];
-    component.scenarioId = 's_002';
+  it('should finalize the attempt and navigate to the results screen after the last scenario', () => {
+    component.selectDecision('Suspicious');
+    actionsSubject.next(AttemptsActions.startAttemptSuccess({ attempt: startedAttempt }));
+    (store.dispatch as jasmine.Spy).calls.reset();
+    (component as any).orderedScenarioIds = [1, 2];
+    component.scenarioId = 2;
 
     component.continueToNext();
 
+    expect(store.dispatch).toHaveBeenCalledWith(
+      AttemptsActions.finalizeAttempt({ attemptId: 5 }),
+    );
     expect(router.navigate).toHaveBeenCalledWith(['/learner/results'], {
       queryParams: { moduleId: 1 },
     });
   });
 
+  it('should not dispatch finalizeAttempt on the results screen if no attempt was ever started', () => {
+    (component as any).orderedScenarioIds = [1, 2];
+    component.scenarioId = 2;
+
+    component.continueToNext();
+
+    expect(store.dispatch).not.toHaveBeenCalledWith(
+      jasmine.objectContaining({ type: AttemptsActions.finalizeAttempt.type }),
+    );
+  });
+
   it('should navigate back to the scenario page', () => {
     component.backToScenario();
 
-    expect(router.navigate).toHaveBeenCalledWith([
-      '/learner/scenarios',
-      's_002',
-    ]);
+    expect(router.navigate).toHaveBeenCalledWith(['/learner/scenarios', 2]);
   });
 
   it('should report pager state and navigate to the previous/next scenario', () => {
@@ -298,25 +384,26 @@ describe('ScenarioChoiceComponent', () => {
     expect(component.hasNext).toBeFalse();
 
     component.goToPrevious();
-    expect(router.navigate).toHaveBeenCalledWith([
-      '/learner/scenarios',
-      's_001',
-    ]);
+    expect(router.navigate).toHaveBeenCalledWith(['/learner/scenarios', 1]);
 
-    component.scenarioId = 's_001';
+    component.scenarioId = 1;
     expect(component.hasPrevious).toBeFalse();
     expect(component.hasNext).toBeTrue();
 
     component.goToNext();
-    expect(router.navigate).toHaveBeenCalledWith([
-      '/learner/scenarios',
-      's_002',
-    ]);
+    expect(router.navigate).toHaveBeenCalledWith(['/learner/scenarios', 2]);
   });
 
-  it('should close back to the module the scenario belongs to', () => {
+  it('should finalize the attempt and close back to the module the scenario belongs to', () => {
+    component.selectDecision('Suspicious');
+    actionsSubject.next(AttemptsActions.startAttemptSuccess({ attempt: startedAttempt }));
+    (store.dispatch as jasmine.Spy).calls.reset();
+
     component.closeSession();
 
+    expect(store.dispatch).toHaveBeenCalledWith(
+      AttemptsActions.finalizeAttempt({ attemptId: 5 }),
+    );
     expect(router.navigate).toHaveBeenCalledWith(['/learner/modules', 1]);
   });
 

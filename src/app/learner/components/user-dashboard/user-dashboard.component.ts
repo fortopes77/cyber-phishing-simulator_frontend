@@ -10,8 +10,9 @@ import { ModulesActions } from 'src/app/modules/+state/modules.actions';
 import { selectModuleList } from 'src/app/modules/+state/modules.selectors';
 import { ScenarioActions } from 'src/app/scenario/+state/scenario.actions';
 import { selectScenarioList } from 'src/app/scenario/+state/scenario.selectors';
-import { AttemptsActions } from 'src/app/attempts/+state/attempts.actions';
-import { selectAttempts } from 'src/app/attempts/+state/attempts.selectors';
+import { ResultsActions } from 'src/app/results/+state/results.actions';
+import { selectMyResults } from 'src/app/results/+state/results.selectors';
+import { LearnerResults } from 'src/app/results/+state/results.model';
 
 interface AssignedModule {
   id: number;
@@ -60,16 +61,24 @@ export class UserDashboardComponent implements OnInit {
   ngOnInit() {
     this.subscribeToAuthUser();
 
+    // assignedToMe is self-scoped via the JWT (confirmed live against GET
+    // /api-json and a real learner token), so this can dispatch immediately
+    // rather than waiting on the auth subscription to resolve a userId.
+    this.store.dispatch(ModulesActions.fetchList({ assignedToMe: true }));
     this.store.dispatch(ScenarioActions.fetchList());
-    this.store.dispatch(AttemptsActions.fetchUserAttempts());
+    this.store.dispatch(ResultsActions.fetchMyResults());
 
     combineLatest([
       this.store.select(selectModuleList),
       this.store.select(selectScenarioList),
-      this.store.select(selectAttempts),
-    ]).subscribe(([moduleList, scenarioList, attempts]) => {
+      this.store.select(selectMyResults),
+    ]).subscribe(([moduleList, scenarioList, results]) => {
+      // GET /results/me - confirmed live to return isCorrect/scenarioId per
+      // completed scenario (see results.model.ts). scenario.id is numeric
+      // (normalizeScenario) but a result's scenarioId is a string, hence
+      // String() below.
       const completedScenarioIds = new Set(
-        attempts.map((attempt) => attempt.scenarioId),
+        (results?.scenarioResults ?? []).map((result) => result.scenarioId),
       );
 
       this.assignedModules = (moduleList ?? []).map((module: any) => {
@@ -77,7 +86,7 @@ export class UserDashboardComponent implements OnInit {
           (scenario: any) => scenario.moduleId === module.moduleId,
         );
         const completedCount = moduleScenarios.filter((scenario: any) =>
-          completedScenarioIds.has(scenario.id),
+          completedScenarioIds.has(String(scenario.id)),
         ).length;
         const progress = moduleScenarios.length
           ? completedCount / moduleScenarios.length
@@ -124,9 +133,8 @@ export class UserDashboardComponent implements OnInit {
 
       const totalScenarios = (scenarioList ?? []).length;
       const scenariosCompleted = (scenarioList ?? []).filter((scenario: any) =>
-        completedScenarioIds.has(scenario.id),
+        completedScenarioIds.has(String(scenario.id)),
       ).length;
-      const correctAttempts = attempts.filter((a) => a.correct).length;
 
       this.stats = {
         modulesCompleted: this.assignedModules.filter(
@@ -135,11 +143,26 @@ export class UserDashboardComponent implements OnInit {
         totalModules: this.assignedModules.length,
         scenariosCompleted,
         totalScenarios,
-        averageScore: attempts.length
-          ? Math.round((correctAttempts / attempts.length) * 100)
-          : 0,
+        averageScore: this.deriveAverageScore(results),
       };
     });
+  }
+
+  // The backend's own averageScore (when it sends one) beats a client-side
+  // recomputation from the individual scenario results.
+  private deriveAverageScore(results: LearnerResults | null): number {
+    if (results?.averageScore != null) {
+      return results.averageScore;
+    }
+
+    if (!results?.scenarioResults.length) {
+      return 0;
+    }
+
+    const correctCount = results.scenarioResults.filter(
+      (result) => result.correct,
+    ).length;
+    return Math.round((correctCount / results.scenarioResults.length) * 100);
   }
 
   private deriveLevel(
@@ -165,11 +188,6 @@ export class UserDashboardComponent implements OnInit {
     this.store.select(selectAuthState).subscribe((authState) => {
       if (authState?.isAuthenticated && authState.user) {
         this.currentUser = authState.user;
-        // Scoped to the logged-in learner so "Assigned Modules" only ever
-        // shows their own modules, not every module in the org.
-        this.store.dispatch(
-          ModulesActions.fetchList({ userId: authState.user.id }),
-        );
       }
     });
   }

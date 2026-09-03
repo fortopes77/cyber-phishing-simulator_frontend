@@ -3,9 +3,9 @@ import { AttemptsState } from './attempts.reducer';
 
 export const selectAttemptsState =
   createFeatureSelector<AttemptsState>('attempts');
-export const selectAttempts = createSelector(
+export const selectCurrentAttempt = createSelector(
   selectAttemptsState,
-  (state) => state.attempts,
+  (state) => state.currentAttempt,
 );
 export const selectAttemptsLoading = createSelector(
   selectAttemptsState,

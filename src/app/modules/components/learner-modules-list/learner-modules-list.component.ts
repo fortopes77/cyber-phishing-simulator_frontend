@@ -17,8 +17,8 @@ import { ModulesActions } from 'src/app/modules/+state/modules.actions';
 import { selectModuleList } from 'src/app/modules/+state/modules.selectors';
 import { ScenarioActions } from 'src/app/scenario/+state/scenario.actions';
 import { selectScenarioList } from 'src/app/scenario/+state/scenario.selectors';
-import { AttemptsActions } from 'src/app/attempts/+state/attempts.actions';
-import { selectAttempts } from 'src/app/attempts/+state/attempts.selectors';
+import { ResultsActions } from 'src/app/results/+state/results.actions';
+import { selectMyResults } from 'src/app/results/+state/results.selectors';
 
 interface ModuleCard {
   id: number;
@@ -53,23 +53,27 @@ export class LearnerModulesListComponent implements OnInit {
   constructor(private store: Store) {}
 
   ngOnInit(): void {
-    // TODO: scope to the current learner's id once this list also needs to
-    // filter by assignment (see UserDashboardComponent for that wiring).
-    this.store.dispatch(ModulesActions.fetchList({}));
+    // assignedToMe is self-scoped via the JWT (confirmed live against GET
+    // /api-json and a real learner token: assignedToMe=true returns only
+    // that learner's assigned modules), so this only shows modules assigned
+    // to the signed-in learner rather than every module in the org.
+    this.store.dispatch(ModulesActions.fetchList({ assignedToMe: true }));
     // Scenarios carry a moduleId (see scenario.service.ts createScenario
     // payload), so fetching the full list lets us group by module to work
     // out scenario counts, difficulty, and progress without a dedicated
     // "module scenarios" endpoint.
     this.store.dispatch(ScenarioActions.fetchList());
-    this.store.dispatch(AttemptsActions.fetchUserAttempts());
+    this.store.dispatch(ResultsActions.fetchMyResults());
 
     combineLatest([
       this.store.select(selectModuleList),
       this.store.select(selectScenarioList),
-      this.store.select(selectAttempts),
-    ]).subscribe(([moduleList, scenarioList, attempts]) => {
+      this.store.select(selectMyResults),
+    ]).subscribe(([moduleList, scenarioList, results]) => {
+      // scenario.id is numeric (normalizeScenario) but a result's
+      // scenarioId is a string (results.model.ts), hence String() below.
       const completedScenarioIds = new Set(
-        attempts.map((attempt) => attempt.scenarioId),
+        (results?.scenarioResults ?? []).map((result) => result.scenarioId),
       );
 
       this.modules = (moduleList ?? []).map((module: any) => {
@@ -78,7 +82,7 @@ export class LearnerModulesListComponent implements OnInit {
         );
 
         const completedCount = moduleScenarios.filter((scenario: any) =>
-          completedScenarioIds.has(scenario.id),
+          completedScenarioIds.has(String(scenario.id)),
         ).length;
 
         return {
