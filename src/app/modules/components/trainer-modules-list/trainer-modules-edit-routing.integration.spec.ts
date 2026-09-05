@@ -19,7 +19,7 @@ import { scenarioReducer } from 'src/app/scenario/+state/scenario.reducer';
 import { ScenarioEffects } from 'src/app/scenario/+state/scenario.effects';
 import { AuthModule } from 'src/app/auth/auth.module';
 import { UsersModule } from 'src/app/users/users.module';
-import { environment } from 'src/environments/environment.development';
+import { environment } from 'src/environments/environment';
 
 // Full-stack check (real Router + real NgRx Store/Effects + HttpTestingController)
 // for a reported bug: clicking "Edit" on the trainer modules list appeared not

@@ -5,7 +5,7 @@ import {
 } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { AttemptsService } from './attempts.service';
-import { environment } from 'src/environments/environment.development';
+import { environment } from 'src/environments/environment';
 import { ScenarioAttemptInput } from './attempt.model';
 
 describe('AttemptsService', () => {
