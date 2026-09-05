@@ -5,9 +5,15 @@
 
       <div class="module-header__tags">
         <div class="tag tag--gray">{{ level }}</div>
-        <div class="tag tag--green" *ngIf="isModuleComplete">Completed</div>
-        <div class="tag tag--green" *ngIf="!isModuleComplete && completedCount > 0">In Progress</div>
-        <div class="tag tag--green" *ngIf="!isModuleComplete && completedCount === 0">Not Started</div>
+        @if (isModuleComplete) {
+          <div class="tag tag--green">Completed</div>
+        }
+        @if (!isModuleComplete && completedCount > 0) {
+          <div class="tag tag--green">In Progress</div>
+        }
+        @if (!isModuleComplete && completedCount === 0) {
+          <div class="tag tag--green">Not Started</div>
+        }
       </div>
 
       <h1 class="module-header__title">{{ title }}</h1>
@@ -51,35 +57,38 @@
     </div>
 
     <div class="scenario-list">
-      <div
-        class="scenario-item"
-        *ngFor="let scenario of scenarios; let i = index"
-        [routerLink]="['/learner/scenarios', scenario.id]"
-      >
-        <div class="scenario-item__left">
-          <div class="scenario-item__number">{{ i + 1 }}</div>
+      @for (scenario of scenarios; track scenario.id; let i = $index) {
+        <div
+          class="scenario-item"
+          [routerLink]="['/learner/scenarios', scenario.id]"
+        >
+          <div class="scenario-item__left">
+            <div class="scenario-item__number">{{ i + 1 }}</div>
 
-          <div class="scenario-item__content">
-            <div class="scenario-item__title">{{ scenario.title }}</div>
+            <div class="scenario-item__content">
+              <div class="scenario-item__title">{{ scenario.title }}</div>
 
-            <div class="scenario-item__meta">
-              <div class="pill">{{ scenario.type }}</div>
-              <div class="pill" *ngIf="scenario.difficulty">{{ scenario.difficulty | titlecase }}</div>
+              <div class="scenario-item__meta">
+                <div class="pill">{{ scenario.type }}</div>
+                @if (scenario.difficulty) {
+                  <div class="pill">{{ scenario.difficulty | titlecase }}</div>
+                }
+              </div>
             </div>
           </div>
-        </div>
 
-        <div
-          class="scenario-item__status"
-          [ngClass]="{
-            'scenario-item__status--completed':
-              scenario.status === 'Completed',
-            'scenario-item__status--progress': scenario.status !== 'Completed'
-          }"
-        >
-          {{ scenario.status === 'Completed' ? '✓ Completed' : scenario.status }}
+          <div
+            class="scenario-item__status"
+            [ngClass]="{
+              'scenario-item__status--completed':
+                scenario.status === 'Completed',
+              'scenario-item__status--progress': scenario.status !== 'Completed'
+            }"
+          >
+            {{ scenario.status === 'Completed' ? '✓ Completed' : scenario.status }}
+          </div>
         </div>
-      </div>
+      }
     </div>
   </div>
 </div>

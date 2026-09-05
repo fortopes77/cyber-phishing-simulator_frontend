@@ -134,7 +134,6 @@ describe('ModuleEditComponent', () => {
         moduleId: 42,
         moduleName: 'Phishing Awareness',
         description: 'Learn to spot phishing',
-        version: '1.0.0',
       },
     ]);
     store.overrideSelector(selectModule, null);
@@ -147,7 +146,6 @@ describe('ModuleEditComponent', () => {
     expect(component.moduleForm.value).toEqual({
       moduleName: 'Phishing Awareness',
       description: 'Learn to spot phishing',
-      version: '1.0.0',
     });
   });
 
@@ -162,12 +160,26 @@ describe('ModuleEditComponent', () => {
     expect(component.isCreateMode).toBeTrue();
   });
 
+  it('should only show name/description in create mode, hiding scenarios/learners/danger zone until the module exists', () => {
+    const route = TestBed.inject(ActivatedRoute);
+    (route.snapshot as any).url = [{ path: 'create' }];
+
+    fixture = TestBed.createComponent(ModuleEditComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('Module name');
+    expect(compiled.querySelector('.scenario-assign-panel')).toBeNull();
+    expect(compiled.querySelector('.learner-assign-panel')).toBeNull();
+    expect(compiled.querySelector('.danger-zone-card')).toBeNull();
+  });
+
   it('should dispatch createModule with the form values in create mode', () => {
     component.isCreateMode = true;
     component.moduleForm.setValue({
       moduleName: 'New Module',
       description: 'A brand new module',
-      version: '1.0.0',
     });
 
     component.onSubmit();
@@ -177,7 +189,6 @@ describe('ModuleEditComponent', () => {
         module: {
           moduleName: 'New Module',
           description: 'A brand new module',
-          version: '1.0.0',
         },
       }),
     );
@@ -189,7 +200,6 @@ describe('ModuleEditComponent', () => {
     component.moduleForm.setValue({
       moduleName: 'Updated Module',
       description: 'Updated description',
-      version: '2.0.0',
     });
 
     component.onSubmit();
@@ -200,17 +210,46 @@ describe('ModuleEditComponent', () => {
         updatedModule: {
           moduleName: 'Updated Module',
           description: 'Updated description',
-          version: '2.0.0',
         },
       }),
     );
+  });
+
+  it("should route into the new module's own edit page (not the list) once createModuleSuccess fires", () => {
+    actions$ = of(
+      ModulesActions.createModuleSuccess({
+        module: { moduleId: 99, moduleName: 'New Module', description: 'desc' },
+      }),
+    );
+
+    fixture = TestBed.createComponent(ModuleEditComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    expect(router.navigate).toHaveBeenCalledWith(
+      ['/trainer/modules', 99, 'edit'],
+      { replaceUrl: true },
+    );
+  });
+
+  it('should navigate back to the modules list once updateModuleSuccess fires', () => {
+    actions$ = of(
+      ModulesActions.updateModuleSuccess({
+        module: { moduleId: 7, moduleName: 'Updated Module', description: 'desc' },
+      }),
+    );
+
+    fixture = TestBed.createComponent(ModuleEditComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    expect(router.navigate).toHaveBeenCalledWith(['/trainer/modules']);
   });
 
   it('should not dispatch when the form is invalid', () => {
     component.moduleForm.setValue({
       moduleName: '',
       description: '',
-      version: '',
     });
 
     component.onSubmit();
@@ -257,6 +296,40 @@ describe('ModuleEditComponent', () => {
     expect(component.filteredLearners).toEqual([learners[1]]);
   });
 
+  it("should pre-populate the learner toggles from the module's assignedUserIds", () => {
+    store.overrideSelector(selectModule, {
+      moduleId: 42,
+      moduleName: 'Phishing Awareness',
+      description: 'Learn to spot phishing',
+      assignedUserIds: [10],
+    });
+
+    createComponentForModule('42');
+    fixture.detectChanges();
+
+    expect(component.addedLearnerIds.has(10)).toBeTrue();
+    expect(component.addedLearnerIds.has(11)).toBeFalse();
+
+    const toggle = fixture.nativeElement.querySelector(
+      '.learner-assign-panel .assign-row .toggle-switch',
+    );
+    expect(toggle.classList.contains('on')).toBeTrue();
+  });
+
+  it('should leave the toggles at their session-tracked state when the module payload has no assignedUserIds', () => {
+    store.overrideSelector(selectModule, {
+      moduleId: 42,
+      moduleName: 'Phishing Awareness',
+      description: 'Learn to spot phishing',
+    });
+
+    createComponentForModule('42');
+    component.addedLearnerIds.add(11);
+    store.refreshState();
+
+    expect(component.addedLearnerIds.has(11)).toBeTrue();
+  });
+
   it('should dispatch assignLearner with this module id and a numeric user id', () => {
     createComponentForModule('42');
 
@@ -266,6 +339,32 @@ describe('ModuleEditComponent', () => {
       ModulesActions.assignLearner({ moduleId: 42, userId: 10 }),
     );
     expect(component.assigningLearnerIds.has(10)).toBeTrue();
+  });
+
+  it('should not dispatch assignLearner when the module has no scenarios', () => {
+    // Module 7 has no entries in the `scenarios` fixture, so moduleScenarios
+    // is empty - a module with nothing in it isn't assignable yet.
+    createComponentForModule('7');
+
+    component.assignLearner(learners[0]);
+
+    expect(store.dispatch).not.toHaveBeenCalledWith(
+      jasmine.objectContaining({ type: ModulesActions.assignLearner.type }),
+    );
+    expect(component.assigningLearnerIds.size).toBe(0);
+  });
+
+  it('should show a blocking message instead of the learner list when the module has no scenarios', () => {
+    createComponentForModule('7');
+    fixture.detectChanges();
+
+    const nativeElement = fixture.nativeElement as HTMLElement;
+    expect(nativeElement.textContent).toContain(
+      'Add at least one scenario to this module before assigning learners.',
+    );
+    expect(
+      nativeElement.querySelector('.learner-assign-panel .toggle-switch'),
+    ).toBeNull();
   });
 
   it('should mark a learner as added once assignLearnerSuccess fires', () => {

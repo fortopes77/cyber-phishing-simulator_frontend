@@ -1,150 +1,159 @@
 <div class="list-wrapper">
-  <div *ngIf="hasRows" class="list-scroll-container">
-    <table
-      mat-table
-      [dataSource]="tableDataSource"
-      matSort
-      (matSortChange)="sortData($event)"
-      class="list-table"
-    >
-      <ng-container *ngFor="let column of columns">
-        <ng-container [matColumnDef]="column.key">
-          <th
-            mat-header-cell
-            *matHeaderCellDef
-            [mat-sort-header]="column.sortable !== false ? column.key : ''"
-            [disabled]="column.sortable === false"
-          >
-            {{ column.label }}
-          </th>
-          <td mat-cell *matCellDef="let row">
-            <ng-container
-              *ngIf="getCellTemplate(column.key) as cellTemplate; else plainCell"
+  @if (hasRows) {
+    <div class="list-scroll-container">
+      <table
+        mat-table
+        [dataSource]="tableDataSource"
+        matSort
+        (matSortChange)="sortData($event)"
+        class="list-table"
+      >
+        @for (column of columns; track column.key) {
+          <ng-container [matColumnDef]="column.key">
+            <th
+              mat-header-cell
+              *matHeaderCellDef
+              [mat-sort-header]="column.sortable !== false ? column.key : ''"
+              [disabled]="column.sortable === false"
             >
-              <ng-container
-                *ngTemplateOutlet="cellTemplate; context: { $implicit: row, row: row }"
-              ></ng-container>
-            </ng-container>
-            <ng-template #plainCell>{{ getCellValue(column, row) }}</ng-template>
+              {{ column.label }}
+            </th>
+            <td mat-cell *matCellDef="let row">
+              @if (getCellTemplate(column.key); as cellTemplate) {
+                <ng-container
+                  *ngTemplateOutlet="cellTemplate; context: { $implicit: row, row: row }"
+                ></ng-container>
+              } @else {
+                {{ getCellValue(column, row) }}
+              }
+            </td>
+          </ng-container>
+        }
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>{{ actionsColumnLabel }}</th>
+          <td mat-cell *matCellDef="let row" class="actions-cell">
+            @if (shouldUseDropdown) {
+              <div
+                class="action-menu-wrapper"
+                (click)="$event.stopPropagation()"
+              >
+                @for (action of visibleActions; track action.label) {
+                  <button
+                    type="button"
+                    class="action-button icon-button"
+                    [matTooltip]="getActionTooltip(action)"
+                    (click)="$event.stopPropagation(); handleAction(action, row)"
+                  >
+                    <fa-icon [icon]="getActionIcon(action)"></fa-icon>
+                  </button>
+                }
+
+                @if (overflowActions.length) {
+                  <button
+                    type="button"
+                    class="action-menu-trigger"
+                    (click)="$event.stopPropagation(); toggleActionsMenu(row, $event)"
+                    aria-label="More actions"
+                    [attr.aria-expanded]="openMenuRowKey === getRowMenuKey(row)"
+                  >
+                    ⋯
+                  </button>
+                }
+              </div>
+            } @else {
+              @for (action of actions; track action.label) {
+                <button
+                  type="button"
+                  class="action-button icon-button"
+                  [matTooltip]="getActionTooltip(action)"
+                  (click)="$event.stopPropagation(); handleAction(action, row)"
+                >
+                  <fa-icon [icon]="getActionIcon(action)"></fa-icon>
+                </button>
+              }
+            }
           </td>
         </ng-container>
-      </ng-container>
 
-      <ng-container matColumnDef="actions">
-        <th mat-header-cell *matHeaderCellDef>{{ actionsColumnLabel }}</th>
-        <td mat-cell *matCellDef="let row" class="actions-cell">
-          <div
-            *ngIf="shouldUseDropdown"
-            class="action-menu-wrapper"
-            (click)="$event.stopPropagation()"
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr
+          mat-row
+          *matRowDef="let row; columns: displayedColumns"
+          (click)="handleRowClick(row)"
+        ></tr>
+      </table>
+    </div>
+  }
+
+  @if (hasRows && totalPages > 1) {
+    <div class="pagination">
+      <div class="pagination-controls">
+        <button
+          type="button"
+          (click)="goToPage(1)"
+          [disabled]="pageIndex === 0"
+          aria-label="First page"
+        >
+          «
+        </button>
+        <button
+          type="button"
+          (click)="previousPage()"
+          [disabled]="pageIndex === 0"
+          aria-label="Previous page"
+        >
+          ‹
+        </button>
+        @for (page of pageNumbers; track page) {
+          <button
+            type="button"
+            class="pagination-page"
+            [class.active]="page === pageIndex + 1"
+            (click)="goToPage(page)"
           >
-            <button
-              *ngFor="let action of visibleActions"
-              type="button"
-              class="action-button icon-button"
-              [matTooltip]="getActionTooltip(action)"
-              (click)="$event.stopPropagation(); handleAction(action, row)"
-            >
-              <fa-icon [icon]="getActionIcon(action)"></fa-icon>
-            </button>
-
-            <button
-              *ngIf="overflowActions.length"
-              type="button"
-              class="action-menu-trigger"
-              (click)="$event.stopPropagation(); toggleActionsMenu(row, $event)"
-              aria-label="More actions"
-              [attr.aria-expanded]="openMenuRowKey === getRowMenuKey(row)"
-            >
-              ⋯
-            </button>
-          </div>
-
-          <ng-container *ngIf="!shouldUseDropdown">
-            <button
-              *ngFor="let action of actions"
-              type="button"
-              class="action-button icon-button"
-              [matTooltip]="getActionTooltip(action)"
-              (click)="$event.stopPropagation(); handleAction(action, row)"
-            >
-              <fa-icon [icon]="getActionIcon(action)"></fa-icon>
-            </button>
-          </ng-container>
-        </td>
-      </ng-container>
-
-      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-      <tr
-        mat-row
-        *matRowDef="let row; columns: displayedColumns"
-        (click)="handleRowClick(row)"
-      ></tr>
-    </table>
-  </div>
-
-  <div class="pagination" *ngIf="hasRows && totalPages > 1">
-    <div class="pagination-controls">
-      <button
-        type="button"
-        (click)="goToPage(1)"
-        [disabled]="pageIndex === 0"
-        aria-label="First page"
-      >
-        «
-      </button>
-      <button
-        type="button"
-        (click)="previousPage()"
-        [disabled]="pageIndex === 0"
-        aria-label="Previous page"
-      >
-        ‹
-      </button>
-      <button
-        *ngFor="let page of pageNumbers"
-        type="button"
-        class="pagination-page"
-        [class.active]="page === pageIndex + 1"
-        (click)="goToPage(page)"
-      >
-        {{ page }}
-      </button>
-      <button
-        type="button"
-        (click)="nextPage()"
-        [disabled]="pageIndex + 1 >= totalPages"
-        aria-label="Next page"
-      >
-        ›
-      </button>
-      <button
-        type="button"
-        (click)="goToPage(totalPages)"
-        [disabled]="pageIndex + 1 >= totalPages"
-        aria-label="Last page"
-      >
-        »
-      </button>
+            {{ page }}
+          </button>
+        }
+        <button
+          type="button"
+          (click)="nextPage()"
+          [disabled]="pageIndex + 1 >= totalPages"
+          aria-label="Next page"
+        >
+          ›
+        </button>
+        <button
+          type="button"
+          (click)="goToPage(totalPages)"
+          [disabled]="pageIndex + 1 >= totalPages"
+          aria-label="Last page"
+        >
+          »
+        </button>
+      </div>
+      <div class="pagination-summary">
+        {{ tableDataSource.data.length }} of {{ rows.length }} records
+      </div>
     </div>
-    <div class="pagination-summary">
-      {{ tableDataSource.data.length }} of {{ rows.length }} records
-    </div>
-  </div>
+  }
 
-  <p *ngIf="!hasRows" class="empty-state">{{ emptyMessage }}</p>
+  @if (!hasRows) {
+    <p class="empty-state">{{ emptyMessage }}</p>
+  }
 </div>
 
 <ng-template #overflowMenuTemplate let-actions let-row="row">
   <div class="action-menu" role="menu">
-    <button
-      *ngFor="let action of actions"
-      type="button"
-      class="action-menu-item"
-      role="menuitem"
-      (click)="handleAction(action, row)"
-    >
-      {{ action.label }}
-    </button>
+    @for (action of actions; track action.label) {
+      <button
+        type="button"
+        class="action-menu-item"
+        role="menuitem"
+        (click)="handleAction(action, row)"
+      >
+        {{ action.label }}
+      </button>
+    }
   </div>
 </ng-template>

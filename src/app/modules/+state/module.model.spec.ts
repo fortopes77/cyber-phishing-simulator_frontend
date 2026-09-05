@@ -1,4 +1,4 @@
-import { normalizeModule } from './module.model';
+import { normalizeModule, toModulePayload } from './module.model';
 
 describe('normalizeModule', () => {
   it('keeps moduleId as-is when the backend already returns it', () => {
@@ -53,11 +53,77 @@ describe('normalizeModule', () => {
       id: 1,
       moduleName: 'Phishing Awareness',
       description: 'Learn to spot phishing',
-      version: '1.0.0',
+      hasUserCompleted: true,
     });
 
     expect(result.moduleName).toBe('Phishing Awareness');
     expect(result.description).toBe('Learn to spot phishing');
-    expect(result.version).toBe('1.0.0');
+    expect(result.hasUserCompleted).toBe(true);
+  });
+
+  it('normalizes assignedUsers as a list of bare ids', () => {
+    const result = normalizeModule({
+      id: 1,
+      moduleName: 'Phishing Awareness',
+      assignedUsers: [3, '45', 7],
+    });
+
+    expect(result.assignedUserIds).toEqual([3, 45, 7]);
+  });
+
+  it('normalizes assignedUsers when the backend returns full user objects instead of bare ids', () => {
+    const result = normalizeModule({
+      id: 1,
+      moduleName: 'Phishing Awareness',
+      assignedUsers: [{ id: 3 }, { userId: 45 }],
+    });
+
+    expect(result.assignedUserIds).toEqual([3, 45]);
+  });
+
+  it('leaves assignedUserIds undefined when the response has no assignedUsers field at all', () => {
+    const result = normalizeModule({ id: 1, moduleName: 'Phishing Awareness' });
+
+    expect(result.assignedUserIds).toBeUndefined();
+  });
+
+  it('treats an empty assignedUsers array as "no learners assigned", not "unknown"', () => {
+    const result = normalizeModule({
+      id: 1,
+      moduleName: 'Phishing Awareness',
+      assignedUsers: [],
+    });
+
+    expect(result.assignedUserIds).toEqual([]);
+  });
+});
+
+describe('toModulePayload', () => {
+  it('builds a { title, description } request body from the internal moduleName/description shape', () => {
+    const payload = toModulePayload({
+      moduleName: 'Phishing Awareness',
+      description: 'Learn to spot phishing',
+    });
+
+    expect(payload).toEqual({
+      title: 'Phishing Awareness',
+      description: 'Learn to spot phishing',
+    });
+  });
+
+  it('never includes moduleName or version - the backend 400s on either', () => {
+    const payload: any = toModulePayload({
+      moduleName: 'Phishing Awareness',
+      description: 'Learn to spot phishing',
+      ...({ version: '1.0.0' } as any),
+    });
+
+    expect(payload.moduleName).toBeUndefined();
+    expect(payload.version).toBeUndefined();
+    expect(Object.keys(payload).sort()).toEqual(['description', 'title']);
+  });
+
+  it('defaults missing fields to empty strings', () => {
+    expect(toModulePayload({})).toEqual({ title: '', description: '' });
   });
 });

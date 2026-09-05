@@ -51,142 +51,179 @@
     <strong>This is a training scenario</strong>
   </div>
 
-  <div class="scenario-choice-card" *ngIf="phase === 'deciding' && !isDetailed">
-    <div class="scenario-choice-card__icon">
-      <fa-icon [icon]="fontAwesomeIcons.questionCircleIcon"></fa-icon>
-    </div>
-    <div class="scenario-choice-card__title">What do you think?</div>
-    <div class="scenario-choice-card__subtitle">
-      Based on the message you just reviewed, is it safe or suspicious?
-    </div>
-
-    <div class="scenario-choice-card__scenario-info">
-      <div class="scenario-choice-card__scenario-title">
-        "{{ scenario.title }}"
+  @if (phase === "deciding" && !isDetailed) {
+    <div class="scenario-choice-card">
+      <div class="scenario-choice-card__icon">
+        <fa-icon [icon]="fontAwesomeIcons.questionCircleIcon"></fa-icon>
       </div>
-      <div *ngIf="scenario.from" class="scenario-choice-card__scenario-from">
-        From: {{ scenario.from }}
+      <div class="scenario-choice-card__title">What do you think?</div>
+      <div class="scenario-choice-card__subtitle">
+        Based on the message you just reviewed, is it safe or suspicious?
+      </div>
+
+      <div class="scenario-choice-card__scenario-info">
+        <div class="scenario-choice-card__scenario-title">
+          "{{ scenario.title }}"
+        </div>
+        @if (scenario.from) {
+          <div class="scenario-choice-card__scenario-from">
+            From: {{ scenario.from }}
+          </div>
+        }
+      </div>
+
+      <div class="scenario-choice-card__options">
+        @for (option of decisionOptions; track option) {
+          <button
+            type="button"
+            class="decision-button"
+            [class.selected]="selectedDecision === option"
+            [disabled]="submitting"
+            (click)="selectDecision(option)"
+          >
+            <div class="decision-button__icon">
+              <fa-icon [icon]="getDecisionIcon(option)"></fa-icon>
+            </div>
+            <div class="decision-button__label">{{ option }}</div>
+            <div class="decision-button__description">
+              {{ getDecisionDescription(option) }}
+            </div>
+          </button>
+        }
+      </div>
+
+      @if (submitting) {
+        <p class="scenario-choice-card__submitting">
+          Submitting your decision…
+        </p>
+      }
+    </div>
+  }
+
+  @if (phase === "deciding" && isDetailed) {
+    <div class="scenario-choice-card">
+      <div class="scenario-choice-card__icon">
+        <fa-icon [icon]="fontAwesomeIcons.questionCircleIcon"></fa-icon>
+      </div>
+      <div class="scenario-choice-card__title">What did you notice?</div>
+      <div class="scenario-choice-card__subtitle">
+        Highlight anything suspicious on the previous screen, then submit what
+        you found.
+      </div>
+
+      <div class="scenario-choice-card__scenario-info">
+        <div class="scenario-choice-card__scenario-title">
+          "{{ scenario.title }}"
+        </div>
+        @if (scenario.from) {
+          <div class="scenario-choice-card__scenario-from">
+            From: {{ scenario.from }}
+          </div>
+        }
+      </div>
+
+      @if (selectedCues.length) {
+        <div class="cues-summary">
+          <div class="cues-summary__title">Cues you flagged</div>
+          <div class="cues-summary__list">
+            @for (cue of selectedCues; track cue) {
+              <span class="cue-chip">{{ cue }}</span>
+            }
+          </div>
+        </div>
+      }
+      @if (!selectedCues.length) {
+        <p class="scenario-choice-card__subtitle">
+          You haven't flagged anything as suspicious yet - go back if you'd like
+          to highlight something first, or submit as-is.
+        </p>
+      }
+
+      <div class="result-actions">
+        <button
+          class="primary-button"
+          type="button"
+          [disabled]="submitting"
+          (click)="submitCues()"
+        >
+          {{ submitting ? "Submitting…" : "Submit Answer" }}
+        </button>
+        <button
+          class="secondary-button"
+          type="button"
+          (click)="backToScenario()"
+        >
+          Back to Scenario
+        </button>
       </div>
     </div>
+  }
 
-    <div class="scenario-choice-card__options">
-      <button
-        *ngFor="let option of decisionOptions"
-        type="button"
-        class="decision-button"
-        [class.selected]="selectedDecision === option"
-        [disabled]="submitting"
-        (click)="selectDecision(option)"
+  @if (phase === "result") {
+    <div class="scenario-choice-card result-card">
+      <div
+        class="result-banner"
+        [ngClass]="
+          isCorrect ? 'result-banner--correct' : 'result-banner--incorrect'
+        "
       >
-        <div class="decision-button__icon">
-          <fa-icon [icon]="getDecisionIcon(option)"></fa-icon>
-        </div>
-        <div class="decision-button__label">{{ option }}</div>
-        <div class="decision-button__description">
-          {{ getDecisionDescription(option) }}
-        </div>
-      </button>
-    </div>
-
-    <p class="scenario-choice-card__submitting" *ngIf="submitting">
-      Submitting your decision…
-    </p>
-  </div>
-
-  <div class="scenario-choice-card" *ngIf="phase === 'deciding' && isDetailed">
-    <div class="scenario-choice-card__icon">
-      <fa-icon [icon]="fontAwesomeIcons.questionCircleIcon"></fa-icon>
-    </div>
-    <div class="scenario-choice-card__title">What did you notice?</div>
-    <div class="scenario-choice-card__subtitle">
-      Highlight anything suspicious on the previous screen, then submit what
-      you found.
-    </div>
-
-    <div class="scenario-choice-card__scenario-info">
-      <div class="scenario-choice-card__scenario-title">
-        "{{ scenario.title }}"
-      </div>
-      <div *ngIf="scenario.from" class="scenario-choice-card__scenario-from">
-        From: {{ scenario.from }}
-      </div>
-    </div>
-
-    <div class="cues-summary" *ngIf="selectedCues.length">
-      <div class="cues-summary__title">Cues you flagged</div>
-      <div class="cues-summary__list">
-        <span class="cue-chip" *ngFor="let cue of selectedCues">{{ cue }}</span>
-      </div>
-    </div>
-    <p class="scenario-choice-card__subtitle" *ngIf="!selectedCues.length">
-      You haven't flagged anything as suspicious yet - go back if you'd like
-      to highlight something first, or submit as-is.
-    </p>
-
-    <div class="result-actions">
-      <button
-        class="primary-button"
-        type="button"
-        [disabled]="submitting"
-        (click)="submitCues()"
-      >
-        {{ submitting ? "Submitting…" : "Submit Answer" }}
-      </button>
-      <button class="secondary-button" type="button" (click)="backToScenario()">
-        Back to Scenario
-      </button>
-    </div>
-  </div>
-
-  <div class="scenario-choice-card result-card" *ngIf="phase === 'result'">
-    <div
-      class="result-banner"
-      [ngClass]="isCorrect ? 'result-banner--correct' : 'result-banner--incorrect'"
-    >
-      <div class="result-banner__icon">{{ isCorrect ? '✔' : '✕' }}</div>
-      <div>
-        <div class="result-banner__title">
-          {{ isCorrect ? 'Correct!' : 'Not quite right' }}
-        </div>
-        <div class="result-banner__subtitle" *ngIf="!isDetailed">
-          You chose "{{ selectedDecision }}"
+        <div class="result-banner__icon">{{ isCorrect ? "✔" : "✕" }}</div>
+        <div>
+          <div class="result-banner__title">
+            {{ isCorrect ? "Correct!" : "Not quite right" }}
+          </div>
+          @if (!isDetailed) {
+            <div class="result-banner__subtitle">
+              You chose "{{ selectedDecision }}"
+            </div>
+          }
         </div>
       </div>
-    </div>
 
-    <div class="cues-summary" *ngIf="selectedCues.length">
-      <div class="cues-summary__title">Cues you flagged</div>
-      <div class="cues-summary__list">
-        <span class="cue-chip" *ngFor="let cue of selectedCues">{{ cue }}</span>
+      @if (selectedCues.length) {
+        <div class="cues-summary">
+          <div class="cues-summary__title">Cues you flagged</div>
+          <div class="cues-summary__list">
+            @for (cue of selectedCues; track cue) {
+              <span class="cue-chip">{{ cue }}</span>
+            }
+          </div>
+        </div>
+      }
+
+      @if (!isCorrect && scenarioResult?.missedCues?.length) {
+        <div class="cues-summary">
+          <div class="cues-summary__title">Cues you missed</div>
+          <div class="cues-summary__list">
+            @for (cue of scenarioResult?.missedCues; track cue) {
+              <span class="cue-chip cue-chip--missed">{{ cue }}</span>
+            }
+          </div>
+        </div>
+      }
+
+      <div class="feedback-panel">
+        <div class="feedback-panel__title">AI Feedback</div>
+        @if (feedbackLoading) {
+          <p class="feedback-panel__loading">Generating feedback…</p>
+        }
+        @if (!feedbackLoading && feedbackContent) {
+          <p class="feedback-panel__content">
+            {{ feedbackContent }}
+          </p>
+        }
+        @if (!feedbackLoading && !feedbackContent) {
+          <p class="feedback-panel__content">
+            No additional feedback is available for this attempt.
+          </p>
+        }
+      </div>
+
+      <div class="result-actions">
+        <button class="primary-button" type="button" (click)="continueToNext()">
+          Next Scenario
+        </button>
       </div>
     </div>
-
-    <div class="cues-summary" *ngIf="!isCorrect && scenarioResult?.missedCues?.length">
-      <div class="cues-summary__title">Cues you missed</div>
-      <div class="cues-summary__list">
-        <span class="cue-chip cue-chip--missed" *ngFor="let cue of scenarioResult?.missedCues">{{
-          cue
-        }}</span>
-      </div>
-    </div>
-
-    <div class="feedback-panel">
-      <div class="feedback-panel__title">AI Feedback</div>
-      <p *ngIf="feedbackLoading" class="feedback-panel__loading">
-        Generating feedback…
-      </p>
-      <p *ngIf="!feedbackLoading && feedbackContent" class="feedback-panel__content">
-        {{ feedbackContent }}
-      </p>
-      <p *ngIf="!feedbackLoading && !feedbackContent" class="feedback-panel__content">
-        No additional feedback is available for this attempt.
-      </p>
-    </div>
-
-    <div class="result-actions">
-      <button class="primary-button" type="button" (click)="continueToNext()">
-        Next Scenario
-      </button>
-    </div>
-  </div>
+  }
 </div>

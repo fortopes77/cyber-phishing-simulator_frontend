@@ -71,16 +71,15 @@
 
     <ng-template appListCell="weaknesses" let-row>
       <div class="weakness-list">
-        <app-status-badge
-          *ngFor="let weakness of visibleWeaknesses(row)"
-          [status]="weakness"
-          variant="neutral"
-        ></app-status-badge>
-        <app-status-badge
-          *ngIf="overflowWeaknessCount(row) > 0"
-          [status]="'+' + overflowWeaknessCount(row)"
-          variant="neutral"
-        ></app-status-badge>
+        @for (weakness of visibleWeaknesses(row); track weakness) {
+          <app-status-badge [status]="weakness" variant="neutral"></app-status-badge>
+        }
+        @if (overflowWeaknessCount(row) > 0) {
+          <app-status-badge
+            [status]="'+' + overflowWeaknessCount(row)"
+            variant="neutral"
+          ></app-status-badge>
+        }
       </div>
     </ng-template>
   </app-list>

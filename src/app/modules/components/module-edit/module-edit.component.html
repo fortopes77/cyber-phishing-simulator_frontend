@@ -56,19 +56,6 @@
               ></app-form-field-error>
             </label>
 
-            <label class="field">
-              <span>Version</span>
-              <input
-                type="text"
-                formControlName="version"
-                placeholder="e.g. 1.0.0"
-              />
-              <app-form-field-error
-                [control]="moduleForm.get('version')"
-                label="Version"
-              ></app-form-field-error>
-            </label>
-
             <label class="field field-full">
               <span>Description</span>
               <textarea
@@ -84,26 +71,24 @@
           </div>
         </div>
 
-        <div class="card scenario-assign-panel">
-          <div class="card-header-row">
-            <div>
-              <h2>Scenarios</h2>
-              <p class="card-subtitle">
-                Search the library and assign scenarios to this module
-              </p>
+        @if (!isCreateMode) {
+          <div class="card scenario-assign-panel">
+            <div class="card-header-row">
+              <div>
+                <h2>Scenarios</h2>
+                <p class="card-subtitle">
+                  Search the library and assign scenarios to this module
+                </p>
+              </div>
+              <button
+                type="button"
+                class="btn btn-secondary btn-small"
+                (click)="manageScenarios()"
+              >
+                Manage Library
+              </button>
             </div>
-            <button
-              type="button"
-              class="btn btn-secondary btn-small"
-              (click)="manageScenarios()"
-            >
-              Manage Library
-            </button>
-          </div>
 
-          @if (isCreateMode) {
-            <p class="empty-state">Save this module first to assign scenarios.</p>
-          } @else {
             @if (scenarioAssignError) {
               <p class="assign-panel-error">{{ scenarioAssignError }}</p>
             }
@@ -138,77 +123,80 @@
             } @else {
               <p class="empty-state">No scenarios match your search.</p>
             }
-          }
-        </div>
+          </div>
+        }
       </div>
 
       <div class="edit-column">
-        <div class="card learner-assign-panel">
-          <h2>Assign to Individual Learners</h2>
-          <p class="card-subtitle">Select which learners can access this module</p>
+        @if (!isCreateMode) {
+          <div class="card learner-assign-panel">
+            <h2>Assign to Individual Learners</h2>
+            <p class="card-subtitle">Select which learners can access this module</p>
 
-          @if (isCreateMode) {
-            <p class="empty-state">Save this module first to assign learners.</p>
-          } @else {
-            @if (learnerAssignError) {
-              <p class="assign-panel-error">{{ learnerAssignError }}</p>
-            }
-
-            <input
-              type="text"
-              class="search-input"
-              placeholder="Search learners by name or email"
-              [(ngModel)]="learnerSearch"
-              [ngModelOptions]="{ standalone: true }"
-            />
-
-            @if (filteredLearners.length) {
-              <ul class="assign-list">
-                @for (learner of filteredLearners; track learner.id) {
-                  <li class="assign-row">
-                    <span class="assign-row-label">
-                      {{ learner.fullName }}
-                      <span class="assign-row-sublabel">{{ learner.email }}</span>
-                    </span>
-                    <button
-                      type="button"
-                      class="toggle-switch"
-                      [class.on]="addedLearnerIds.has(learnerId(learner))"
-                      [disabled]="assigningLearnerIds.has(learnerId(learner))"
-                      [attr.aria-pressed]="addedLearnerIds.has(learnerId(learner))"
-                      attr.aria-label="Toggle module access for {{ learner.fullName }}"
-                      (click)="toggleLearner(learner)"
-                    >
-                      <span class="toggle-knob"></span>
-                    </button>
-                  </li>
-                }
-              </ul>
+            @if (!moduleScenarios.length) {
+              <p class="empty-state">
+                Add at least one scenario to this module before assigning learners.
+              </p>
             } @else {
-              <p class="empty-state">No learners match your search.</p>
-            }
-          }
-        </div>
+              @if (learnerAssignError) {
+                <p class="assign-panel-error">{{ learnerAssignError }}</p>
+              }
 
-        <div class="card danger-zone-card">
-          <h2>
-            <fa-icon [icon]="fontAwesomeIcons.warningIcon"></fa-icon>
-            Danger Zone
-          </h2>
-          <p class="card-subtitle">
-            Deleting this module removes it and unassigns it from every
-            learner - this can't be undone.
-          </p>
-          <button
-            type="button"
-            class="btn btn-danger"
-            [disabled]="isCreateMode"
-            (click)="handleDeleteModule()"
-          >
-            <fa-icon [icon]="fontAwesomeIcons.trashIcon"></fa-icon>
-            Delete Module
-          </button>
-        </div>
+              <input
+                type="text"
+                class="search-input"
+                placeholder="Search learners by name or email"
+                [(ngModel)]="learnerSearch"
+                [ngModelOptions]="{ standalone: true }"
+              />
+
+              @if (filteredLearners.length) {
+                <ul class="assign-list">
+                  @for (learner of filteredLearners; track learner.id) {
+                    <li class="assign-row">
+                      <span class="assign-row-label">
+                        {{ learner.fullName }}
+                        <span class="assign-row-sublabel">{{ learner.email }}</span>
+                      </span>
+                      <button
+                        type="button"
+                        class="toggle-switch"
+                        [class.on]="addedLearnerIds.has(learnerId(learner))"
+                        [disabled]="assigningLearnerIds.has(learnerId(learner))"
+                        [attr.aria-pressed]="addedLearnerIds.has(learnerId(learner))"
+                        attr.aria-label="Toggle module access for {{ learner.fullName }}"
+                        (click)="toggleLearner(learner)"
+                      >
+                        <span class="toggle-knob"></span>
+                      </button>
+                    </li>
+                  }
+                </ul>
+              } @else {
+                <p class="empty-state">No learners match your search.</p>
+              }
+            }
+          </div>
+
+          <div class="card danger-zone-card">
+            <h2>
+              <fa-icon [icon]="fontAwesomeIcons.warningIcon"></fa-icon>
+              Danger Zone
+            </h2>
+            <p class="card-subtitle">
+              Deleting this module removes it and unassigns it from every
+              learner - this can't be undone.
+            </p>
+            <button
+              type="button"
+              class="btn btn-danger"
+              (click)="handleDeleteModule()"
+            >
+              <fa-icon [icon]="fontAwesomeIcons.trashIcon"></fa-icon>
+              Delete Module
+            </button>
+          </div>
+        }
       </div>
     </div>
   </form>

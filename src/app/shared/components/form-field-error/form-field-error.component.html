@@ -1,3 +1,5 @@
-<div class="form-field-error" *ngIf="message" role="alert">
-  {{ message }}
-</div>
+@if (message) {
+  <div class="form-field-error" role="alert">
+    {{ message }}
+  </div>
+}

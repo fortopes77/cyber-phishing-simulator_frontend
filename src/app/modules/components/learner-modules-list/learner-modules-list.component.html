@@ -23,20 +23,22 @@
     >
       Filter
     </button>
-    <div *ngIf="showFilters" class="filter-panel">
-      <label>
-        Difficulty
-        <select [(ngModel)]="difficultyFilter" (change)="applyFilters()">
-          <option value="">All</option>
-          <option value="beginner">Beginner</option>
-          <option value="intermediate">Intermediate</option>
-          <option value="advanced">Advanced</option>
-        </select>
-      </label>
-      <button type="button" class="clear-btn" (click)="clearFilters()">
-        Clear
-      </button>
-    </div>
+    @if (showFilters) {
+      <div class="filter-panel">
+        <label>
+          Difficulty
+          <select [(ngModel)]="difficultyFilter" (change)="applyFilters()">
+            <option value="">All</option>
+            <option value="beginner">Beginner</option>
+            <option value="intermediate">Intermediate</option>
+            <option value="advanced">Advanced</option>
+          </select>
+        </label>
+        <button type="button" class="clear-btn" (click)="clearFilters()">
+          Clear
+        </button>
+      </div>
+    }
   </div>
 </div>
 

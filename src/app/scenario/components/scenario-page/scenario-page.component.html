@@ -19,161 +19,196 @@
   >
     <div class="scenario-card__top" (mouseup)="onContentMouseUp()">
       <span class="scenario-card__tag">{{ scenario.type }}</span>
-      <span
-        *ngIf="scenario.difficulty"
-        class="scenario-card__tag scenario-card__tag--difficulty"
-        >{{ scenario.difficulty | titlecase }}</span
-      >
-      <div *ngIf="scenario.from" class="scenario-card__from">
-        From: {{ scenario.from }}
-      </div>
-      <div *ngIf="scenario.recipient" class="scenario-card__recipient">
-        To: {{ scenario.recipient }}
-      </div>
+      @if (scenario.difficulty) {
+        <span class="scenario-card__tag scenario-card__tag--difficulty"
+          >{{ scenario.difficulty | titlecase }}</span
+        >
+      }
+      @if (scenario.from) {
+        <div class="scenario-card__from">
+          From: {{ scenario.from }}
+        </div>
+      }
+      @if (scenario.recipient) {
+        <div class="scenario-card__recipient">
+          To: {{ scenario.recipient }}
+        </div>
+      }
       <div class="scenario-card__subject">{{ scenario.subject }}</div>
     </div>
 
     <div
       class="scenario-card__body"
-      [ngSwitch]="getScenarioTypeKey()"
       (mouseup)="onContentMouseUp()"
     >
-      <div *ngSwitchCase="'email'" class="message-shell message-shell--email">
-        <div *ngIf="scenario.from" class="message-shell__meta">
-          <span class="message-shell__label">From</span>
-          <span>{{ scenario.from }}</span>
-        </div>
-        <div *ngIf="scenario.recipient" class="message-shell__meta">
-          <span class="message-shell__label">To</span>
-          <span>{{ scenario.recipient }}</span>
-        </div>
-        <div class="message-shell__meta">
-          <span class="message-shell__label">Subject</span>
-          <span>{{ scenario.subject }}</span>
-        </div>
-        <div class="message-shell__content">{{ scenario.body }}</div>
-      </div>
+      @switch (getScenarioTypeKey()) {
+        @case ('email') {
+          <div class="message-shell message-shell--email">
+            @if (scenario.from) {
+              <div class="message-shell__meta">
+                <span class="message-shell__label">From</span>
+                <span>{{ scenario.from }}</span>
+              </div>
+            }
+            @if (scenario.recipient) {
+              <div class="message-shell__meta">
+                <span class="message-shell__label">To</span>
+                <span>{{ scenario.recipient }}</span>
+              </div>
+            }
+            <div class="message-shell__meta">
+              <span class="message-shell__label">Subject</span>
+              <span>{{ scenario.subject }}</span>
+            </div>
+            <div class="message-shell__content">{{ scenario.body }}</div>
+          </div>
+        }
 
-      <div *ngSwitchCase="'phone'" class="message-shell message-shell--phone">
-        <div class="message-shell__header">
-          <div class="message-shell__pill">Phone Transcript</div>
-          <div *ngIf="scenario.from" class="message-shell__subtle">
-            {{ scenario.from }}
+        @case ('phone') {
+          <div class="message-shell message-shell--phone">
+            <div class="message-shell__header">
+              <div class="message-shell__pill">Phone Transcript</div>
+              @if (scenario.from) {
+                <div class="message-shell__subtle">
+                  {{ scenario.from }}
+                </div>
+              }
+            </div>
+            <div class="message-shell__transcript">
+              @for (entry of getTranscriptEntries(); track $index) {
+                <div
+                  class="transcript-line"
+                  [ngClass]="
+                    entry.speaker === 'You'
+                      ? 'transcript-line--user'
+                      : 'transcript-line--caller'
+                  "
+                >
+                  <div class="transcript-line__speaker">{{ entry.speaker }}</div>
+                  <div class="transcript-line__text">{{ entry.text }}</div>
+                </div>
+              }
+            </div>
           </div>
-        </div>
-        <div class="message-shell__transcript">
-          <div
-            *ngFor="let entry of getTranscriptEntries()"
-            class="transcript-line"
-            [ngClass]="
-              entry.speaker === 'You'
-                ? 'transcript-line--user'
-                : 'transcript-line--caller'
-            "
-          >
-            <div class="transcript-line__speaker">{{ entry.speaker }}</div>
-            <div class="transcript-line__text">{{ entry.text }}</div>
-          </div>
-        </div>
-      </div>
+        }
 
-      <div *ngSwitchCase="'text'" class="message-shell message-shell--text">
-        <div class="message-shell__header">
-          <div class="message-shell__pill">Text Thread</div>
-          <div *ngIf="scenario.from" class="message-shell__subtle">
-            {{ scenario.from }}
+        @case ('text') {
+          <div class="message-shell message-shell--text">
+            <div class="message-shell__header">
+              <div class="message-shell__pill">Text Thread</div>
+              @if (scenario.from) {
+                <div class="message-shell__subtle">
+                  {{ scenario.from }}
+                </div>
+              }
+            </div>
+            <div class="message-shell__chat">
+              @for (message of getTextMessages(); track $index) {
+                <div
+                  class="chat-bubble"
+                  [ngClass]="
+                    message.speaker === 'You'
+                      ? 'chat-bubble--user'
+                      : 'chat-bubble--caller'
+                  "
+                >
+                  <div class="chat-bubble__sender">{{ message.speaker }}</div>
+                  <div class="chat-bubble__text">{{ message.text }}</div>
+                </div>
+              }
+            </div>
           </div>
-        </div>
-        <div class="message-shell__chat">
-          <div
-            *ngFor="let message of getTextMessages()"
-            class="chat-bubble"
-            [ngClass]="
-              message.speaker === 'You'
-                ? 'chat-bubble--user'
-                : 'chat-bubble--caller'
-            "
-          >
-            <div class="chat-bubble__sender">{{ message.speaker }}</div>
-            <div class="chat-bubble__text">{{ message.text }}</div>
-          </div>
-        </div>
-      </div>
+        }
 
-      <div *ngSwitchCase="'social'" class="message-shell message-shell--social">
-        <div class="message-shell__header">
-          <div class="message-shell__pill message-shell__pill--social">
-            Social Media DM
+        @case ('social') {
+          <div class="message-shell message-shell--social">
+            <div class="message-shell__header">
+              <div class="message-shell__pill message-shell__pill--social">
+                Social Media DM
+              </div>
+              @if (scenario.from) {
+                <div class="message-shell__subtle">
+                  {{ scenario.from }}
+                </div>
+              }
+            </div>
+            <div class="message-shell__chat">
+              @for (message of getSocialMessages(); track $index) {
+                <div
+                  class="social-bubble"
+                  [ngClass]="
+                    message.speaker === 'You'
+                      ? 'social-bubble--user'
+                      : 'social-bubble--caller'
+                  "
+                >
+                  <div class="social-bubble__sender">{{ message.speaker }}</div>
+                  <div class="social-bubble__text">{{ message.text }}</div>
+                </div>
+              }
+            </div>
           </div>
-          <div *ngIf="scenario.from" class="message-shell__subtle">
-            {{ scenario.from }}
-          </div>
-        </div>
-        <div class="message-shell__chat">
-          <div
-            *ngFor="let message of getSocialMessages()"
-            class="social-bubble"
-            [ngClass]="
-              message.speaker === 'You'
-                ? 'social-bubble--user'
-                : 'social-bubble--caller'
-            "
-          >
-            <div class="social-bubble__sender">{{ message.speaker }}</div>
-            <div class="social-bubble__text">{{ message.text }}</div>
-          </div>
-        </div>
-      </div>
+        }
 
-      <div
-        *ngSwitchCase="'invoice'"
-        class="message-shell message-shell--invoice"
-      >
-        <div class="invoice__header">
-          <div>
-            <div class="message-shell__pill">Invoice</div>
-            <div class="message-shell__subtle">{{ scenario.subject }}</div>
+        @case ('invoice') {
+          <div class="message-shell message-shell--invoice">
+            <div class="invoice__header">
+              <div>
+                <div class="message-shell__pill">Invoice</div>
+                <div class="message-shell__subtle">{{ scenario.subject }}</div>
+              </div>
+              <div class="invoice__amount">{{ getInvoiceAmount() }}</div>
+            </div>
+            <div class="invoice__grid">
+              @for (field of getInvoiceFields(); track $index) {
+                <div class="invoice__field">
+                  <span class="invoice__label">{{ field.label }}</span>
+                  <span class="invoice__value">{{ field.value }}</span>
+                </div>
+              }
+            </div>
           </div>
-          <div class="invoice__amount">{{ getInvoiceAmount() }}</div>
-        </div>
-        <div class="invoice__grid">
-          <div *ngFor="let field of getInvoiceFields()" class="invoice__field">
-            <span class="invoice__label">{{ field.label }}</span>
-            <span class="invoice__value">{{ field.value }}</span>
-          </div>
-        </div>
-      </div>
+        }
 
-      <div *ngSwitchDefault class="message-shell">
-        <div class="message-shell__content">{{ scenario.body }}</div>
-      </div>
+        @default {
+          <div class="message-shell">
+            <div class="message-shell__content">{{ scenario.body }}</div>
+          </div>
+        }
+      }
     </div>
 
-    <div class="cue-selector" *ngIf="isDetailed">
-      <div class="cue-selector__title">Your selected cues</div>
-      <div class="cue-selector__hint">
-        Highlight any suspicious text in the message above to add it here.
+    @if (isDetailed) {
+      <div class="cue-selector">
+        <div class="cue-selector__title">Your selected cues</div>
+        <div class="cue-selector__hint">
+          Highlight any suspicious text in the message above to add it here.
+        </div>
+        @if (selectedCues.length) {
+          <div class="cue-selector__list">
+            @for (cue of selectedCues; track cue) {
+              <button
+                type="button"
+                class="cue-chip cue-chip--selected"
+                (click)="removeSelectedCue(cue)"
+                [attr.aria-label]="'Remove selected cue: ' + cue"
+              >
+                {{ cue }} ✕
+              </button>
+            }
+          </div>
+        } @else {
+          <p class="cue-selector__empty">No cues selected yet.</p>
+        }
       </div>
-      <div class="cue-selector__list" *ngIf="selectedCues.length; else noCues">
-        <button
-          type="button"
-          *ngFor="let cue of selectedCues"
-          class="cue-chip cue-chip--selected"
-          (click)="removeSelectedCue(cue)"
-          [attr.aria-label]="'Remove selected cue: ' + cue"
-        >
-          {{ cue }} ✕
-        </button>
-      </div>
-      <ng-template #noCues>
-        <p class="cue-selector__empty">No cues selected yet.</p>
-      </ng-template>
-    </div>
+    }
   </div>
 
-  <div class="scenario-page__actions" *ngIf="!previewMode">
-    <button class="primary-button" (click)="makeDecision()">
-      {{ isDetailed ? "Submit Answer" : "Make Your Decision" }}
-    </button>
-  </div>
+  @if (!previewMode) {
+    <div class="scenario-page__actions">
+      <button class="primary-button" (click)="makeDecision()">
+        {{ isDetailed ? "Submit Answer" : "Make Your Decision" }}
+      </button>
+    </div>
+  }
 </div>

@@ -34,7 +34,6 @@ import { selectScenarioList } from 'src/app/scenario/+state/scenario.selectors';
 export class TrainerModulesListComponent implements OnInit {
   columns: ListColumn[] = [
     { key: 'moduleName', label: 'Module Name' },
-    { key: 'version', label: 'Version' },
     { key: 'description', label: 'Description' },
     { key: 'scenarioCount', label: 'Scenarios' },
   ];
@@ -109,7 +108,6 @@ export class TrainerModulesListComponent implements OnInit {
         return {
           moduleId: module.moduleId,
           moduleName: module.moduleName,
-          version: module.version ?? '—',
           description: module.description,
           scenarioCount,
         };

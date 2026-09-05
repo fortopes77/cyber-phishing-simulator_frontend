@@ -27,7 +27,6 @@ import { UserAccount } from 'src/app/users/+state/user-account.model';
 
 const NAME_MAX_LENGTH = 150;
 const DESCRIPTION_MAX_LENGTH = 1000;
-const VERSION_MAX_LENGTH = 20;
 
 @Component({
   selector: 'app-module-edit',
@@ -69,7 +68,6 @@ export class ModuleEditComponent implements OnInit {
         textValidator(),
       ],
     ],
-    version: ['', [Validators.maxLength(VERSION_MAX_LENGTH), textValidator()]],
   });
 
   moduleId: number | null = null;
@@ -183,6 +181,7 @@ export class ModuleEditComponent implements OnInit {
         );
         if (existing) {
           this.patchForm(existing);
+          this.hydrateAssignedLearners(existing);
         }
       });
       this.fetchLearners();
@@ -214,6 +213,7 @@ export class ModuleEditComponent implements OnInit {
       }
 
       this.patchForm(module);
+      this.hydrateAssignedLearners(module);
     });
   }
 
@@ -221,8 +221,22 @@ export class ModuleEditComponent implements OnInit {
     this.moduleForm.patchValue({
       moduleName: module.moduleName ?? '',
       description: module.description ?? '',
-      version: module.version ?? '',
     });
+  }
+
+  // Pre-populates the learner toggle state from the module's own
+  // assignedUserIds instead of always starting every toggle off - the
+  // backend now returns this on GET /training-modules(/:id) (see
+  // normalizeAssignedUserIds in module.model.ts). A module payload that
+  // doesn't include the field at all (assignedUserIds undefined) leaves
+  // whatever's already tracked this session alone, rather than resetting it
+  // to "nothing assigned".
+  private hydrateAssignedLearners(module: LearnerModule): void {
+    if (!module.assignedUserIds) {
+      return;
+    }
+
+    this.addedLearnerIds = new Set(module.assignedUserIds);
   }
 
   subscribeToLoadingAndError(): void {
@@ -237,8 +251,14 @@ export class ModuleEditComponent implements OnInit {
   subscribeToCreateSuccess(): void {
     this.actions$
       .pipe(ofType(ModulesActions.createModuleSuccess))
-      .subscribe(() => {
-        this.router.navigate(['/trainer/modules']);
+      .subscribe(({ module }) => {
+        // Route into this same module's edit page instead of back to the
+        // list, so the trainer can immediately assign scenarios/learners to
+        // the module they just created - replaceUrl so "back" from there
+        // doesn't return to the now-stale create form.
+        this.router.navigate(['/trainer/modules', module.moduleId, 'edit'], {
+          replaceUrl: true,
+        });
       });
   }
 
@@ -351,7 +371,11 @@ export class ModuleEditComponent implements OnInit {
   }
 
   assignLearner(learner: UserAccount): void {
-    if (!this.moduleId) {
+    // A module with no scenarios has nothing for a learner to actually do,
+    // so it shouldn't be assignable yet - the template hides the toggle in
+    // this state too, but guard here as well in case this is ever called
+    // some other way.
+    if (!this.moduleId || !this.moduleScenarios.length) {
       return;
     }
 
@@ -376,11 +400,10 @@ export class ModuleEditComponent implements OnInit {
     );
   }
 
-  // Drives the toggle switch in the template - there's no GET endpoint to
-  // list who's already assigned (see the ASSUMPTION note on
-  // ModulesService.assignLearner), so every toggle starts off/unassigned on
-  // page load regardless of the learner's real assignment state, and only
-  // reflects changes made in this session.
+  // Drives the toggle switch in the template - addedLearnerIds is hydrated
+  // from the module's real assignedUserIds on load (see
+  // hydrateAssignedLearners) and then kept in sync with whatever changes are
+  // made this session via subscribeToLearnerAssignResult.
   toggleLearner(learner: UserAccount): void {
     if (this.addedLearnerIds.has(Number(learner.id))) {
       this.unassignLearner(learner);

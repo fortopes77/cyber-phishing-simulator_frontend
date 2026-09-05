@@ -31,17 +31,19 @@
       </app-data-card>
     </div>
 
-    <div *ngIf="continueLearning">
-      <app-dashboard-card
-        title="Continue Learning"
-        description="Pick up where you left off"
-        actionText="View All"
-        (actionClick)="viewAllModules()"
-      >
-        <app-learning-progress-card [item]="continueLearning">
-        </app-learning-progress-card>
-      </app-dashboard-card>
-    </div>
+    @if (continueLearning) {
+      <div>
+        <app-dashboard-card
+          title="Continue Learning"
+          description="Pick up where you left off"
+          actionText="View All"
+          (actionClick)="viewAllModules()"
+        >
+          <app-learning-progress-card [item]="continueLearning">
+          </app-learning-progress-card>
+        </app-dashboard-card>
+      </div>
+    }
 
     <div>
       <app-dashboard-card>
@@ -50,18 +52,20 @@
           subtitle="Your training curriculum"
         ></app-header>
 
-        <div class="assigned-modules-grid" *ngIf="assignedModules.length; else noModules">
-          <app-assigned-module-card
-            *ngFor="let module of assignedModules"
-            [module]="module"
-            (selected)="onAssignedModuleSelected($event)"
-          ></app-assigned-module-card>
-        </div>
-        <ng-template #noModules>
+        @if (assignedModules.length) {
+          <div class="assigned-modules-grid">
+            @for (module of assignedModules; track module.id) {
+              <app-assigned-module-card
+                [module]="module"
+                (selected)="onAssignedModuleSelected($event)"
+              ></app-assigned-module-card>
+            }
+          </div>
+        } @else {
           <p class="empty-state">
             No modules assigned, please contact your trainer.
           </p>
-        </ng-template>
+        }
       </app-dashboard-card>
     </div>
   </div>

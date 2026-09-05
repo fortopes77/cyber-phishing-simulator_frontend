@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { environment } from 'src/environments/environment.development';
-import { LearnerModule } from './module.model';
+import { LearnerModule, toModulePayload } from './module.model';
 
 @Injectable({
   providedIn: 'root',
@@ -25,27 +25,31 @@ export class ModulesService {
     );
   }
 
-  // ASSUMPTION: mirrors the scenarios resource's Create/Read/Update/Delete
-  // shape (see scenario.service.ts) since no dedicated module management
-  // ticket/endpoint spec was included in this upload - update the path or
-  // payload shape once a real "Module Management" contract lands.
+  // Confirmed live via GET /api-json: GET /training-modules/{id} - "Get a
+  // single module, including its scenarios".
   getModuleDetails(moduleId: number) {
     return this.http.get<LearnerModule>(
       `${this.apiEndpoint}training-modules/${moduleId}`,
     );
   }
 
+  // Confirmed live via GET /api-json: POST /training-modules
+  // (CreateTrainingModuleDto: title + description, no moduleName/version) -
+  // "Create a new training module (trainer & admin only)".
   createModule(module: Partial<LearnerModule>) {
     return this.http.post<LearnerModule>(
       `${this.apiEndpoint}training-modules`,
-      module,
+      toModulePayload(module),
     );
   }
 
+  // Confirmed live via GET /api-json: PATCH /training-modules/{id}
+  // (UpdateTrainingModuleDto - same shape as create) - "Update a training
+  // module (admin & trainer only)".
   updateModule(moduleId: number, updatedModule: Partial<LearnerModule>) {
     return this.http.patch<LearnerModule>(
       `${this.apiEndpoint}training-modules/${moduleId}`,
-      updatedModule,
+      toModulePayload(updatedModule),
     );
   }
 
@@ -55,8 +59,9 @@ export class ModulesService {
 
   // Confirmed via GET /api-json: POST /training-modules/{moduleId}/assignments
   // with { userId } (AssignUserDto), "Assign a learner to a module (trainer
-  // only)". There's no matching GET to list who's already assigned, so the
-  // module-edit screen can't show existing assignments - only add new ones.
+  // only)". Still no dedicated GET for this - who's already assigned comes
+  // from getModuleDetails's assignedUserIds instead (see
+  // normalizeAssignedUserIds in module.model.ts).
   assignLearner(moduleId: number, userId: number) {
     return this.http.post(
       `${this.apiEndpoint}training-modules/${moduleId}/assignments`,

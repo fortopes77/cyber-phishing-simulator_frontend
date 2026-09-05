@@ -20,7 +20,6 @@ describe('TrainerModulesListComponent', () => {
     {
       moduleId: 1,
       moduleName: 'Phishing Awareness',
-      version: '1.2.0',
       description: 'Learn how to recognize and avoid phishing attacks',
     },
   ];

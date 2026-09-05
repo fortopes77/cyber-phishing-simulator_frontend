@@ -63,7 +63,7 @@ describe('ModulesService', () => {
     req.flush(modules[0]);
   });
 
-  it('should POST a new module', () => {
+  it('should POST a new module, translated to the { title, description } shape the backend accepts', () => {
     const newModule = { moduleName: 'New Module', description: 'desc' };
     service.createModule(newModule).subscribe();
 
@@ -71,20 +71,26 @@ describe('ModulesService', () => {
       `${environment.apiUrl}training-modules`,
     );
     expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual(newModule);
-    req.flush({ moduleId: 2, ...newModule });
+    // Confirmed live via GET /api-json: CreateTrainingModuleDto only accepts
+    // title/description - sending moduleName (or a version field) 400s with
+    // "property moduleName should not exist".
+    expect(req.request.body).toEqual({ title: 'New Module', description: 'desc' });
+    req.flush({ moduleId: 2, title: newModule.moduleName, description: newModule.description });
   });
 
-  it('should PATCH an existing module', () => {
-    const updatedModule = { moduleName: 'Updated Module' };
+  it('should PATCH an existing module, translated to the { title, description } shape the backend accepts', () => {
+    const updatedModule = { moduleName: 'Updated Module', description: 'Updated description' };
     service.updateModule(1, updatedModule).subscribe();
 
     const req = httpMock.expectOne(
       `${environment.apiUrl}training-modules/1`,
     );
     expect(req.request.method).toBe('PATCH');
-    expect(req.request.body).toEqual(updatedModule);
-    req.flush({ ...modules[0], ...updatedModule });
+    expect(req.request.body).toEqual({
+      title: 'Updated Module',
+      description: 'Updated description',
+    });
+    req.flush({ ...modules[0], title: updatedModule.moduleName, description: updatedModule.description });
   });
 
   it('should DELETE a module', () => {
