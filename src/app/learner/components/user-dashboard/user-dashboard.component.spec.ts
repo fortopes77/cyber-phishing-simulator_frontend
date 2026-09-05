@@ -97,6 +97,130 @@ describe('UserDashboardComponent', () => {
     expect(component.assignedModules[0].status).toBe('In progress');
   });
 
+  it('should label a fully-completed module Passed or Not Passed based on its moduleResult', () => {
+    store.overrideSelector(selectModuleList, [
+      { moduleId: 1, moduleName: 'Passed Module', description: '' },
+      { moduleId: 2, moduleName: 'Failed Module', description: '' },
+    ]);
+    store.overrideSelector(selectScenarioList, [
+      { id: 1, moduleId: 1, difficulty: 'easy' },
+      { id: 2, moduleId: 2, difficulty: 'easy' },
+    ]);
+    store.overrideSelector(selectMyResults, {
+      moduleResults: [
+        {
+          id: 1,
+          moduleId: 1,
+          moduleName: 'Passed Module',
+          status: 'COMPLETED',
+          totalScore: 1,
+          maxScore: 1,
+          percentageScore: 100,
+          passed: true,
+          completedAt: '2026-09-01T00:00:00.000Z',
+        },
+        {
+          id: 2,
+          moduleId: 2,
+          moduleName: 'Failed Module',
+          status: 'COMPLETED',
+          totalScore: 0,
+          maxScore: 1,
+          percentageScore: 0,
+          passed: false,
+          completedAt: '2026-09-01T00:00:00.000Z',
+        },
+      ],
+      scenarioResults: [
+        { scenarioId: '1', moduleId: 1, correct: true },
+        { scenarioId: '2', moduleId: 2, correct: false },
+      ],
+      averageScore: null,
+    });
+    store.refreshState();
+
+    const passedModule = component.assignedModules.find((m) => m.id === 1);
+    const failedModule = component.assignedModules.find((m) => m.id === 2);
+    expect(passedModule?.status).toBe('Passed');
+    expect(failedModule?.status).toBe('Not Passed');
+  });
+
+  it('should default a completed module to Not Passed when there is no moduleResult yet', () => {
+    store.overrideSelector(selectModuleList, [
+      { moduleId: 1, moduleName: 'Completed Module', description: '' },
+    ]);
+    store.overrideSelector(selectScenarioList, [
+      { id: 1, moduleId: 1, difficulty: 'easy' },
+    ]);
+    store.overrideSelector(selectMyResults, {
+      moduleResults: [],
+      scenarioResults: [{ scenarioId: '1', moduleId: 1, correct: true }],
+      averageScore: null,
+    });
+    store.refreshState();
+
+    expect(component.assignedModules[0].status).toBe('Not Passed');
+  });
+
+  it('should sort assigned modules: in progress, then not-started, then completed but failed, then completed and passed', () => {
+    store.overrideSelector(selectModuleList, [
+      { moduleId: 1, moduleName: 'Passed Module', description: '' },
+      { moduleId: 2, moduleName: 'Not Started Module', description: '' },
+      { moduleId: 3, moduleName: 'In Progress Module', description: '' },
+      { moduleId: 4, moduleName: 'Failed Module', description: '' },
+    ]);
+    store.overrideSelector(selectScenarioList, [
+      { id: 1, moduleId: 1, difficulty: 'easy' },
+      { id: 2, moduleId: 2, difficulty: 'easy' },
+      { id: 3, moduleId: 3, difficulty: 'easy' },
+      { id: 4, moduleId: 3, difficulty: 'easy' },
+      { id: 5, moduleId: 4, difficulty: 'easy' },
+    ]);
+    store.overrideSelector(selectMyResults, {
+      moduleResults: [
+        {
+          id: 1,
+          moduleId: 1,
+          moduleName: 'Passed Module',
+          status: 'COMPLETED',
+          totalScore: 1,
+          maxScore: 1,
+          percentageScore: 100,
+          passed: true,
+          completedAt: '2026-09-01T00:00:00.000Z',
+        },
+        {
+          id: 2,
+          moduleId: 4,
+          moduleName: 'Failed Module',
+          status: 'COMPLETED',
+          totalScore: 0,
+          maxScore: 1,
+          percentageScore: 0,
+          passed: false,
+          completedAt: '2026-09-01T00:00:00.000Z',
+        },
+      ],
+      // Module 1: fully completed and passed. Module 2: nothing done (not
+      // started). Module 3: one of two scenarios done (in progress).
+      // Module 4: fully completed but failed.
+      scenarioResults: [
+        { scenarioId: '1', moduleId: 1, correct: true },
+        { scenarioId: '3', moduleId: 3, correct: true },
+        { scenarioId: '5', moduleId: 4, correct: false },
+      ],
+      averageScore: null,
+    });
+    store.refreshState();
+
+    expect(component.assignedModules.map((m) => m.title)).toEqual([
+      'In Progress Module',
+      'Not Started Module',
+      'Failed Module',
+      'Passed Module',
+    ]);
+  });
+
   it('should surface the in-progress module as continueLearning', () => {
     expect(component.continueLearning?.id).toBe(1);
     expect(component.continueLearning?.progressPercentage).toBe(50);

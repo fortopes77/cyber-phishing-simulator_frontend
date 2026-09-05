@@ -3,7 +3,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { Actions, ofType } from '@ngrx/effects';
-import { Subject, combineLatest, takeUntil } from 'rxjs';
+import { Subject, combineLatest, take, takeUntil } from 'rxjs';
 import { IconDefinition } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ScenarioActions } from '../../+state/scenario.actions';
@@ -12,6 +12,7 @@ import {
   selectScenarioList,
 } from '../../+state/scenario.selectors';
 import { AttemptsActions } from 'src/app/attempts/+state/attempts.actions';
+import { selectCurrentAttempt } from 'src/app/attempts/+state/attempts.selectors';
 import { ScenarioAttemptResult } from 'src/app/attempts/+state/attempt.model';
 import { FeedbackActions } from 'src/app/feedback/+state/feedback.actions';
 import {
@@ -19,13 +20,18 @@ import {
   selectFeedbackLoading,
 } from 'src/app/feedback/+state/feedback.selectors';
 import { iconLibrary } from 'src/app/shared/constants/font-awesome-icons.const';
-import { SIMPLE_ANSWER_OPTIONS } from '../../models/scenario.model';
+import {
+  normalizeAnswerMode,
+  ScenarioAnswerMode,
+  SIMPLE_ANSWER_OPTIONS,
+} from '../../models/scenario.model';
 
 interface Scenario {
   id: number | string;
   moduleId?: number;
   title: string;
   content: string;
+  answerMode: ScenarioAnswerMode;
   // Not part of the scenarios API response (see scenario.model.ts) - kept
   // optional so the UI degrades gracefully rather than showing "From: "
   // with nothing after it.
@@ -64,6 +70,7 @@ export class ScenarioChoiceComponent implements OnInit, OnDestroy {
     id: '',
     title: '',
     content: '',
+    answerMode: 'simple',
   };
   readonly decisionOptions = DECISION_OPTIONS;
   readonly fontAwesomeIcons = iconLibrary;
@@ -84,6 +91,14 @@ export class ScenarioChoiceComponent implements OnInit, OnDestroy {
   // The module attempt session backing this walkthrough - started on the
   // first decision in a module and reused for every scenario after that
   // (see selectDecision), finalized once the learner finishes or leaves.
+  // Mirrored from the attempts store's currentAttempt (see the
+  // selectCurrentAttempt subscription in ngOnInit) rather than only ever set
+  // locally: continuing to the next scenario navigates through
+  // ScenarioPageComponent in between (scenarios/:id -> scenarios/:id/feedback
+  // is a different route each time), which destroys and recreates this
+  // component - a purely local field would forget the in-progress attempt
+  // after scenario 1, causing every scenario after the first to silently
+  // start its own separate (single-scenario) attempt instead of extending it.
   private currentAttemptId: number | null = null;
   private currentAttemptModuleId: number | null = null;
   private pendingDecision: string | null = null;
@@ -91,6 +106,13 @@ export class ScenarioChoiceComponent implements OnInit, OnDestroy {
 
   private destroy$ = new Subject<void>();
   private orderedScenarioIds: Array<number | string> = [];
+  // Guards fetchScenariosByModule so it's only dispatched when the module
+  // actually changes, not on every combineLatest emission below - without
+  // this, dispatching it unconditionally on every emission of
+  // [selectScenario, selectScenarioList] causes an infinite loop: the
+  // dispatch's own success response updates scenarioList, which re-fires the
+  // combineLatest, which dispatches again, forever.
+  private lastFetchedModuleId: number | null = null;
 
   constructor(
     private route: ActivatedRoute,
@@ -134,7 +156,11 @@ export class ScenarioChoiceComponent implements OnInit, OnDestroy {
         if (scenario) {
           this.scenario = this.mapScenario(scenario);
 
-          if (this.scenario.moduleId != null) {
+          if (
+            this.scenario.moduleId != null &&
+            this.scenario.moduleId !== this.lastFetchedModuleId
+          ) {
+            this.lastFetchedModuleId = this.scenario.moduleId;
             this.store.dispatch(
               ScenarioActions.fetchScenariosByModule({
                 moduleId: this.scenario.moduleId,
@@ -143,13 +169,47 @@ export class ScenarioChoiceComponent implements OnInit, OnDestroy {
           }
         }
 
-        if (scenarioList?.length) {
-          this.totalScenarios = scenarioList.length;
-          this.orderedScenarioIds = scenarioList.map((item: any) => item.id);
+        // scenarioList is meant to be scoped to this module via
+        // fetchScenariosByModule, but it's a single store slice also written
+        // by unrelated screens (the dashboard/module-page's own fetches for
+        // a different module, an org-wide fetchList) - guard against briefly
+        // reading someone else's list by filtering to this scenario's module
+        // (mirrors the same guard in ModulePageComponent). Without this, a
+        // stale/foreign list can leave orderedScenarioIds too short, making
+        // hasNext resolve false after just the first scenario and finalizing
+        // the attempt early.
+        const moduleScenarios = (scenarioList ?? []).filter(
+          (item: any) =>
+            item.moduleId == null || item.moduleId === this.scenario.moduleId,
+        );
+
+        if (moduleScenarios.length) {
+          this.totalScenarios = moduleScenarios.length;
+          this.orderedScenarioIds = moduleScenarios.map((item: any) => item.id);
           const index = this.orderedScenarioIds.findIndex(
             (id) => id === this.scenarioId,
           );
           this.scenarioNumber = index >= 0 ? index + 1 : 1;
+        }
+      });
+
+    // Keeps currentAttemptId/currentAttemptModuleId in sync with the
+    // attempts store rather than only setting them from startAttemptSuccess
+    // below - a fresh instance of this component (see the field comment
+    // above) picks up an already-in-progress attempt immediately on
+    // subscribe instead of losing track of it. Only IN_PROGRESS counts as
+    // "reusable": once an attempt is finalized (e.g. the learner retries the
+    // same module), its old id must not be extended further.
+    this.store
+      .select(selectCurrentAttempt)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((attempt) => {
+        if (attempt?.status === 'IN_PROGRESS') {
+          this.currentAttemptId = attempt.id;
+          this.currentAttemptModuleId = attempt.moduleId;
+        } else {
+          this.currentAttemptId = null;
+          this.currentAttemptModuleId = null;
         }
       });
 
@@ -159,10 +219,7 @@ export class ScenarioChoiceComponent implements OnInit, OnDestroy {
     this.actions$
       .pipe(ofType(AttemptsActions.startAttemptSuccess), takeUntil(this.destroy$))
       .subscribe(({ attempt }) => {
-        this.currentAttemptId = attempt.id;
-        this.currentAttemptModuleId = attempt.moduleId;
-
-        if (this.pendingDecision) {
+        if (this.pendingDecision !== null) {
           const decision = this.pendingDecision;
           this.pendingDecision = null;
           this.dispatchScenarioAttempt(attempt.id, decision);
@@ -227,7 +284,14 @@ export class ScenarioChoiceComponent implements OnInit, OnDestroy {
       title: raw.title ?? '',
       from: raw.sender ?? raw.from ?? undefined,
       content: raw.content ?? raw.body ?? '',
+      answerMode: normalizeAnswerMode(raw),
     };
+  }
+
+  // Detailed scenarios are answered by flagging cues rather than picking
+  // Safe/Suspicious - see the answerMode field note on ScenarioAnswerMode.
+  get isDetailed(): boolean {
+    return this.scenario.answerMode === 'detailed';
   }
 
   selectDecision(decision: string): void {
@@ -241,6 +305,33 @@ export class ScenarioChoiceComponent implements OnInit, OnDestroy {
     // Reuse the in-progress attempt if we're still in the same module;
     // otherwise (first decision, or the module changed) start a new one and
     // submit this decision once it resolves.
+    if (
+      this.currentAttemptId != null &&
+      this.currentAttemptModuleId === this.scenario.moduleId
+    ) {
+      this.dispatchScenarioAttempt(this.currentAttemptId, decision);
+    } else {
+      this.pendingDecision = decision;
+      this.store.dispatch(
+        AttemptsActions.startAttempt({ moduleId: this.scenario.moduleId }),
+      );
+    }
+  }
+
+  // The 'detailed' counterpart to selectDecision() - there's no explicit
+  // Safe/Suspicious pick, so the decision is derived from whatever cues were
+  // flagged on the scenario page: flagging nothing means the learner judged
+  // the message safe, flagging anything means they judged it suspicious
+  // (confirmed with the backend team alongside the answerMode field).
+  submitCues(): void {
+    if (this.submitting || this.scenario.moduleId == null) {
+      return;
+    }
+
+    this.submitting = true;
+    const decision = this.selectedCues.length ? 'Suspicious' : 'Safe';
+    this.selectedDecision = decision;
+
     if (
       this.currentAttemptId != null &&
       this.currentAttemptModuleId === this.scenario.moduleId
@@ -355,9 +446,9 @@ export class ScenarioChoiceComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.finalizeCurrentAttempt();
-    this.router.navigate(['/learner/results'], {
-      queryParams: { moduleId: this.scenario.moduleId },
+    const moduleId = this.scenario.moduleId;
+    this.finalizeCurrentAttempt(() => {
+      this.router.navigate(['/learner/modules', moduleId, 'results']);
     });
   }
 
@@ -366,23 +457,40 @@ export class ScenarioChoiceComponent implements OnInit, OnDestroy {
   }
 
   closeSession(): void {
-    this.finalizeCurrentAttempt();
+    const moduleId = this.scenario.moduleId;
+    this.finalizeCurrentAttempt(() => {
+      if (moduleId != null) {
+        this.router.navigate(['/learner/modules', moduleId]);
+        return;
+      }
 
-    if (this.scenario.moduleId != null) {
-      this.router.navigate(['/learner/modules', this.scenario.moduleId]);
-      return;
-    }
-
-    this.router.navigate(['/learner/dashboard']);
+      this.router.navigate(['/learner/dashboard']);
+    });
   }
 
   // Locks in whatever scenarios were actually submitted this session,
-  // whether the learner finished the module or left partway through.
-  private finalizeCurrentAttempt(): void {
-    if (this.currentAttemptId != null) {
-      this.store.dispatch(
-        AttemptsActions.finalizeAttempt({ attemptId: this.currentAttemptId }),
-      );
+  // whether the learner finished the module or left partway through - then
+  // runs onDone only once finalize has actually landed (success or failure).
+  // Navigating (and re-fetching results) immediately after just dispatching
+  // finalizeAttempt races GET /results/me against the finalize POST: if the
+  // fetch wins, this attempt still reads as IN_PROGRESS, and
+  // buildModuleResult's isMoreComplete picks an older, already-COMPLETED
+  // attempt over the one the learner just finished.
+  private finalizeCurrentAttempt(onDone: () => void = () => {}): void {
+    if (this.currentAttemptId == null) {
+      onDone();
+      return;
     }
+
+    this.actions$
+      .pipe(
+        ofType(AttemptsActions.finalizeAttemptSuccess, AttemptsActions.finalizeAttemptFailure),
+        take(1),
+      )
+      .subscribe(() => onDone());
+
+    this.store.dispatch(
+      AttemptsActions.finalizeAttempt({ attemptId: this.currentAttemptId }),
+    );
   }
 }

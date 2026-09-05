@@ -13,6 +13,7 @@ import { selectScenarioList } from 'src/app/scenario/+state/scenario.selectors';
 import { ResultsActions } from 'src/app/results/+state/results.actions';
 import { selectMyResults } from 'src/app/results/+state/results.selectors';
 import { LearnerResults } from 'src/app/results/+state/results.model';
+import { buildModuleResultsOverview } from 'src/app/module-results/+state/module-result.model';
 
 interface AssignedModule {
   id: number;
@@ -24,6 +25,17 @@ interface AssignedModule {
   progressPercentage: number;
   route?: string;
 }
+
+// Surfaces what the learner still needs to act on first: a module they're
+// partway through, then one they haven't started, then ones they finished
+// but need to retry, with modules they've actually passed pushed to the
+// very bottom.
+const STATUS_SORT_ORDER: Record<string, number> = {
+  'In progress': 0,
+  Assigned: 1,
+  'Not Passed': 2,
+  Passed: 3,
+};
 
 interface DashboardStats {
   modulesCompleted: number;
@@ -81,33 +93,54 @@ export class UserDashboardComponent implements OnInit {
         (results?.scenarioResults ?? []).map((result) => result.scenarioId),
       );
 
-      this.assignedModules = (moduleList ?? []).map((module: any) => {
-        const moduleScenarios = (scenarioList ?? []).filter(
-          (scenario: any) => scenario.moduleId === module.moduleId,
-        );
-        const completedCount = moduleScenarios.filter((scenario: any) =>
-          completedScenarioIds.has(String(scenario.id)),
-        ).length;
-        const progress = moduleScenarios.length
-          ? completedCount / moduleScenarios.length
-          : 0;
+      // Per-module pass/fail, keyed by moduleId - buildModuleResultsOverview
+      // already collapses a module's retries down to its most recent
+      // COMPLETED attempt (see the module-results page), so it's reused here
+      // instead of duplicating that dedup logic.
+      const moduleResultByModuleId = new Map(
+        buildModuleResultsOverview(results).map((row) => [row.moduleId, row]),
+      );
 
-        return {
-          id: module.moduleId,
-          title: module.moduleName,
-          description: module.description,
-          level: this.deriveLevel(moduleScenarios),
-          scenarios: moduleScenarios.length,
-          status:
-            progress >= 1
-              ? 'Completed'
-              : progress > 0
-                ? 'In progress'
-                : 'Assigned',
-          progressPercentage: Math.round(progress * 100),
-          route: `/learner/modules/${module.moduleId}`,
-        };
-      });
+      this.assignedModules = (moduleList ?? [])
+        .map((module: any) => {
+          const moduleScenarios = (scenarioList ?? []).filter(
+            (scenario: any) => scenario.moduleId === module.moduleId,
+          );
+          const completedCount = moduleScenarios.filter((scenario: any) =>
+            completedScenarioIds.has(String(scenario.id)),
+          ).length;
+          const progress = moduleScenarios.length
+            ? completedCount / moduleScenarios.length
+            : 0;
+
+          let status: string;
+          if (progress >= 1) {
+            // Falls back to "Not Passed" rather than "Passed" if there's no
+            // COMPLETED moduleResult yet (e.g. finalize is still in flight) -
+            // safer to under-claim a pass than over-claim one.
+            status = moduleResultByModuleId.get(module.moduleId)?.passed
+              ? 'Passed'
+              : 'Not Passed';
+          } else if (progress > 0) {
+            status = 'In progress';
+          } else {
+            status = 'Assigned';
+          }
+
+          return {
+            id: module.moduleId,
+            title: module.moduleName,
+            description: module.description,
+            level: this.deriveLevel(moduleScenarios),
+            scenarios: moduleScenarios.length,
+            status,
+            progressPercentage: Math.round(progress * 100),
+            route: `/learner/modules/${module.moduleId}`,
+          };
+        })
+        .sort(
+          (a, b) => STATUS_SORT_ORDER[a.status] - STATUS_SORT_ORDER[b.status],
+        );
 
       // "Continue Learning" only surfaces a module actually in progress -
       // hidden entirely (not a fallback to a not-yet-started module) when

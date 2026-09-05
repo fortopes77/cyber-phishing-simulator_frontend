@@ -188,6 +188,28 @@ describe('ScenarioPageComponent', () => {
     expect(component.selectedCues).not.toContain('Urgent language');
   });
 
+  it('should hide the cue selector and read "Make Your Decision" for a simple scenario', () => {
+    expect(component.isDetailed).toBeFalse();
+
+    const nativeElement = fixture.nativeElement as HTMLElement;
+    expect(nativeElement.querySelector('.cue-selector')).toBeNull();
+    expect(nativeElement.textContent).toContain('Make Your Decision');
+    expect(nativeElement.textContent).not.toContain('Submit Answer');
+  });
+
+  it('should show the cue selector and read "Submit Answer" for a detailed scenario', () => {
+    store.overrideSelector(selectScenario, { ...scenario, answerMode: 'detailed' });
+    store.refreshState();
+    fixture.detectChanges();
+
+    expect(component.isDetailed).toBeTrue();
+
+    const nativeElement = fixture.nativeElement as HTMLElement;
+    expect(nativeElement.querySelector('.cue-selector')).not.toBeNull();
+    expect(nativeElement.textContent).toContain('Submit Answer');
+    expect(nativeElement.textContent).not.toContain('Make Your Decision');
+  });
+
   it('should navigate to the feedback screen with selected cues in router state', () => {
     component.addSelectedCue('Suspicious link');
     component.makeDecision();

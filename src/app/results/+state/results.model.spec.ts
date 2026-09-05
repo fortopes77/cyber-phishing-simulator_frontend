@@ -38,7 +38,7 @@ describe('normalizeLearnerResults', () => {
   it('should read the real GET /results/me envelope - { moduleResults, scenarioResults } - confirmed live', () => {
     expect(
       normalizeLearnerResults({ moduleResults: [], scenarioResults: [] }),
-    ).toEqual({ scenarioResults: [], averageScore: null });
+    ).toEqual({ scenarioResults: [], moduleResults: [], averageScore: null });
 
     expect(
       normalizeLearnerResults({
@@ -91,13 +91,80 @@ describe('normalizeLearnerResults', () => {
     expect(normalizeLearnerResults({ score: 90, results: [] }).averageScore).toBe(90);
   });
 
+  it('should normalize moduleResults, aliasing module.title/snake_case score fields', () => {
+    const result = normalizeLearnerResults({
+      moduleResults: [
+        {
+          id: 2,
+          moduleId: 1,
+          status: 'COMPLETED',
+          total_score: 1,
+          max_possible_score: 1,
+          percentage_score: 100,
+          passed: true,
+          completedAt: '2026-09-02T00:32:29.641Z',
+          module: { id: 1, title: 'Email Phishing Fundamentals' },
+        },
+      ],
+      scenarioResults: [],
+    });
+
+    expect(result.moduleResults).toEqual([
+      {
+        id: 2,
+        moduleId: 1,
+        moduleName: 'Email Phishing Fundamentals',
+        status: 'COMPLETED',
+        totalScore: 1,
+        maxScore: 1,
+        percentageScore: 100,
+        passed: true,
+        completedAt: '2026-09-02T00:32:29.641Z',
+      },
+    ]);
+  });
+
+  it('should carry over per-scenario title/response/score/moduleResultId when present', () => {
+    const result = normalizeLearnerResults({
+      moduleResults: [],
+      scenarioResults: [
+        {
+          id: 2,
+          moduleResultId: 2,
+          scenarioId: 3,
+          moduleId: 1,
+          isCorrect: true,
+          response: 'Safe',
+          score: 100,
+          missedCues: [],
+          scenario: { id: 3, title: 'dfghdfsh', moduleId: 1 },
+        },
+      ],
+    });
+
+    expect(result.scenarioResults).toEqual([
+      {
+        scenarioId: '3',
+        moduleId: 1,
+        correct: true,
+        title: 'dfghdfsh',
+        decision: 'Safe',
+        score: 100,
+        missedCues: [],
+        moduleResultId: 2,
+      },
+    ]);
+  });
+
   it('should return an empty result set and a null averageScore for an empty/unrecognised response', () => {
     expect(normalizeLearnerResults([])).toEqual({
       scenarioResults: [],
+      moduleResults: [],
       averageScore: null,
     });
     expect(normalizeLearnerResults({})).toEqual({
       scenarioResults: [],
+      moduleResults: [],
       averageScore: null,
     });
   });

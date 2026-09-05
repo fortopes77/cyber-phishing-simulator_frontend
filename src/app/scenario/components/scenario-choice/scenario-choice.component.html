@@ -51,7 +51,7 @@
     <strong>This is a training scenario</strong>
   </div>
 
-  <div class="scenario-choice-card" *ngIf="phase === 'deciding'">
+  <div class="scenario-choice-card" *ngIf="phase === 'deciding' && !isDetailed">
     <div class="scenario-choice-card__icon">
       <fa-icon [icon]="fontAwesomeIcons.questionCircleIcon"></fa-icon>
     </div>
@@ -93,6 +93,51 @@
     </p>
   </div>
 
+  <div class="scenario-choice-card" *ngIf="phase === 'deciding' && isDetailed">
+    <div class="scenario-choice-card__icon">
+      <fa-icon [icon]="fontAwesomeIcons.questionCircleIcon"></fa-icon>
+    </div>
+    <div class="scenario-choice-card__title">What did you notice?</div>
+    <div class="scenario-choice-card__subtitle">
+      Highlight anything suspicious on the previous screen, then submit what
+      you found.
+    </div>
+
+    <div class="scenario-choice-card__scenario-info">
+      <div class="scenario-choice-card__scenario-title">
+        "{{ scenario.title }}"
+      </div>
+      <div *ngIf="scenario.from" class="scenario-choice-card__scenario-from">
+        From: {{ scenario.from }}
+      </div>
+    </div>
+
+    <div class="cues-summary" *ngIf="selectedCues.length">
+      <div class="cues-summary__title">Cues you flagged</div>
+      <div class="cues-summary__list">
+        <span class="cue-chip" *ngFor="let cue of selectedCues">{{ cue }}</span>
+      </div>
+    </div>
+    <p class="scenario-choice-card__subtitle" *ngIf="!selectedCues.length">
+      You haven't flagged anything as suspicious yet - go back if you'd like
+      to highlight something first, or submit as-is.
+    </p>
+
+    <div class="result-actions">
+      <button
+        class="primary-button"
+        type="button"
+        [disabled]="submitting"
+        (click)="submitCues()"
+      >
+        {{ submitting ? "Submitting…" : "Submit Answer" }}
+      </button>
+      <button class="secondary-button" type="button" (click)="backToScenario()">
+        Back to Scenario
+      </button>
+    </div>
+  </div>
+
   <div class="scenario-choice-card result-card" *ngIf="phase === 'result'">
     <div
       class="result-banner"
@@ -103,7 +148,7 @@
         <div class="result-banner__title">
           {{ isCorrect ? 'Correct!' : 'Not quite right' }}
         </div>
-        <div class="result-banner__subtitle">
+        <div class="result-banner__subtitle" *ngIf="!isDetailed">
           You chose "{{ selectedDecision }}"
         </div>
       </div>

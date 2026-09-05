@@ -41,6 +41,7 @@ describe('ResultsEffects', () => {
         ResultsActions.fetchMyResultsSuccess({
           results: {
             scenarioResults: [{ scenarioId: '1', moduleId: 1, correct: true }],
+            moduleResults: [],
             averageScore: null,
           },
         }),

@@ -30,6 +30,14 @@ describe('StatusBadgeComponent', () => {
     expect(component.resolvedVariant).toBe('danger');
   });
 
+  it('should resolve Passed/Not Passed (space-separated) to success/danger', () => {
+    component.status = 'Passed';
+    expect(component.resolvedVariant).toBe('success');
+
+    component.status = 'Not Passed';
+    expect(component.resolvedVariant).toBe('danger');
+  });
+
   it('should fall back to neutral for an unrecognized status', () => {
     component.status = 'Something Unusual';
     expect(component.resolvedVariant).toBe('neutral');

@@ -52,9 +52,12 @@
       "
     >
       <div class="card-top">
-        <div class="status-indicator" [ngClass]="getStatusClass(m.progress)">
+        <div
+          class="status-indicator"
+          [ngClass]="getStatusClass(m.progress, m.passed)"
+        >
           <span class="status-icon">
-            <fa-icon [icon]="getStatusIcon(m.progress)"></fa-icon>
+            <fa-icon [icon]="getStatusIcon(m.progress, m.passed)"></fa-icon>
           </span>
         </div>
         <div class="progress-pill">
@@ -77,7 +80,9 @@
         <div class="status">
           {{
             m.progress >= 1
-              ? "Completed"
+              ? m.passed
+                ? "Passed"
+                : "Not Passed"
               : m.progress > 0
                 ? "In Progress"
                 : "Not Started"
@@ -87,7 +92,11 @@
 
       <div class="progress-row">
         <div class="progress-track">
-          <div class="progress-fill" [style.width.%]="m.progress * 100"></div>
+          <div
+            class="progress-fill"
+            [class.failed]="m.progress >= 1 && !m.passed"
+            [style.width.%]="m.progress * 100"
+          ></div>
         </div>
       </div>
     </div>

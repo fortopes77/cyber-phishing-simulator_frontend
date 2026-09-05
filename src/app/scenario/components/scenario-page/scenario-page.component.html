@@ -22,7 +22,7 @@
       <span
         *ngIf="scenario.difficulty"
         class="scenario-card__tag scenario-card__tag--difficulty"
-        >{{ scenario.difficulty }}</span
+        >{{ scenario.difficulty | titlecase }}</span
       >
       <div *ngIf="scenario.from" class="scenario-card__from">
         From: {{ scenario.from }}
@@ -149,7 +149,7 @@
       </div>
     </div>
 
-    <div class="cue-selector">
+    <div class="cue-selector" *ngIf="isDetailed">
       <div class="cue-selector__title">Your selected cues</div>
       <div class="cue-selector__hint">
         Highlight any suspicious text in the message above to add it here.
@@ -173,7 +173,7 @@
 
   <div class="scenario-page__actions" *ngIf="!previewMode">
     <button class="primary-button" (click)="makeDecision()">
-      Make Your Decision
+      {{ isDetailed ? "Submit Answer" : "Make Your Decision" }}
     </button>
   </div>
 </div>

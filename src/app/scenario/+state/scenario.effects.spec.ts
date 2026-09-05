@@ -46,7 +46,14 @@ describe('ScenarioEffects', () => {
         expect(action).toEqual(
           ScenarioActions.fetchListSuccess({
             scenarios: [
-              { scenarioId: 1, moduleId: 1, title: 'Fake Invoice', content: '...', id: 1 },
+              {
+                scenarioId: 1,
+                moduleId: 1,
+                title: 'Fake Invoice',
+                content: '...',
+                id: 1,
+                answerMode: 'simple',
+              },
             ],
           }),
         );
@@ -81,7 +88,13 @@ describe('ScenarioEffects', () => {
         expect(action).toEqual(
           ScenarioActions.fetchScenariosByModuleSuccess({
             scenarios: [
-              { scenarioId: 3, moduleId: 2, title: 'Suspicious Login', id: 3 },
+              {
+                scenarioId: 3,
+                moduleId: 2,
+                title: 'Suspicious Login',
+                id: 3,
+                answerMode: 'simple',
+              },
             ],
           }),
         );
@@ -115,7 +128,13 @@ describe('ScenarioEffects', () => {
         expect(scenarioService.getScenarioDetails).toHaveBeenCalledWith('1');
         expect(action).toEqual(
           ScenarioActions.fetchScenarioDetailsSuccess({
-            scenario: { scenarioId: 1, moduleId: 1, title: 'Fake Invoice', id: 1 },
+            scenario: {
+              scenarioId: 1,
+              moduleId: 1,
+              title: 'Fake Invoice',
+              id: 1,
+              answerMode: 'simple',
+            },
           }),
         );
         done();
@@ -149,7 +168,13 @@ describe('ScenarioEffects', () => {
         expect(scenarioService.createScenario).toHaveBeenCalledWith(scenario);
         expect(action).toEqual(
           ScenarioActions.createScenarioSuccess({
-            scenario: { scenarioId: 9, moduleId: 1, title: 'New scenario', id: 9 },
+            scenario: {
+              scenarioId: 9,
+              moduleId: 1,
+              title: 'New scenario',
+              id: 9,
+              answerMode: 'simple',
+            },
           }),
         );
         done();
@@ -188,7 +213,13 @@ describe('ScenarioEffects', () => {
         );
         expect(action).toEqual(
           ScenarioActions.updateScenarioSuccess({
-            scenario: { scenarioId: 9, moduleId: 2, title: 'Updated scenario', id: 9 },
+            scenario: {
+              scenarioId: 9,
+              moduleId: 2,
+              title: 'Updated scenario',
+              id: 9,
+              answerMode: 'simple',
+            },
           }),
         );
         done();

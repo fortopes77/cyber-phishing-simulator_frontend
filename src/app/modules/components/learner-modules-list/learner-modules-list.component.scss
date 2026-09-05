@@ -99,6 +99,11 @@
   color: #15803d;
 }
 
+.status-indicator.failed {
+  background: #fdecea;
+  color: #b3261e;
+}
+
 .status-icon {
   font-size: 0.95rem;
 }
@@ -155,6 +160,10 @@
 .progress-fill {
   height: 100%;
   background: linear-gradient(90deg, #0f4c81, #1e88e5);
+}
+
+.progress-fill.failed {
+  background: linear-gradient(90deg, #b3261e, #dc2626);
 }
 
 .clear-btn {

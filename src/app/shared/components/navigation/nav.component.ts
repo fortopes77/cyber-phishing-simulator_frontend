@@ -63,6 +63,13 @@ export class NavComponent implements OnInit, OnDestroy {
     });
   }
 
+  get fullName(): string | undefined {
+    const name = [this.currentUser?.firstName, this.currentUser?.lastName]
+      .filter(Boolean)
+      .join(' ');
+    return name || this.currentUser?.username;
+  }
+
   triggerFeedback() {
     this.authService
       .getFeedback({

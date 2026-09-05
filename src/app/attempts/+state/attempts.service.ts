@@ -11,8 +11,12 @@ export class AttemptsService {
 
   constructor(private http: HttpClient) {}
 
-  // Confirmed live: POST /attempts { moduleId } (CreateAttemptDto) -
-  // "Start a new attempt for a module".
+  // POST /attempts { moduleId } (CreateAttemptDto) - "Start a new attempt for
+  // a module". Idempotent per learner+module: if the caller already has an
+  // IN_PROGRESS attempt for this module, the backend returns that existing
+  // attempt instead of creating a duplicate, so callers can safely call this
+  // again (e.g. after losing track of the attempt id across a page refresh)
+  // without risking splitting one module's scenarios across two attempts.
   startAttempt(moduleId: number) {
     return this.http.post<any>(`${this.apiEndpoint}attempts`, { moduleId });
   }

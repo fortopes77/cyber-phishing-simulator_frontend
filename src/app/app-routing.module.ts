@@ -64,6 +64,12 @@ const routes: Routes = [
         data: { breadcrumb: 'Module', roles: LEARNER_ROLES },
       },
       {
+        path: 'modules/:moduleId/results',
+        component: ModuleResultsComponent,
+        canActivate: [AuthGuard],
+        data: { breadcrumb: 'Module Results', roles: LEARNER_ROLES },
+      },
+      {
         path: 'scenarios/:id',
         component: ScenarioPageComponent,
         canActivate: [AuthGuard],

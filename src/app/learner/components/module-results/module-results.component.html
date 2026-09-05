@@ -3,66 +3,121 @@
     <p class="status-message">Loading your results...</p>
   } @else if (error) {
     <p class="status-message error">Couldn't load your results - {{ error }}</p>
-  } @else if (result) {
-    <div class="summary-card">
-      <div class="badge" [class.passed]="result.passed" [class.failed]="!result.passed">
-        {{ result.passed ? "Passed" : "Not Passed" }}
-      </div>
-      <h1>{{ result.moduleName }}</h1>
-      <p>
-        {{
-          result.passed
-            ? "You have successfully completed this module."
-            : "You didn't reach the passing score for this module - you can retry it below."
-        }}
-      </p>
+  } @else if (moduleId != null) {
+    @if (result) {
+      <div class="page">
+        <div class="module-header">
+          <div class="module-header__left">
+            <a class="module-header__back" (click)="backToResultsOverview()">← Back to Results</a>
 
-      <div class="score-panel">
-        <div class="score-value">{{ result.percentageScore }}%</div>
-        <div class="score-label">Score</div>
-        <div class="score-details">
-          {{ result.totalScore }} / {{ result.maxScore }} points - passing score
-          {{ result.passingScore }}%
+            <div class="module-header__tags">
+              <div class="tag" [class.tag--green]="result.passed" [class.tag--red]="!result.passed">
+                {{ result.passed ? "Passed" : "Not Passed" }}
+              </div>
+            </div>
+
+            <h1 class="module-header__title">{{ result.moduleName }}</h1>
+            <p class="module-header__description">
+              {{
+                result.passed
+                  ? "You have successfully completed this module."
+                  : "You didn't reach the passing score for this module - you can retry it below."
+              }}
+            </p>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <div class="score-panel">
+            <div class="score-value">{{ result.percentageScore }}%</div>
+            <div class="score-label">Score</div>
+            <div class="score-details">
+              {{ result.totalScore }} / {{ result.maxScore }} points - passing score
+              {{ result.passingScore }}%
+            </div>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <h2 class="section-title">Results Overview</h2>
+          <div class="section-description">
+            Review your decisions and continue strengthening your phishing awareness.
+          </div>
+
+          <div class="scenario-list">
+            @for (scenario of result.scenarioResults; track scenario.scenarioId) {
+              <div class="scenario-item">
+                <div class="scenario-item__left">
+                  <div class="scenario-item__content">
+                    <div class="scenario-item__title">{{ scenario.title }}</div>
+                    <div class="scenario-item__meta">
+                      <div class="pill">Your answer: {{ scenario.decision }}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  class="scenario-item__status"
+                  [ngClass]="{
+                    'scenario-item__status--completed': scenario.correct,
+                    'scenario-item__status--progress': !scenario.correct
+                  }"
+                >
+                  {{ scenario.correct ? "✓ Correct" : "Incorrect" }}
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="btn primary" type="button" (click)="retryModule()">
+            Retry Module
+          </button>
+          <button class="btn secondary" type="button" (click)="backToAssignedModules()">
+            Back to Assigned Modules
+          </button>
+          <button class="btn secondary" type="button" (click)="backToDashboard()">
+            Back to Dashboard
+          </button>
         </div>
       </div>
-    </div>
+    } @else {
+      <p class="status-message">No results yet for this module.</p>
+    }
+  } @else if (overview.length) {
+    <div class="results-overview">
+      <app-header
+        title="Results"
+        subtitle="Every module you've completed, and the mark you got."
+      ></app-header>
 
-    <div class="details-card">
-      <h2>Results Overview</h2>
-      <p>
-        Review your decisions and continue strengthening your phishing awareness.
-      </p>
-
-      <ul class="scenario-list">
-        @for (scenario of result.scenarioResults; track scenario.scenarioId) {
-          <li class="scenario-item">
-            <div class="scenario-title">{{ scenario.title }}</div>
-            <div class="scenario-answer">
-              <span class="label">Your answer:</span>
-              <strong>{{ scenario.decision }}</strong>
+      <ul class="results-list">
+        @for (row of overview; track row.moduleId) {
+          <li
+            class="result-row"
+            tabindex="0"
+            role="button"
+            (click)="viewModuleResult(row.moduleId)"
+            (keydown.enter)="viewModuleResult(row.moduleId)"
+          >
+            <div class="result-row-main">
+              <div class="result-title">{{ row.moduleName }}</div>
+              @if (row.completedAt) {
+                <div class="result-meta">Completed {{ row.completedAt | date: "mediumDate" }}</div>
+              }
             </div>
-            <div
-              class="scenario-outcome"
-              [class.correct]="scenario.correct"
-              [class.incorrect]="!scenario.correct"
-            >
-              {{ scenario.correct ? "Correct" : "Incorrect" }}
+            <div class="result-mark">
+              <span class="badge" [class.passed]="row.passed" [class.failed]="!row.passed">
+                {{ row.percentageScore }}%
+              </span>
+              <span class="result-score-detail">{{ row.totalScore }} / {{ row.maxScore }} points</span>
             </div>
           </li>
         }
       </ul>
-
-      <div class="actions">
-        <button class="btn primary" type="button" (click)="retryModule()">
-          Retry Module
-        </button>
-        <button class="btn secondary" type="button" (click)="backToAssignedModules()">
-          Back to Assigned Modules
-        </button>
-        <button class="btn secondary" type="button" (click)="backToDashboard()">
-          Back to Dashboard
-        </button>
-      </div>
     </div>
+  } @else {
+    <p class="status-message">You haven't completed any modules yet.</p>
   }
 </section>

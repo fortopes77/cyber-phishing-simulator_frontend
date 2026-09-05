@@ -8,6 +8,7 @@ import {
   selectScenario,
   selectScenarioList,
 } from '../../+state/scenario.selectors';
+import { normalizeAnswerMode, ScenarioAnswerMode } from '../../models/scenario.model';
 
 interface Scenario {
   id: number | string;
@@ -15,6 +16,7 @@ interface Scenario {
   type: string;
   body: string;
   moduleId?: number;
+  answerMode: ScenarioAnswerMode;
   // Not part of the scenarios API response for learners (the Read endpoint
   // only returns scenarioId/moduleId/title/content/interactionType to
   // them - see the scenarios ticket) - kept optional so the UI degrades
@@ -59,6 +61,7 @@ export class ScenarioPageComponent implements OnInit, OnChanges {
     title: '',
     type: 'generic',
     body: '',
+    answerMode: 'simple',
   };
   selectedCues: string[] = [];
 
@@ -142,8 +145,8 @@ export class ScenarioPageComponent implements OnInit, OnChanges {
       id: raw.id ?? this.scenarioId,
       title: raw.title ?? '',
       type: raw.interactionType ?? raw.type ?? 'generic',
-      // difficulty/from/subject aren't part of the scenarios API response a
-      // learner receives - these fallbacks only surface something if a
+      // from/subject aren't part of the scenarios API response a learner
+      // receives - these fallbacks only surface something if a
       // future/trainer-scoped response happens to include them.
       difficulty: raw.difficulty || undefined,
       from: raw.sender ?? raw.from ?? undefined,
@@ -151,7 +154,15 @@ export class ScenarioPageComponent implements OnInit, OnChanges {
       subject: raw.subject ?? raw.title ?? undefined,
       body: raw.content ?? raw.body ?? '',
       moduleId: raw.moduleId != null ? Number(raw.moduleId) : undefined,
+      answerMode: normalizeAnswerMode(raw),
     };
+  }
+
+  // 'detailed' scenarios are answered by flagging suspicious text rather
+  // than a plain Safe/Suspicious pick, so the cue selector only makes sense
+  // for them - see the answerMode field note on ScenarioAnswerMode.
+  get isDetailed(): boolean {
+    return this.scenario.answerMode === 'detailed';
   }
 
   /**

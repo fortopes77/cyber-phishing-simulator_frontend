@@ -18,6 +18,8 @@ const VARIANT_BY_STATUS: Record<string, StatusBadgeVariant> = {
   NOT_STARTED: 'neutral',
   IN_PROGRESS: 'warning',
   COMPLETED: 'success',
+  PASSED: 'success',
+  NOT_PASSED: 'danger',
   OVERDUE: 'danger',
   ACTIVE: 'success',
   INACTIVE: 'neutral',

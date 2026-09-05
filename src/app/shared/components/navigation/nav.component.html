@@ -63,6 +63,7 @@
           >
         </li>
         <li class="nav-item">
+          <fa-icon [icon]="fontAwesomeIcons.awardIcon"></fa-icon>
           <a routerLink="/learner/results" routerLinkActive="active">Results</a>
         </li>
       </ul>
@@ -80,7 +81,7 @@
       </div>
       <div class="profile-info">
         <div class="profile-name">
-          {{ currentUser?.username || currentUser?.email || "Your account" }}
+          {{ fullName || currentUser?.email || "Your account" }}
         </div>
         <div class="profile-email">{{ currentUser?.email }}</div>
       </div>

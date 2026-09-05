@@ -1,4 +1,5 @@
 import {
+  normalizeAnswerMode,
   normalizeCategory,
   normalizeDifficulty,
   normalizeInteractionType,
@@ -45,6 +46,36 @@ describe('scenario.model', () => {
       expect(result.moduleId).toBe(1);
       expect(result.title).toBe('Fake Invoice');
       expect(result.content).toBe('Dear customer...');
+    });
+
+    it("should default answerMode to 'simple' when the backend doesn't send one yet", () => {
+      const result = normalizeScenario({ scenarioId: 1, title: 'Fake Invoice' });
+
+      expect(result.answerMode).toBe('simple');
+    });
+
+    it("should carry through a 'detailed' answerMode once the backend sends one", () => {
+      const result = normalizeScenario({
+        scenarioId: 1,
+        title: 'Fake Invoice',
+        answerMode: 'detailed',
+      });
+
+      expect(result.answerMode).toBe('detailed');
+    });
+  });
+
+  describe('normalizeAnswerMode', () => {
+    it("should default to 'simple' for a missing or unrecognised value", () => {
+      expect(normalizeAnswerMode({})).toBe('simple');
+      expect(normalizeAnswerMode({ answerMode: 'something-else' })).toBe(
+        'simple',
+      );
+    });
+
+    it("should recognise 'detailed' case-insensitively", () => {
+      expect(normalizeAnswerMode({ answerMode: 'detailed' })).toBe('detailed');
+      expect(normalizeAnswerMode({ answerMode: 'DETAILED' })).toBe('detailed');
     });
   });
 

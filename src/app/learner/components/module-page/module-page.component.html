@@ -64,7 +64,7 @@
 
             <div class="scenario-item__meta">
               <div class="pill">{{ scenario.type }}</div>
-              <div class="pill">{{ scenario.difficulty }}</div>
+              <div class="pill" *ngIf="scenario.difficulty">{{ scenario.difficulty | titlecase }}</div>
             </div>
           </div>
         </div>

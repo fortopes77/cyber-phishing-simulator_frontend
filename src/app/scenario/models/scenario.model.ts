@@ -117,6 +117,22 @@ const INTERACTION_TYPE_ALIASES: Record<string, ScenarioInteractionType> = {
  */
 export const SIMPLE_ANSWER_OPTIONS = ['Safe', 'Suspicious'] as const;
 
+export type ScenarioAnswerMode = 'simple' | 'detailed';
+
+/**
+ * The learner-facing GET /scenarios(/:id) response now carries an
+ * `answerMode: 'simple' | 'detailed'` field so the learner UI can decide
+ * which decision screen to show without ever seeing the trainer's
+ * correctAnswer/correctCues: 'simple' means a Safe/Suspicious pick,
+ * 'detailed' means flagging suspicious cues instead. Still falls back to
+ * 'simple' for anything missing/unrecognized (e.g. older cached data),
+ * matching today's default Safe/Suspicious behavior.
+ */
+export function normalizeAnswerMode(raw: any): ScenarioAnswerMode {
+  const value = String(raw?.answerMode ?? '').trim().toLowerCase();
+  return value === 'detailed' ? 'detailed' : 'simple';
+}
+
 export const DEFAULT_CATEGORY = ScenarioCategory.Phishing;
 export const DEFAULT_DIFFICULTY = ScenarioDifficulty.Medium;
 export const DEFAULT_INTERACTION_TYPE = ScenarioInteractionType.Email;
@@ -243,10 +259,11 @@ export function toScenarioPayload(source: Record<string, any>): ScenarioPayload 
  * moduleScenarios/isAssignedToThisModule lookups keyed on it). Mirrors
  * normalizeModule's id fallback - normalize once here, at the boundary,
  * rather than teach every consumer a second field name. Also confirmed live:
- * the list/detail responses no longer include category/difficulty/
- * scenarioDescription/correctAnswer/correctCues at all (a learner is never
- * sent the answer up front) - callers that read those fields need to keep
- * tolerating them being absent.
+ * the list/detail responses a learner receives omit scenarioDescription/
+ * correctAnswer/correctCues (a learner is never sent the answer up front) -
+ * callers that read those fields need to keep tolerating them being absent.
+ * difficulty is now included in the learner-facing response (previously
+ * omitted alongside the answer fields, since fixed backend-side).
  */
 export function normalizeScenario(raw: any): any {
   const rawId = raw?.id ?? raw?.scenarioId;
@@ -254,5 +271,6 @@ export function normalizeScenario(raw: any): any {
   return {
     ...raw,
     id: rawId != null ? Number(rawId) : raw?.id,
+    answerMode: normalizeAnswerMode(raw),
   };
 }

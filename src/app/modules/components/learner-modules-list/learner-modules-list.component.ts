@@ -19,6 +19,7 @@ import { ScenarioActions } from 'src/app/scenario/+state/scenario.actions';
 import { selectScenarioList } from 'src/app/scenario/+state/scenario.selectors';
 import { ResultsActions } from 'src/app/results/+state/results.actions';
 import { selectMyResults } from 'src/app/results/+state/results.selectors';
+import { buildModuleResultsOverview } from 'src/app/module-results/+state/module-result.model';
 
 interface ModuleCard {
   id: number;
@@ -27,6 +28,10 @@ interface ModuleCard {
   difficulty: 'beginner' | 'intermediate' | 'advanced';
   scenarios: number;
   progress: number; // 0..1
+  // Only meaningful once progress reaches 1 - defaults to false (not
+  // pending/unknown) so a module that's finished but has no COMPLETED
+  // moduleResult yet reads as failed rather than briefly flashing a pass.
+  passed: boolean;
 }
 
 @Component({
@@ -76,6 +81,14 @@ export class LearnerModulesListComponent implements OnInit {
         (results?.scenarioResults ?? []).map((result) => result.scenarioId),
       );
 
+      // Per-module pass/fail, keyed by moduleId - buildModuleResultsOverview
+      // already collapses a module's retries down to its most recent
+      // COMPLETED attempt (see the module-results page), so it's reused here
+      // instead of duplicating that dedup logic.
+      const moduleResultByModuleId = new Map(
+        buildModuleResultsOverview(results).map((row) => [row.moduleId, row]),
+      );
+
       this.modules = (moduleList ?? []).map((module: any) => {
         const moduleScenarios = (scenarioList ?? []).filter(
           (scenario: any) => scenario.moduleId === module.moduleId,
@@ -90,13 +103,14 @@ export class LearnerModulesListComponent implements OnInit {
           title: module.moduleName,
           description: module.description,
           // No per-module difficulty field exists on the module list
-          // endpoint - approximate it from the module's scenarios until
-          // the backend exposes one directly.
+          // endpoint - approximate it from the module's scenarios (which now
+          // carry a real difficulty value from the backend).
           difficulty: this.deriveDifficulty(moduleScenarios),
           scenarios: moduleScenarios.length,
           progress: moduleScenarios.length
             ? completedCount / moduleScenarios.length
             : 0,
+          passed: moduleResultByModuleId.get(module.moduleId)?.passed ?? false,
         };
       });
 
@@ -144,9 +158,9 @@ export class LearnerModulesListComponent implements OnInit {
     this.applyFilters();
   }
 
-  getStatusClass(progress: number): string {
+  getStatusClass(progress: number, passed: boolean): string {
     if (progress >= 1) {
-      return 'completed';
+      return passed ? 'completed' : 'failed';
     }
 
     if (progress > 0) {
@@ -156,9 +170,9 @@ export class LearnerModulesListComponent implements OnInit {
     return 'not-started';
   }
 
-  getStatusIcon(progress: number): IconDefinition | string {
+  getStatusIcon(progress: number, passed: boolean): IconDefinition | string {
     if (progress >= 1) {
-      return iconLibrary.checkCircleIcon;
+      return passed ? iconLibrary.checkCircleIcon : iconLibrary.closeIcon;
     }
 
     if (progress > 0) {
