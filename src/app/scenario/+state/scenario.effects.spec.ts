@@ -156,6 +156,50 @@ describe('ScenarioEffects', () => {
     });
   });
 
+  describe('createAIScenario$', () => {
+    it('should call the AI API with the simple answer mode and pass its response straight through', (done) => {
+      const aiScenario = { title: 'AI generated scenario', correctAnswer: 'Suspicious' };
+      scenarioService.createScenarioWithAI.and.returnValue(of(aiScenario));
+      actions$ = of(ScenarioActions.createAIScenario({ answerMode: 'simple' }));
+
+      effects.createAIScenario$.subscribe((action) => {
+        expect(scenarioService.createScenarioWithAI).toHaveBeenCalledWith('simple');
+        expect(action).toEqual(
+          ScenarioActions.createAIScenarioSuccess({ scenario: aiScenario }),
+        );
+        done();
+      });
+    });
+
+    it('should call the AI API with the detailed answer mode', (done) => {
+      const aiScenario = { title: 'AI generated scenario', correctCues: ['Dear customer'] };
+      scenarioService.createScenarioWithAI.and.returnValue(of(aiScenario));
+      actions$ = of(ScenarioActions.createAIScenario({ answerMode: 'detailed' }));
+
+      effects.createAIScenario$.subscribe((action) => {
+        expect(scenarioService.createScenarioWithAI).toHaveBeenCalledWith('detailed');
+        expect(action).toEqual(
+          ScenarioActions.createAIScenarioSuccess({ scenario: aiScenario }),
+        );
+        done();
+      });
+    });
+
+    it('should dispatch createAIScenarioFailure on error', (done) => {
+      scenarioService.createScenarioWithAI.and.returnValue(
+        throwError(() => new Error('Network error')),
+      );
+      actions$ = of(ScenarioActions.createAIScenario({ answerMode: 'simple' }));
+
+      effects.createAIScenario$.subscribe((action) => {
+        expect(action).toEqual(
+          ScenarioActions.createAIScenarioFailure({ error: 'Network error' }),
+        );
+        done();
+      });
+    });
+  });
+
   describe('createScenario$', () => {
     it('should normalize the created scenario', (done) => {
       const scenario = { moduleId: 1, title: 'New scenario' };

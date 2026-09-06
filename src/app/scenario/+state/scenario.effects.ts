@@ -82,8 +82,8 @@ export class ScenarioEffects {
   createAIScenario$ = createEffect(() =>
     this.actions$.pipe(
       ofType(ScenarioActions.createAIScenario),
-      mergeMap(() =>
-        this.scenarioService.createScenarioWithAI().pipe(
+      mergeMap((action) =>
+        this.scenarioService.createScenarioWithAI(action.answerMode).pipe(
           map((scenario: any) =>
             ScenarioActions.createAIScenarioSuccess({ scenario }),
           ),

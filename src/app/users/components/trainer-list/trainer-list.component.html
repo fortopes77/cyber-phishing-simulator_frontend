@@ -1,0 +1,50 @@
+<app-header
+  title="Trainers"
+  subtitle="Manage the organisation's trainer accounts"
+  [showCreateAction]="true"
+  [createActions]="createActions"
+></app-header>
+
+<div class="role-tabs">
+  <a routerLink="/trainer/learners" routerLinkActive="active" class="role-tab">Learners</a>
+  <a routerLink="/trainer/trainers" routerLinkActive="active" class="role-tab">Trainers</a>
+</div>
+
+<app-dashboard-card>
+  <app-list
+    [columns]="columns"
+    [rows]="rows"
+    [actions]="actions"
+    [pageSize]="12"
+    emptyMessage="No trainers found."
+  >
+    <ng-template appListCell="trainer" let-row>
+      <div class="trainer-cell">
+        <span class="trainer-avatar">
+          <fa-icon [icon]="fontAwesomeIcon.userIcon"></fa-icon>
+        </span>
+        <div class="trainer-details">
+          <div class="trainer-name">{{ row.fullName }}</div>
+          <div class="trainer-email">{{ row.email }}</div>
+        </div>
+      </div>
+    </ng-template>
+  </app-list>
+</app-dashboard-card>
+
+<app-delete-confirmation-modal
+  [isOpen]="isDeleteModalOpen"
+  [title]="selectedTrainerName"
+  [message]="'Are you sure you wish to delete'"
+  (confirmed)="confirmDelete()"
+  (cancelled)="cancelDelete()"
+></app-delete-confirmation-modal>
+
+<app-forgot-password-modal
+  [isOpen]="isForgotPasswordModalOpen"
+  [targetName]="selectedResetName || 'this trainer'"
+  [loading]="forgotPasswordSending"
+  [error]="forgotPasswordError"
+  (confirmed)="confirmForgotPassword()"
+  (cancelled)="cancelForgotPassword()"
+></app-forgot-password-modal>

@@ -1,0 +1,113 @@
+<app-header
+  title="Reports & Analytics"
+  subtitle="Organisation-wide training performance, at a glance."
+></app-header>
+
+<div class="reports-toolbar">
+  <button type="button" class="export-button" (click)="exportReport()">
+    Export Report (PDF)
+  </button>
+</div>
+
+@if (dashboardError) {
+  <p class="dashboard-error">
+    Couldn't load the latest dashboard data - showing what's available.
+  </p>
+}
+
+<div class="dashboard-statistics">
+  <app-data-card
+    label="Total Learners"
+    [statistic]="{ singleValue: totalLearners }"
+    [icon]="fontAwesomeIcons.userGroupIcon"
+    dataType="total"
+  />
+  <app-data-card
+    label="Active Modules"
+    [statistic]="{ singleValue: activeModules }"
+    [icon]="fontAwesomeIcons.openBookIcon"
+    dataType="module"
+  />
+  <app-data-card
+    label="Completion Rate"
+    [statistic]="{ percentage: completionRate }"
+    [icon]="fontAwesomeIcons.targetIcon"
+    dataType="scenario"
+  />
+  <app-data-card
+    label="Average Score"
+    [statistic]="{ percentage: averageScore }"
+    [icon]="fontAwesomeIcons.trendUpIcon"
+    dataType="average"
+  />
+</div>
+
+<div class="report-section">
+  <app-dashboard-card
+    title="Completion by Module"
+    description="Share of assigned learners who have completed each module"
+  >
+    @for (module of moduleCompletion; track module.moduleName) {
+      <app-progress-row
+        [label]="module.moduleName"
+        [value]="module.completionPercentage"
+      ></app-progress-row>
+    } @empty {
+      <p class="empty-state">No module completion data yet.</p>
+    }
+  </app-dashboard-card>
+
+  <app-dashboard-card
+    title="Weakest Categories (Org-Wide)"
+    description="Share of your learners who are weakest in each threat category"
+  >
+    @for (category of categoryBreakdown; track category.category) {
+      <app-progress-row
+        [label]="category.label + ' (' + category.learnerCount + ')'"
+        [value]="category.percentage"
+        color="#dc2626"
+      ></app-progress-row>
+    } @empty {
+      <p class="empty-state">No weakness data yet.</p>
+    }
+  </app-dashboard-card>
+</div>
+
+<div class="report-section">
+  <app-dashboard-card
+    title="Top Performers"
+    description="Highest average score across finalized module attempts"
+  >
+    @for (learner of topPerformers; track learner.id) {
+      <app-progress-row
+        [label]="learner.fullName"
+        [value]="learner.averageScore ?? 0"
+        color="#16a34a"
+      ></app-progress-row>
+    } @empty {
+      <p class="empty-state">No scored learners yet.</p>
+    }
+  </app-dashboard-card>
+
+  <app-dashboard-card
+    title="Learners Needing Attention"
+    description="Average score below 60%"
+  >
+    @for (learner of needsAttention; track learner.id) {
+      <app-progress-row
+        [label]="learner.fullName"
+        [value]="learner.averageScore ?? 0"
+        color="#dc2626"
+      ></app-progress-row>
+    } @empty {
+      <p class="empty-state">No learners currently need attention.</p>
+    }
+  </app-dashboard-card>
+</div>
+
+<app-dashboard-card
+  title="Recent Activity"
+  description="Latest learner actions across the organisation"
+>
+  <app-activity-list [items]="recentActivity"></app-activity-list>
+</app-dashboard-card>

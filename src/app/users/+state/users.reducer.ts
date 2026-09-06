@@ -4,6 +4,7 @@ import { UserAccount } from './user-account.model';
 
 export interface UsersState {
   userList: UserAccount[];
+  trainerList: UserAccount[];
   user: UserAccount | null;
   loading: boolean;
   error: string | null;
@@ -11,6 +12,7 @@ export interface UsersState {
 
 export const initialUsersState: UsersState = {
   userList: [],
+  trainerList: [],
   user: null,
   loading: false,
   error: null,
@@ -28,6 +30,20 @@ export const usersReducer = createReducer(
     loading: false,
   })),
   on(UsersActions.fetchListFailure, (state, { error }) => ({
+    ...state,
+    loading: false,
+    error,
+  })),
+  on(UsersActions.fetchTrainerList, (state) => ({
+    ...state,
+    loading: true,
+  })),
+  on(UsersActions.fetchTrainerListSuccess, (state, { users }) => ({
+    ...state,
+    trainerList: users,
+    loading: false,
+  })),
+  on(UsersActions.fetchTrainerListFailure, (state, { error }) => ({
     ...state,
     loading: false,
     error,
@@ -55,7 +71,9 @@ export const usersReducer = createReducer(
   on(UsersActions.createUserSuccess, (state, { user }) => ({
     ...state,
     user,
-    userList: [...state.userList, user],
+    userList: user.role === 'user' ? [...state.userList, user] : state.userList,
+    trainerList:
+      user.role === 'trainer' ? [...state.trainerList, user] : state.trainerList,
     loading: false,
   })),
   on(UsersActions.createUserFailure, (state, { error }) => ({
@@ -74,6 +92,9 @@ export const usersReducer = createReducer(
     userList: state.userList.map((existing) =>
       existing.id === user.id ? user : existing,
     ),
+    trainerList: state.trainerList.map((existing) =>
+      existing.id === user.id ? user : existing,
+    ),
     loading: false,
   })),
   on(UsersActions.updateUserFailure, (state, { error }) => ({
@@ -89,6 +110,7 @@ export const usersReducer = createReducer(
   on(UsersActions.deleteUserSuccess, (state, { userId }) => ({
     ...state,
     userList: state.userList.filter((existing) => existing.id !== userId),
+    trainerList: state.trainerList.filter((existing) => existing.id !== userId),
     loading: false,
   })),
   on(UsersActions.deleteUserFailure, (state, { error }) => ({

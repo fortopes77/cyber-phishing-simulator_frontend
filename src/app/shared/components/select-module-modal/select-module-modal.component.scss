@@ -33,6 +33,21 @@
   }
 }
 
+.answer-mode-toggle {
+  display: flex;
+  gap: 1.5rem;
+  font-weight: 400;
+}
+
+.radio-option {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 400;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
 .modal-actions {
   display: flex;
   justify-content: flex-end;

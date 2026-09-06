@@ -47,6 +47,16 @@ describe('UsersService', () => {
     req.flush([rawUser]);
   });
 
+  it("should GET the trainers list scoped to an organisation", () => {
+    service.getTrainers(1).subscribe();
+
+    const req = httpMock.expectOne(
+      `${environment.apiUrl}users/trainers?organisationId=1`,
+    );
+    expect(req.request.method).toBe('GET');
+    req.flush([{ ...rawUser, role: 'TRAINER' }]);
+  });
+
   it('should GET a single user by id', () => {
     service.getUserDetails('1').subscribe();
 
@@ -123,11 +133,4 @@ describe('UsersService', () => {
     req.flush(rawUser);
   });
 
-  it('should POST to the send-reminder endpoint', () => {
-    service.sendReminderEmail('1').subscribe();
-
-    const req = httpMock.expectOne(`${environment.apiUrl}users/1/send-reminder`);
-    expect(req.request.method).toBe('POST');
-    req.flush({});
-  });
 });

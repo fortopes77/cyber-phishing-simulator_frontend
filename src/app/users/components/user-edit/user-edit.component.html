@@ -1,8 +1,10 @@
 <app-header
-  [title]="isCreateMode ? 'Add Learner' : 'Edit Learner'"
+  [title]="isCreateMode ? (managingRole === 'trainer' ? 'Add Trainer' : 'Add Learner') : 'Edit Learner'"
   [subtitle]="
     isCreateMode
-      ? 'Create a new learner or trainer account.'
+      ? (managingRole === 'trainer'
+          ? 'Create a new trainer account.'
+          : 'Create a new learner account.')
       : 'Update the account details below and save your changes.'
   "
 ></app-header>
@@ -95,6 +97,14 @@
         </select>
         @if (!isCreateMode) {
           <small class="field-hint">Role can't be changed.</small>
+        } @else {
+          <small class="field-hint">
+            {{
+              managingRole === 'trainer'
+                ? "Creating from the Trainers screen always creates a trainer."
+                : "Creating from the Learners screen always creates a learner."
+            }}
+          </small>
         }
         <app-form-field-error
           [control]="userForm.get('role')"
@@ -113,15 +123,6 @@
           Send Password Reset Email
         </button>
       }
-      @if (!isCreateMode && isLearner) {
-        <button
-          type="button"
-          class="btn btn-secondary"
-          (click)="openSendReminderModal()"
-        >
-          Send Reminder Email
-        </button>
-      }
       <button type="button" class="btn btn-secondary" (click)="onCancel()">
         Cancel
       </button>
@@ -131,15 +132,6 @@
     </div>
   </form>
 </app-dashboard-card>
-
-<app-send-reminder-modal
-  [isOpen]="isSendReminderModalOpen"
-  [learnerName]="fullNameValue || 'this learner'"
-  [loading]="reminderSending"
-  [error]="reminderError"
-  (confirmed)="confirmSendReminder()"
-  (cancelled)="cancelSendReminder()"
-></app-send-reminder-modal>
 
 <app-forgot-password-modal
   [isOpen]="isForgotPasswordModalOpen"

@@ -13,6 +13,7 @@ describe('ScenarioService', () => {
   let service: ScenarioService;
   let httpMock: HttpTestingController;
   const apiEndpoint = environment.apiUrl || 'http://localhost:3000/';
+  const aiApiEndpoint = environment.aiApiUrl || 'http://localhost:8000/';
 
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -81,6 +82,22 @@ describe('ScenarioService', () => {
       'invoice #4471',
     ]);
     expect(req.request.body.correctAnswer).toBeUndefined();
+    req.flush({});
+  });
+
+  it('should GET simple-scenario from the AI API when the simple answer mode is chosen', () => {
+    service.createScenarioWithAI('simple').subscribe();
+
+    const req = httpMock.expectOne(`${aiApiEndpoint}simple-scenario`);
+    expect(req.request.method).toBe('GET');
+    req.flush({});
+  });
+
+  it('should GET detailed-scenario from the AI API when the detailed answer mode is chosen', () => {
+    service.createScenarioWithAI('detailed').subscribe();
+
+    const req = httpMock.expectOne(`${aiApiEndpoint}detailed-scenario`);
+    expect(req.request.method).toBe('GET');
     req.flush({});
   });
 

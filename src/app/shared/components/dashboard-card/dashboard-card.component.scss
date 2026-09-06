@@ -45,3 +45,10 @@
     gap: 24px;
   }
 }
+
+@media print {
+  .dashboard-card {
+    box-shadow: none;
+    break-inside: avoid;
+  }
+}

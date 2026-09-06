@@ -36,6 +36,30 @@ export class UsersEffects {
     ),
   );
 
+  fetchTrainers$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(UsersActions.fetchTrainerList),
+      mergeMap(({ organisationId }) =>
+        this.usersService.getTrainers(organisationId).pipe(
+          map((response: any) =>
+            UsersActions.fetchTrainerListSuccess({
+              users: (Array.isArray(response) ? response : response.users).map(
+                normalizeUserAccount,
+              ),
+            }),
+          ),
+          catchError((error) =>
+            of(
+              UsersActions.fetchTrainerListFailure({
+                error: error.message || 'Failed to fetch trainers',
+              }),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+
   fetchUserDetails$ = createEffect(() =>
     this.actions$.pipe(
       ofType(UsersActions.fetchUserDetails),
@@ -134,23 +158,4 @@ export class UsersEffects {
     ),
   );
 
-  sendReminderEmail$ = createEffect(() =>
-    this.actions$.pipe(
-      ofType(UsersActions.sendReminderEmail),
-      mergeMap((action) =>
-        this.usersService.sendReminderEmail(action.userId).pipe(
-          map(() =>
-            UsersActions.sendReminderEmailSuccess({ userId: action.userId }),
-          ),
-          catchError((error) =>
-            of(
-              UsersActions.sendReminderEmailFailure({
-                error: error.message || 'Failed to send reminder email',
-              }),
-            ),
-          ),
-        ),
-      ),
-    ),
-  );
 }

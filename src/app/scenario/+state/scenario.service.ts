@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { environment } from 'src/environments/environment';
-import { toScenarioPayload } from '../models/scenario.model';
+import { ScenarioAnswerMode, toScenarioPayload } from '../models/scenario.model';
 
 @Injectable({
   providedIn: 'root',
@@ -42,8 +42,14 @@ export class ScenarioService {
     return this.http.post(`${this.apiEndpoint}scenarios`, toScenarioPayload(scenario));
   }
 
-  createScenarioWithAI() {
-    return this.http.get(this.aiApiEndpoint + 'simple-scenario');
+  // 'simple' scenarios ask the AI API for a single correctAnswer
+  // (Safe/Suspicious); 'detailed' scenarios ask for the correctCues list
+  // instead - same downstream workflow either way (see
+  // ScenarioListComponent.subscribeToAIScenarioCreateSuccess and
+  // toScenarioPayload, which already picks whichever field is present).
+  createScenarioWithAI(answerMode: ScenarioAnswerMode) {
+    const path = answerMode === 'detailed' ? 'detailed-scenario' : 'simple-scenario';
+    return this.http.get(this.aiApiEndpoint + path);
   }
 
   updateScenario(scenarioId: string, updatedScenario: any) {

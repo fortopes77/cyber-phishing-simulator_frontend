@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { Actions, ofType } from '@ngrx/effects';
 import { filter, map, take } from 'rxjs';
@@ -29,8 +29,7 @@ import { iconLibrary } from 'src/app/shared/constants/font-awesome-icons.const';
 import { selectAuthState } from 'src/app/auth/+state/auth.selectors';
 import { UsersActions } from 'src/app/users/+state/users.actions';
 import { selectUserList } from 'src/app/users/+state/users.selectors';
-import { UserAccount } from 'src/app/users/+state/user-account.model';
-import { CATEGORY_OPTIONS } from 'src/app/scenario/models/scenario.model';
+import { getWeaknessLabel, UserAccount } from 'src/app/users/+state/user-account.model';
 
 interface LearnerRow extends Record<string, unknown> {
   id: number;
@@ -43,39 +42,45 @@ interface LearnerRow extends Record<string, unknown> {
   weaknesses: string[];
 }
 
-// ASSUMPTION: identity (name/email/id) now comes from the real
-// GET /users/learners endpoint, but no learner-progress/analytics endpoint
-// exists yet - there's no Jira ticket covering it on the backend board at
-// time of writing. Progress, score and last-active stay deterministically
-// derived per learner id (see buildLearnerRows) until a real "learner
-// analytics" contract is available.
-//
-// Weaknesses use the real scenario `category` enum (Phishing/Smishing/.../
-// Whaling - see scenario.model.ts, confirmed against the backend via a 400
-// validation response) rather than invented per-cue tags like "Urgency" or
-// "Domain Mismatch": the backend has no such categorization for the
-// free-text cues a learner selects (CreateScenarioAttemptDto.selectedCues),
-// so category is the only real, queryable dimension a "weakness" can map
-// to. Which categories are assigned to which learner is still simulated,
-// though - that needs each learner's per-scenario correct/incorrect result
-// cross-referenced with the scenario's category, and there's no populated
-// example of GET /results/user/{userId}'s response to confirm field names
-// against yet (empty in this dev DB - no scenarios/attempts exist to
-// generate one).
-const WEAKNESS_POOL = CATEGORY_OPTIONS.map((option) => option.label);
-const LAST_ACTIVE_POOL = [
-  'Just now', '2 hours ago', 'Yesterday', '2 days ago', '3 days ago',
-  '1 week ago',
-];
-// Parallel to LAST_ACTIVE_POOL - how many days before now each label
-// represents, so the "Last Active" filter has a real Date to compare
-// against instead of just the display string.
-const LAST_ACTIVE_DAYS_AGO_POOL = [0, 0, 1, 2, 3, 7];
+// Mirrors the "Just now / X hours ago / Yesterday / X days ago" style the
+// UI previously showed with mock data, now derived from the real
+// lastActiveAt timestamp GET /users/learners returns.
+function formatLastActive(iso: string | null | undefined): string {
+  if (!iso) {
+    return 'Never';
+  }
+
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const minutes = Math.floor(diffMs / 60000);
+  if (minutes < 1) {
+    return 'Just now';
+  }
+  if (minutes < 60) {
+    return `${minutes} minute${minutes === 1 ? '' : 's'} ago`;
+  }
+
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) {
+    return `${hours} hour${hours === 1 ? '' : 's'} ago`;
+  }
+
+  const days = Math.floor(hours / 24);
+  if (days === 1) {
+    return 'Yesterday';
+  }
+  if (days < 7) {
+    return `${days} days ago`;
+  }
+
+  const weeks = Math.floor(days / 7);
+  return `${weeks} week${weeks === 1 ? '' : 's'} ago`;
+}
 
 @Component({
   selector: 'app-learner-list',
   imports: [
     CommonModule,
+    RouterModule,
     FaIconComponent,
     HeaderComponent,
     DashboardCardComponent,
@@ -312,50 +317,24 @@ export class LearnerListComponent implements OnInit {
     this.computeStats(this.filteredRows);
   }
 
-  // Identity (id/fullName/email) is real, from the store's learner list.
-  // Progress/score/last-active/weaknesses are still mocked - deterministically
-  // derived from each learner's id so a given learner's row stays stable
-  // across refreshes - until a real analytics endpoint exists (see the
-  // ASSUMPTION comment above the mock pools).
+  // All fields, including progress/score/last-active/weaknesses, now come
+  // straight from GET /users/learners (LearnerResponseDto) - nothing here
+  // is mocked.
   private buildLearnerRows(users: UserAccount[]): LearnerRow[] {
     return users.map((user) => {
-      const i = this.analyticsSeed(user.id);
-      const weaknessCount = 1 + (i % 3);
-      const weaknesses = Array.from(
-        { length: weaknessCount },
-        (_, w) => WEAKNESS_POOL[(i + w) % WEAKNESS_POOL.length],
-      );
-
-      const lastActiveIndex = i % LAST_ACTIVE_POOL.length;
-      const lastActiveDate = new Date();
-      lastActiveDate.setDate(
-        lastActiveDate.getDate() - LAST_ACTIVE_DAYS_AGO_POOL[lastActiveIndex],
-      );
+      const lastActiveAt = user.lastActiveAt ?? null;
 
       return {
         id: Number(user.id),
         fullName: user.fullName,
         email: user.email,
-        progress: (i * 7) % 101,
-        avgScore: 40 + ((i * 11) % 61),
-        lastActive: LAST_ACTIVE_POOL[lastActiveIndex],
-        lastActiveDate,
-        weaknesses,
+        progress: user.progressPercentage ?? 0,
+        avgScore: user.averageScore ?? 0,
+        lastActive: formatLastActive(lastActiveAt),
+        lastActiveDate: lastActiveAt ? new Date(lastActiveAt) : new Date(0),
+        weaknesses: (user.weaknesses ?? []).map(getWeaknessLabel),
       };
     });
-  }
-
-  private analyticsSeed(id: string): number {
-    const numericId = Number(id);
-    if (!Number.isNaN(numericId)) {
-      return numericId;
-    }
-
-    let hash = 0;
-    for (let c = 0; c < id.length; c++) {
-      hash = (hash * 31 + id.charCodeAt(c)) >>> 0;
-    }
-    return hash;
   }
 
   private computeStats(rows: LearnerRow[]): void {

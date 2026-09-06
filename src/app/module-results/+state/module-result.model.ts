@@ -22,21 +22,6 @@ export interface ModuleResult {
 // module itself yet) - 70% is a placeholder pass mark until one exists.
 const DEFAULT_PASSING_SCORE = 70;
 
-// Points are one per scenario rather than whatever weighting the backend's
-// own total_score/max_possible_score used - a module with 3 scenarios is
-// worth 3 points, one per correct answer, regardless of difficulty or answer
-// mode.
-function computeScoreFromScenarios(scenarios: { correct: boolean }[]): {
-  totalScore: number;
-  maxScore: number;
-  percentageScore: number;
-} {
-  const maxScore = scenarios.length;
-  const totalScore = scenarios.filter((scenario) => scenario.correct).length;
-  const percentageScore = maxScore > 0 ? Math.round((totalScore / maxScore) * 100) : 0;
-  return { totalScore, maxScore, percentageScore };
-}
-
 // COMPLETED beats any other status regardless of id, so a module the learner
 // finished and then retried-but-abandoned (leaving a newer IN_PROGRESS
 // attempt with near-empty stats) still shows the finished attempt's real
@@ -96,7 +81,14 @@ export function buildModuleResult(
   return {
     moduleId: latest.moduleId,
     moduleName: latest.moduleName,
-    ...computeScoreFromScenarios(scenarioResults),
+    // Use the backend's own score, not a recount of scenarioResults - it's
+    // the same score the backend used to decide `passed`, so the two can
+    // never disagree (e.g. a learner picking the right verdict on every
+    // scenario but missing some cues can score under 100% and fail, even
+    // though every scenario reads "correct" here).
+    totalScore: latest.totalScore,
+    maxScore: latest.maxScore,
+    percentageScore: latest.percentageScore,
     passingScore: DEFAULT_PASSING_SCORE,
     passed: latest.passed,
     scenarioResults,
@@ -137,21 +129,20 @@ export function buildModuleResultsOverview(
     }
   }
 
-  const scenarioResults = results?.scenarioResults ?? [];
-
   return Array.from(latestByModule.values())
-    .map((attempt): ModuleResultOverviewRow => {
-      const attemptScenarios = scenarioResults.filter(
-        (scenario) => scenario.moduleResultId === attempt.id,
-      );
-
-      return {
+    .map(
+      (attempt): ModuleResultOverviewRow => ({
         moduleId: attempt.moduleId,
         moduleName: attempt.moduleName,
-        ...computeScoreFromScenarios(attemptScenarios),
+        // Use the backend's own score - see the matching comment in
+        // buildModuleResult for why this can't be recounted from
+        // scenarioResults without disagreeing with `passed`.
+        totalScore: attempt.totalScore,
+        maxScore: attempt.maxScore,
+        percentageScore: attempt.percentageScore,
         passed: attempt.passed,
         completedAt: attempt.completedAt,
-      };
-    })
+      }),
+    )
     .sort((a, b) => (b.completedAt ?? '').localeCompare(a.completedAt ?? ''));
 }

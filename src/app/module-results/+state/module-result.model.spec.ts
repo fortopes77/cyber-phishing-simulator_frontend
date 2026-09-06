@@ -2,7 +2,7 @@ import { buildModuleResult, buildModuleResultsOverview } from './module-result.m
 import { LearnerResults } from 'src/app/results/+state/results.model';
 
 describe('buildModuleResult', () => {
-  it('scores one point per scenario - total/max come from the scenario count and correct count, not the backend summary', () => {
+  it("uses the backend's own total/max/percentage score, not a recount of scenarioResults - so the score shown can never disagree with `passed`", () => {
     const results: LearnerResults = {
       moduleResults: [
         {
@@ -10,8 +10,11 @@ describe('buildModuleResult', () => {
           moduleId: 3,
           moduleName: 'Email Phishing Basics',
           status: 'COMPLETED',
-          // Deliberately different from the scenario-based score below, to
-          // prove these backend-computed fields are no longer used.
+          // Deliberately different from a naive "1 point per correct
+          // scenario" count (which would say 2/3, 67%) - a learner can pick
+          // the right verdict on every scenario but still lose points for
+          // missed cues, so the backend's own weighted score is the only
+          // number that agrees with `passed`.
           totalScore: 18,
           maxScore: 20,
           percentageScore: 90,
@@ -53,10 +56,9 @@ describe('buildModuleResult', () => {
     expect(result).toEqual({
       moduleId: 3,
       moduleName: 'Email Phishing Basics',
-      // 2 correct out of 3 scenarios - one point each.
-      totalScore: 2,
-      maxScore: 3,
-      percentageScore: 67,
+      totalScore: 18,
+      maxScore: 20,
+      percentageScore: 90,
       passingScore: 70,
       passed: true,
       scenarioResults: [
@@ -191,7 +193,7 @@ describe('buildModuleResult', () => {
     ]);
   });
 
-  it('scores an attempt with no matching scenarios as 0 out of 0', () => {
+  it('scores an attempt with no matching scenarios straight from the backend summary', () => {
     const results: LearnerResults = {
       moduleResults: [
         {
@@ -212,14 +214,15 @@ describe('buildModuleResult', () => {
 
     const result = buildModuleResult(results, 1);
 
-    expect(result?.totalScore).toBe(0);
-    expect(result?.maxScore).toBe(0);
-    expect(result?.percentageScore).toBe(0);
+    expect(result?.totalScore).toBe(5);
+    expect(result?.maxScore).toBe(5);
+    expect(result?.percentageScore).toBe(100);
+    expect(result?.scenarioResults).toEqual([]);
   });
 });
 
 describe('buildModuleResultsOverview', () => {
-  it('scores each row as one point per scenario, using the matching moduleResultId', () => {
+  it("scores each row from the backend's own summary, using the matching moduleResultId for the passed flag", () => {
     const results: LearnerResults = {
       moduleResults: [
         {
@@ -229,7 +232,7 @@ describe('buildModuleResultsOverview', () => {
           status: 'COMPLETED',
           totalScore: 99,
           maxScore: 99,
-          percentageScore: 99,
+          percentageScore: 100,
           passed: true,
           completedAt: '2026-09-01T00:00:00.000Z',
         },
@@ -238,9 +241,9 @@ describe('buildModuleResultsOverview', () => {
           moduleId: 3,
           moduleName: 'Instant Messaging Attacks',
           status: 'COMPLETED',
-          totalScore: 99,
+          totalScore: 40,
           maxScore: 99,
-          percentageScore: 99,
+          percentageScore: 40,
           passed: false,
           completedAt: '2026-09-02T00:00:00.000Z',
         },
@@ -257,17 +260,17 @@ describe('buildModuleResultsOverview', () => {
       {
         moduleId: 3,
         moduleName: 'Instant Messaging Attacks',
-        totalScore: 0,
-        maxScore: 2,
-        percentageScore: 0,
+        totalScore: 40,
+        maxScore: 99,
+        percentageScore: 40,
         passed: false,
         completedAt: '2026-09-02T00:00:00.000Z',
       },
       {
         moduleId: 1,
         moduleName: 'Email Phishing Fundamentals',
-        totalScore: 1,
-        maxScore: 1,
+        totalScore: 99,
+        maxScore: 99,
         percentageScore: 100,
         passed: true,
         completedAt: '2026-09-01T00:00:00.000Z',

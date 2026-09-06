@@ -6,7 +6,6 @@ import { Actions, ofType } from '@ngrx/effects';
 import { HeaderComponent } from 'src/app/shared/components/header/header.component';
 import { DashboardCardComponent } from 'src/app/shared/components/dashboard-card/dashboard-card.component';
 import { FormFieldErrorComponent } from 'src/app/shared/components/form-field-error/form-field-error.component';
-import { SendReminderModalComponent } from 'src/app/shared/components/send-reminder-modal/send-reminder-modal.component';
 import { ForgotPasswordModalComponent } from 'src/app/shared/components/forgot-password-modal/forgot-password-modal.component';
 import {
   emailValidator,
@@ -34,7 +33,6 @@ const MIN_PASSWORD_LENGTH = 8;
     HeaderComponent,
     DashboardCardComponent,
     FormFieldErrorComponent,
-    SendReminderModalComponent,
     ForgotPasswordModalComponent,
   ],
   templateUrl: './user-edit.component.html',
@@ -83,11 +81,14 @@ export class UserEditComponent implements OnInit {
   loading = false;
   error: string | null = null;
 
-  // Tracks the role the account was loaded with, not the (possibly
-  // unsaved) value of the role dropdown - so the "Send Reminder Email"
-  // button doesn't appear/disappear as a trainer edits the role field
-  // before saving.
-  isLearner = false;
+  // Which list this form returns to (and, in create mode, which role is
+  // locked in) - derived from the route: /trainer/trainers(/create) manages
+  // trainers, everything else (/trainer/learners...) manages learners.
+  // Trainers can only be created or deleted from the Trainers screen, never
+  // edited there - they're responsible for updating their own details via
+  // their profile modal - so this only ever applies in create mode; there is
+  // no trainers/:id/edit route.
+  managingRole: UserAccountRole = 'user';
 
   // The account's email as loaded from the store - used for the forgot-
   // password email rather than whatever's currently typed in the (possibly
@@ -95,24 +96,19 @@ export class UserEditComponent implements OnInit {
   // hasn't actually been saved yet.
   private loadedUserEmail: string | null = null;
 
-  isSendReminderModalOpen = false;
-  reminderSending = false;
-  reminderError: string | null = null;
-
   isForgotPasswordModalOpen = false;
   forgotPasswordSending = false;
   forgotPasswordError: string | null = null;
 
   ngOnInit(): void {
-    this.isCreateMode = this.route.snapshot.url.some((segment) =>
-      segment.path.includes('create'),
-    );
+    const urlSegments = this.route.snapshot.url.map((segment) => segment.path);
+    this.isCreateMode = urlSegments.some((path) => path.includes('create'));
+    this.managingRole = urlSegments.includes('trainers') ? 'trainer' : 'user';
 
     this.subscribeToUserDetails();
     this.subscribeToLoadingAndError();
     this.subscribeToCreateSuccess();
     this.subscribeToUpdateSuccess();
-    this.subscribeToReminderEmailResult();
     this.subscribeToForgotPasswordResult();
 
     if (this.isCreateMode) {
@@ -123,6 +119,14 @@ export class UserEditComponent implements OnInit {
           Validators.minLength(MIN_PASSWORD_LENGTH),
           passwordComplexityValidator(),
         ]);
+
+      // Creating from the Learners screen always creates a learner, and
+      // creating from the Trainers screen always creates a trainer - lock
+      // the role to whichever screen this is rather than leaving it an open
+      // choice, so trainer creation lives solely on its own dedicated
+      // screen.
+      this.userForm.patchValue({ role: this.managingRole });
+      this.userForm.get('role')?.disable();
       return;
     }
 
@@ -147,7 +151,6 @@ export class UserEditComponent implements OnInit {
         return;
       }
 
-      this.isLearner = user.role === 'user';
       this.loadedUserEmail = user.email ?? null;
       this.userForm.patchValue({
         username: user.username ?? '',
@@ -168,14 +171,18 @@ export class UserEditComponent implements OnInit {
 
   subscribeToCreateSuccess(): void {
     this.actions$.pipe(ofType(UsersActions.createUserSuccess)).subscribe(() => {
-      this.router.navigate(['/trainer/learners']);
+      this.router.navigate([this.listRoute]);
     });
   }
 
   subscribeToUpdateSuccess(): void {
     this.actions$.pipe(ofType(UsersActions.updateUserSuccess)).subscribe(() => {
-      this.router.navigate(['/trainer/learners']);
+      this.router.navigate([this.listRoute]);
     });
+  }
+
+  private get listRoute(): string {
+    return this.managingRole === 'trainer' ? '/trainer/trainers' : '/trainer/learners';
   }
 
   onSubmit(): void {
@@ -209,47 +216,12 @@ export class UserEditComponent implements OnInit {
   }
 
   onCancel(): void {
-    this.router.navigate(['/trainer/learners']);
+    this.router.navigate([this.listRoute]);
   }
 
   get fullNameValue(): string {
     const { firstName, lastName } = this.userForm.getRawValue();
     return `${firstName ?? ''} ${lastName ?? ''}`.trim();
-  }
-
-  openSendReminderModal(): void {
-    this.reminderError = null;
-    this.isSendReminderModalOpen = true;
-  }
-
-  confirmSendReminder(): void {
-    if (!this.userId) {
-      return;
-    }
-
-    this.reminderSending = true;
-    this.store.dispatch(UsersActions.sendReminderEmail({ userId: this.userId }));
-  }
-
-  cancelSendReminder(): void {
-    this.isSendReminderModalOpen = false;
-    this.reminderError = null;
-  }
-
-  private subscribeToReminderEmailResult(): void {
-    this.actions$
-      .pipe(ofType(UsersActions.sendReminderEmailSuccess))
-      .subscribe(() => {
-        this.reminderSending = false;
-        this.isSendReminderModalOpen = false;
-      });
-
-    this.actions$
-      .pipe(ofType(UsersActions.sendReminderEmailFailure))
-      .subscribe(({ error }) => {
-        this.reminderSending = false;
-        this.reminderError = error;
-      });
   }
 
   openForgotPasswordModal(): void {

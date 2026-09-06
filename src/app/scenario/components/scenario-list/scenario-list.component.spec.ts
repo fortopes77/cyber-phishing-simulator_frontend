@@ -74,18 +74,32 @@ describe('ScenarioListComponent', () => {
     component.createActions[0].action();
 
     expect(component.isSelectModuleModalOpen).toBeTrue();
-    expect(store.dispatch).not.toHaveBeenCalledWith(ScenarioActions.createAIScenario());
+    expect(store.dispatch).not.toHaveBeenCalledWith(
+      jasmine.objectContaining({ type: ScenarioActions.createAIScenario.type }),
+    );
   });
 
-  it('should dispatch createAIScenario and track the chosen module once a module is confirmed', () => {
+  it('should dispatch createAIScenario with the simple answer mode and track the chosen module once confirmed', () => {
     component.createActions[0].action();
 
-    component.confirmSelectModule(2);
+    component.confirmSelectModule({ moduleId: 2, answerMode: 'simple' });
 
     expect(component.isSelectModuleModalOpen).toBeFalse();
     expect(component.pendingAiModuleId).toBe(2);
     expect(component.isCreatingWithAi).toBeTrue();
-    expect(store.dispatch).toHaveBeenCalledWith(ScenarioActions.createAIScenario());
+    expect(store.dispatch).toHaveBeenCalledWith(
+      ScenarioActions.createAIScenario({ answerMode: 'simple' }),
+    );
+  });
+
+  it('should dispatch createAIScenario with the detailed answer mode when detailed is chosen', () => {
+    component.createActions[0].action();
+
+    component.confirmSelectModule({ moduleId: 2, answerMode: 'detailed' });
+
+    expect(store.dispatch).toHaveBeenCalledWith(
+      ScenarioActions.createAIScenario({ answerMode: 'detailed' }),
+    );
   });
 
   it('should close the modal without dispatching createAIScenario on cancel', () => {
@@ -94,7 +108,9 @@ describe('ScenarioListComponent', () => {
     component.cancelSelectModule();
 
     expect(component.isSelectModuleModalOpen).toBeFalse();
-    expect(store.dispatch).not.toHaveBeenCalledWith(ScenarioActions.createAIScenario());
+    expect(store.dispatch).not.toHaveBeenCalledWith(
+      jasmine.objectContaining({ type: ScenarioActions.createAIScenario.type }),
+    );
   });
 
   it("should merge the confirmed module id into the AI-generated scenario before dispatching createScenario - the AI API doesn't know about modules, only the backend create call needs one", () => {
@@ -116,5 +132,88 @@ describe('ScenarioListComponent', () => {
         scenario: { title: 'AI generated scenario', content: 'Some email body', moduleId: 2 },
       }),
     );
+  });
+
+  it("should rename the AI response's redFlags to correctCues when the detailed answer mode was chosen - GET /detailed-scenario returns cue phrases under redFlags, not correctCues", () => {
+    actions$ = of(
+      ScenarioActions.createAIScenarioSuccess({
+        scenario: {
+          title: 'AI generated scenario',
+          content: 'Some email body',
+          redFlags: ['Verify your details immediately', 'midnight deadline'],
+        },
+      }),
+    );
+    fixture = TestBed.createComponent(ScenarioListComponent);
+    component = fixture.componentInstance;
+    component.pendingAiModuleId = 2;
+    component.pendingAiAnswerMode = 'detailed';
+    fixture.detectChanges();
+
+    expect(store.dispatch).toHaveBeenCalledWith(
+      ScenarioActions.createScenario({
+        scenario: {
+          title: 'AI generated scenario',
+          content: 'Some email body',
+          redFlags: ['Verify your details immediately', 'midnight deadline'],
+          correctCues: ['Verify your details immediately', 'midnight deadline'],
+          moduleId: 2,
+        },
+      }),
+    );
+  });
+
+  describe('Module column', () => {
+    function moduleColumn() {
+      return component.columns.find((column) => column.key === 'moduleId')!;
+    }
+
+    it("should resolve moduleId to the module's name from the catalog, not show the raw id", () => {
+      store.overrideSelector(selectScenarioList, [
+        {
+          id: 1,
+          title: 'Test scenario',
+          category: 'phishing',
+          difficulty: 'Medium',
+          interactionType: 'Email',
+          moduleId: 1,
+        },
+      ]);
+      store.refreshState();
+
+      expect(moduleColumn().valueFormatter!(1, {})).toBe('Email Phishing Basics');
+    });
+
+    it('should show "Unassigned" when the scenario has no module', () => {
+      store.overrideSelector(selectScenarioList, [
+        {
+          id: 1,
+          title: 'Test scenario',
+          category: 'phishing',
+          difficulty: 'Medium',
+          interactionType: 'Email',
+          moduleId: null,
+        },
+      ]);
+      store.refreshState();
+
+      expect(moduleColumn().valueFormatter!(null, {})).toBe('Unassigned');
+    });
+
+    it('should fall back to the raw id if the module is not in the catalog', () => {
+      store.overrideSelector(selectScenarioList, [
+        {
+          id: 1,
+          title: 'Test scenario',
+          category: 'phishing',
+          difficulty: 'Medium',
+          interactionType: 'Email',
+          moduleId: 99,
+        },
+      ]);
+      store.refreshState();
+
+      expect(moduleColumn().valueFormatter!(99, {})).toBe('99');
+    });
   });
 });

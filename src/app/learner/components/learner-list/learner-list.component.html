@@ -5,6 +5,11 @@
   [createActions]="createActions"
 ></app-header>
 
+<div class="role-tabs">
+  <a routerLink="/trainer/learners" routerLinkActive="active" class="role-tab">Learners</a>
+  <a routerLink="/trainer/trainers" routerLinkActive="active" class="role-tab">Trainers</a>
+</div>
+
 <div class="learner-statistics">
   <app-data-card
     label="Total Learners"

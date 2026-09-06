@@ -18,6 +18,8 @@ import { LearnerModulesListComponent } from './modules/components/learner-module
 import { TrainerModulesListComponent } from './modules/components/trainer-modules-list/trainer-modules-list.component';
 import { ModuleEditComponent } from './modules/components/module-edit/module-edit.component';
 import { UserEditComponent } from './users/components/user-edit/user-edit.component';
+import { TrainerListComponent } from './users/components/trainer-list/trainer-list.component';
+import { TrainerReportsComponent } from './admin/components/trainer-reports/trainer-reports.component';
 
 /**
  * Route-level access control. Every protected route declares the roles that
@@ -126,6 +128,18 @@ const routes: Routes = [
         data: { breadcrumb: 'Add Learner', roles: TRAINER_ROLES },
       },
       {
+        path: 'trainers',
+        component: TrainerListComponent,
+        canActivate: [AuthGuard],
+        data: { breadcrumb: 'Trainers', roles: TRAINER_ROLES },
+      },
+      {
+        path: 'trainers/create',
+        component: UserEditComponent,
+        canActivate: [AuthGuard],
+        data: { breadcrumb: 'Add Trainer', roles: TRAINER_ROLES },
+      },
+      {
         path: 'modules',
         component: TrainerModulesListComponent,
         canActivate: [AuthGuard],
@@ -167,6 +181,12 @@ const routes: Routes = [
         canActivate: [AuthGuard],
         data: { breadcrumb: 'Create Scenario', roles: TRAINER_ROLES },
       },
+      {
+        path: 'analytics',
+        component: TrainerReportsComponent,
+        canActivate: [AuthGuard],
+        data: { breadcrumb: 'Reports & Analytics', roles: TRAINER_ROLES },
+      },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
   },
@@ -191,6 +211,7 @@ const routes: Routes = [
     TrainerModulesListComponent,
     ModuleEditComponent,
     UserEditComponent,
+    TrainerListComponent,
   ],
   exports: [RouterModule],
   providers: [AuthGuard],

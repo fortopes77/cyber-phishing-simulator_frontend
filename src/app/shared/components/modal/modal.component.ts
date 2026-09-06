@@ -25,6 +25,10 @@ let nextModalId = 0;
 export class ModalComponent {
   @Input() isOpen = false;
   @Input() title = '';
+  // Lets a specific modal opt into a wider card (e.g. one with a lot of
+  // inline content) without changing the default width every other modal
+  // in the app uses.
+  @Input() maxWidth?: string;
 
   @Output() closed = new EventEmitter<void>();
 

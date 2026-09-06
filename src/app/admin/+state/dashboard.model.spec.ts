@@ -1,113 +1,156 @@
 import { normalizeTrainerDashboardStats } from './dashboard.model';
 
 describe('normalizeTrainerDashboardStats', () => {
-  it('maps a fully-populated overview and a flat activity array', () => {
-    const stats = normalizeTrainerDashboardStats(
-      {
-        totalLearners: 52,
-        activeModules: 8,
-        completionRate: 78,
-        averageScore: 81,
-        moduleCompletion: [
-          { moduleId: 1, moduleName: 'Email Phishing Basics', completionPercentage: 50 },
-        ],
-      },
-      [
-        {
-          id: 1,
-          userName: 'Joseph Smith',
-          action: 'Completed Email Phishing Basics',
-          status: 'completed',
-          timestamp: '2 hours ago',
-          moduleName: 'Email Phishing Basics',
-        },
-      ],
-    );
+  const overview = {
+    totalLearners: 52,
+    activeModules: 8,
+    overallCompletionRate: 78,
+    averageScore: 81,
+    moduleCompletion: [
+      { moduleId: 4, moduleName: 'Spotting Phishing Emails', completionPercentage: 62 },
+    ],
+  };
 
-    expect(stats).toEqual({
-      totalLearners: 52,
-      activeModules: 8,
-      completionRate: 78,
-      averageScore: 81,
-      moduleCompletion: [
-        { moduleId: 1, moduleName: 'Email Phishing Basics', completionPercentage: 50 },
-      ],
-      recentActivity: [
-        {
-          id: '1',
-          userName: 'Joseph Smith',
-          action: 'Completed Email Phishing Basics',
-          status: 'completed',
-          timestamp: '2 hours ago',
-          moduleName: 'Email Phishing Basics',
-        },
-      ],
-    });
+  beforeEach(() => {
+    jasmine.clock().install();
+    jasmine.clock().mockDate(new Date('2026-08-22T14:14:00.000Z'));
   });
 
-  it('falls back through alternate field names for the headline stats', () => {
-    const stats = normalizeTrainerDashboardStats(
-      { learnerCount: 10, moduleCount: 3, averageCompletionRate: 60, avgScore: 72 },
-      [],
-    );
-
-    expect(stats.totalLearners).toBe(10);
-    expect(stats.activeModules).toBe(3);
-    expect(stats.completionRate).toBe(60);
-    expect(stats.averageScore).toBe(72);
+  afterEach(() => {
+    jasmine.clock().uninstall();
   });
 
-  it('unwraps an activity response wrapped in { activities: [...] } or { items: [...] }', () => {
-    const wrappedInActivities = normalizeTrainerDashboardStats(
-      {},
-      { activities: [{ userName: 'Ava' }] },
-    );
-    const wrappedInItems = normalizeTrainerDashboardStats({}, { items: [{ userName: 'Noah' }] });
+  it('maps the headline stats straight from DashboardOverviewDto', () => {
+    const stats = normalizeTrainerDashboardStats(overview, { activity: [] });
 
-    expect(wrappedInActivities.recentActivity[0].userName).toBe('Ava');
-    expect(wrappedInItems.recentActivity[0].userName).toBe('Noah');
+    expect(stats.totalLearners).toBe(52);
+    expect(stats.activeModules).toBe(8);
+    expect(stats.completionRate).toBe(78);
+    expect(stats.averageScore).toBe(81);
   });
 
-  it('maps a module completion list using alternate field names', () => {
-    const stats = normalizeTrainerDashboardStats(
-      { modules: [{ id: 2, title: 'SMS Phishing Basics', completionRate: 28 }] },
-      [],
-    );
+  it('maps the per-module completion breakdown straight from DashboardOverviewDto', () => {
+    const stats = normalizeTrainerDashboardStats(overview, { activity: [] });
 
     expect(stats.moduleCompletion).toEqual([
-      { moduleId: 2, moduleName: 'SMS Phishing Basics', completionPercentage: 28 },
+      { moduleId: 4, moduleName: 'Spotting Phishing Emails', completionPercentage: 62 },
     ]);
   });
 
-  it('normalizes varied activity status casings to the known ActivityStatus values', () => {
+  it('returns an empty moduleCompletion list when the organisation has no modules', () => {
     const stats = normalizeTrainerDashboardStats(
-      {},
-      [
-        { status: 'COMPLETED' },
-        { status: 'in-progress' },
-        { status: 'FAILED' },
-        { status: 'something-unrecognised' },
-      ],
+      { ...overview, moduleCompletion: [] },
+      { activity: [] },
     );
 
-    expect(stats.recentActivity.map((item) => item.status)).toEqual([
-      'completed',
-      'started',
-      'failed',
-      'started',
+    expect(stats.moduleCompletion).toEqual([]);
+  });
+
+  it('maps a completed activity item to its display fields', () => {
+    const stats = normalizeTrainerDashboardStats(overview, {
+      activity: [
+        {
+          userId: 12,
+          username: 'jane.doe',
+          firstName: 'Jane',
+          lastName: 'Doe',
+          moduleId: 4,
+          moduleTitle: 'Spotting Phishing Emails',
+          action: 'completed',
+          timestamp: '2026-08-22T12:14:00.000Z',
+        },
+      ],
+    });
+
+    expect(stats.recentActivity).toEqual([
+      {
+        id: '12-4-2026-08-22T12:14:00.000Z',
+        userName: 'Jane Doe',
+        action: 'Completed Spotting Phishing Emails',
+        status: 'completed',
+        timestamp: '2 hours ago',
+        moduleName: 'Spotting Phishing Emails',
+      },
     ]);
   });
 
-  it('defaults to empty lists and zeroed stats when nothing is provided', () => {
-    const stats = normalizeTrainerDashboardStats({}, {});
-
-    expect(stats).toEqual({
-      totalLearners: 0,
-      activeModules: 0,
-      completionRate: 0,
-      averageScore: 0,
-      moduleCompletion: [],
-      recentActivity: [],
+  it('maps "started" and "assigned" actions to their labels and statuses', () => {
+    const stats = normalizeTrainerDashboardStats(overview, {
+      activity: [
+        {
+          userId: 1,
+          username: 'a',
+          firstName: 'Ava',
+          lastName: 'Smith',
+          moduleId: 1,
+          moduleTitle: 'Module A',
+          action: 'started',
+          timestamp: '2026-08-22T14:04:00.000Z',
+        },
+        {
+          userId: 2,
+          username: 'b',
+          firstName: 'Ben',
+          lastName: 'Jones',
+          moduleId: 2,
+          moduleTitle: 'Module B',
+          action: 'assigned',
+          timestamp: '2026-08-22T14:14:00.000Z',
+        },
+      ],
     });
+
+    expect(stats.recentActivity[0].action).toBe('Started Module A');
+    expect(stats.recentActivity[0].status).toBe('started');
+    expect(stats.recentActivity[1].action).toBe('Assigned Module B');
+    // ActivityStatus has no "assigned" state - falls back to "started".
+    expect(stats.recentActivity[1].status).toBe('started');
+  });
+
+  it('formats the activity timestamp as a relative time string', () => {
+    const stats = normalizeTrainerDashboardStats(overview, {
+      activity: [
+        {
+          userId: 1, username: 'a', firstName: 'Ava', lastName: 'Smith',
+          moduleId: 1, moduleTitle: 'Module A', action: 'completed',
+          timestamp: '2026-08-22T14:13:30.000Z',
+        },
+        {
+          userId: 2, username: 'b', firstName: 'Ben', lastName: 'Jones',
+          moduleId: 2, moduleTitle: 'Module B', action: 'completed',
+          timestamp: '2026-08-21T14:14:00.000Z',
+        },
+        {
+          userId: 3, username: 'c', firstName: 'Cara', lastName: 'Lee',
+          moduleId: 3, moduleTitle: 'Module C', action: 'completed',
+          timestamp: '2026-08-19T14:14:00.000Z',
+        },
+      ],
+    });
+
+    expect(stats.recentActivity[0].timestamp).toBe('Just now');
+    expect(stats.recentActivity[1].timestamp).toBe('Yesterday');
+    expect(stats.recentActivity[2].timestamp).toBe('3 days ago');
+  });
+
+  it('maps every activity item in the list, in order', () => {
+    const stats = normalizeTrainerDashboardStats(overview, {
+      activity: [
+        {
+          userId: 1, username: 'a', firstName: 'Ava', lastName: 'Smith',
+          moduleId: 1, moduleTitle: 'Module A', action: 'completed',
+          timestamp: '2026-08-22T14:14:00.000Z',
+        },
+        {
+          userId: 2, username: 'b', firstName: 'Ben', lastName: 'Jones',
+          moduleId: 2, moduleTitle: 'Module B', action: 'started',
+          timestamp: '2026-08-22T14:14:00.000Z',
+        },
+      ],
+    });
+
+    expect(stats.recentActivity.length).toBe(2);
+    expect(stats.recentActivity[0].userName).toBe('Ava Smith');
+    expect(stats.recentActivity[1].userName).toBe('Ben Jones');
   });
 });

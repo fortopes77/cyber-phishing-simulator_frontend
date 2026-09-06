@@ -39,18 +39,35 @@ describe('DashboardEffects', () => {
   });
 
   it("should fetch both endpoints with the trainer's organisationId and dispatch fetchTrainerDashboardSuccess", (done) => {
+    jasmine.clock().install();
+    jasmine.clock().mockDate(new Date('2026-08-22T14:14:00.000Z'));
+
     dashboardService.getOverview.and.returnValue(
-      of({ totalLearners: 52, activeModules: 8, completionRate: 78, averageScore: 81 }),
+      of({
+        totalLearners: 52,
+        activeModules: 8,
+        overallCompletionRate: 78,
+        averageScore: 81,
+        moduleCompletion: [
+          { moduleId: 4, moduleName: 'Email Phishing Basics', completionPercentage: 62 },
+        ],
+      }),
     );
     dashboardService.getActivity.and.returnValue(
-      of([
-        {
-          userName: 'Joseph Smith',
-          action: 'Completed Email Phishing Basics',
-          status: 'completed',
-          timestamp: '2 hours ago',
-        },
-      ]),
+      of({
+        activity: [
+          {
+            userId: 12,
+            username: 'joseph.smith',
+            firstName: 'Joseph',
+            lastName: 'Smith',
+            moduleId: 4,
+            moduleTitle: 'Email Phishing Basics',
+            action: 'completed' as const,
+            timestamp: '2026-08-22T12:14:00.000Z',
+          },
+        ],
+      }),
     );
     actions$ = of(DashboardActions.fetchTrainerDashboard());
 
@@ -64,20 +81,23 @@ describe('DashboardEffects', () => {
             activeModules: 8,
             completionRate: 78,
             averageScore: 81,
-            moduleCompletion: [],
+            moduleCompletion: [
+              { moduleId: 4, moduleName: 'Email Phishing Basics', completionPercentage: 62 },
+            ],
             recentActivity: [
               {
-                id: undefined,
+                id: '12-4-2026-08-22T12:14:00.000Z',
                 userName: 'Joseph Smith',
                 action: 'Completed Email Phishing Basics',
                 status: 'completed',
                 timestamp: '2 hours ago',
-                moduleName: undefined,
+                moduleName: 'Email Phishing Basics',
               },
             ],
           },
         }),
       );
+      jasmine.clock().uninstall();
       done();
     });
   });
@@ -86,7 +106,7 @@ describe('DashboardEffects', () => {
     dashboardService.getOverview.and.returnValue(
       throwError(() => new Error('Network error')),
     );
-    dashboardService.getActivity.and.returnValue(of([]));
+    dashboardService.getActivity.and.returnValue(of({ activity: [] }));
     actions$ = of(DashboardActions.fetchTrainerDashboard());
 
     effects.fetchTrainerDashboard$.subscribe((action) => {

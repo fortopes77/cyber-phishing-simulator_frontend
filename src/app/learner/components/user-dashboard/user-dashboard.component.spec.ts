@@ -229,20 +229,53 @@ describe('UserDashboardComponent', () => {
   it('should compute dashboard stats from GET /results/me', () => {
     expect(component.stats.scenariosCompleted).toBe(1);
     expect(component.stats.totalScenarios).toBe(2);
-    expect(component.stats.averageScore).toBe(100);
+    // No moduleResults in the base fixture yet - nothing completed to
+    // average.
+    expect(component.stats.averageScore).toBe(0);
   });
 
-  it("should use the backend's own averageScore when GET /results/me provides one", () => {
+  it("should average each completed module's own backend-computed percentageScore, not a raw scenario-correct count", () => {
     store.overrideSelector(selectMyResults, {
-      scenarioResults: [{ scenarioId: '1', moduleId: 1, correct: true }],
-      averageScore: 88,
+      moduleResults: [
+        {
+          id: 1,
+          moduleId: 1,
+          moduleName: 'Module One',
+          status: 'COMPLETED',
+          totalScore: 3,
+          maxScore: 3,
+          percentageScore: 100,
+          passed: true,
+          completedAt: '2026-09-01T00:00:00.000Z',
+        },
+        {
+          id: 2,
+          moduleId: 2,
+          moduleName: 'Module Two',
+          status: 'COMPLETED',
+          totalScore: 3,
+          maxScore: 5,
+          percentageScore: 60,
+          passed: false,
+          completedAt: '2026-09-02T00:00:00.000Z',
+        },
+      ],
+      // Every scenario reads "correct" here - a naive correct-count would
+      // say 100%. The true average (80%) only comes from the modules' own
+      // backend-computed scores, which account for missed cues/partial
+      // credit a plain correct/incorrect count can't see.
+      scenarioResults: [
+        { scenarioId: '1', moduleId: 1, correct: true },
+        { scenarioId: '2', moduleId: 2, correct: true },
+      ],
+      averageScore: null,
     });
     store.refreshState();
 
-    expect(component.stats.averageScore).toBe(88);
+    expect(component.stats.averageScore).toBe(80);
   });
 
-  it('should derive averageScore from the individual scenario results when the backend sends none', () => {
+  it('should show 0 average score when no module has been completed yet', () => {
     store.overrideSelector(selectMyResults, {
       scenarioResults: [
         { scenarioId: '1', moduleId: 1, correct: true },
@@ -253,7 +286,7 @@ describe('UserDashboardComponent', () => {
     store.refreshState();
 
     expect(component.stats.scenariosCompleted).toBe(2);
-    expect(component.stats.averageScore).toBe(50);
+    expect(component.stats.averageScore).toBe(0);
   });
 
   it('should navigate to the modules list when View All is clicked', () => {

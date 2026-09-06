@@ -6,6 +6,10 @@ export const selectUserList = createSelector(
   selectUsersState,
   (state) => state.userList,
 );
+export const selectTrainerList = createSelector(
+  selectUsersState,
+  (state) => state.trainerList,
+);
 export const selectUser = createSelector(
   selectUsersState,
   (state) => state.user,

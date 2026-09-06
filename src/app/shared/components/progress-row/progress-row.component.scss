@@ -22,3 +22,14 @@
     transition: width 300ms ease;
   }
 }
+
+// Browsers drop background colors when printing by default (to save ink) -
+// since the bar and its fill are drawn entirely with background-color, that
+// makes them invisible on a printed/PDF-exported page without this.
+@media print {
+  .progress-row-bar,
+  .progress-row-fill {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}

@@ -19,6 +19,13 @@ export interface UserAccount {
   email: string;
   role: UserAccountRole;
   organisationId?: number;
+  // The four fields below are only present on GET /users/learners
+  // (LearnerResponseDto) - absent for trainers and for the plain UserAccount
+  // returned by create/update/GET /users/trainers.
+  progressPercentage?: number;
+  averageScore?: number | null;
+  lastActiveAt?: string | null;
+  weaknesses?: string[];
 }
 
 /** Payload for POST /users (CreateUserDto). */
@@ -56,6 +63,34 @@ export interface RawUserAccount {
   lastName: string;
   role: string;
   organisationId?: number;
+  progressPercentage?: number;
+  averageScore?: number | null;
+  lastActiveAt?: string | null;
+  weaknesses?: string[];
+}
+
+// GET /users/learners (LearnerResponseDto) returns `weaknesses` as the
+// scenario-category enum, weakest first - labels here match that enum's
+// exact spelling (confirmed via the live GET /api-json schema). Kept
+// separate from scenario.model.ts's ScenarioCategory/CATEGORY_OPTIONS since
+// that enum has two confirmed backend typos (RANSONWARE,
+// BUISINESS_EMAIL_COMPROMISE) that this endpoint's enum does not share.
+// Shared by the learner list and the trainer reports page - anywhere a raw
+// weakness code needs a human-readable label.
+export const LEARNER_WEAKNESS_LABELS: Record<string, string> = {
+  PHISHING: 'Phishing',
+  SMISHING: 'Smishing (SMS)',
+  VISHING: 'Vishing (Voice)',
+  SOCIAL_ENGINEERING: 'Social Engineering',
+  MALWARE: 'Malware',
+  RANSOMWARE: 'Ransomware',
+  BUSINESS_EMAIL_COMPROMISE: 'Business Email Compromise',
+  SPEAR_PHISHING: 'Spear Phishing',
+  WHALING: 'Whaling',
+};
+
+export function getWeaknessLabel(category: string): string {
+  return LEARNER_WEAKNESS_LABELS[category] ?? category;
 }
 
 const ROLE_MAP: Record<string, UserAccountRole> = {

@@ -19,3 +19,18 @@ app-nav + .app-container {
   margin-left: 250px;
   padding: 2rem;
 }
+
+// Exporting a report as a PDF (see TrainerReportsComponent.exportReport)
+// goes through the browser's own print pipeline, so what should print is
+// just the routed page content - not the sidebar nav or breadcrumb trail.
+@media print {
+  app-nav,
+  app-breadcrumbs {
+    display: none !important;
+  }
+
+  app-nav + .app-container {
+    margin-left: 0;
+    padding: 0;
+  }
+}

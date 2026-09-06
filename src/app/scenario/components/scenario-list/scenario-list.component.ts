@@ -16,9 +16,12 @@ import { DashboardCardComponent } from 'src/app/shared/components/dashboard-card
 import { Actions, ofType } from '@ngrx/effects';
 import { DeleteConfirmationModalComponent } from 'src/app/shared/components/delete-confirmation-modal/delete-confirmation-modal.component';
 import { SearchFilterBarComponent } from 'src/app/shared/components/search-filter-bar/search-filter-bar.component';
-import { SelectModuleModalComponent } from 'src/app/shared/components/select-module-modal/select-module-modal.component';
+import {
+  SelectModuleConfirmation,
+  SelectModuleModalComponent,
+} from 'src/app/shared/components/select-module-modal/select-module-modal.component';
 import { iconLibrary } from 'src/app/shared/constants/font-awesome-icons.const';
-import { getScenarioOptionLabel } from '../../models/scenario.model';
+import { getScenarioOptionLabel, ScenarioAnswerMode } from '../../models/scenario.model';
 import { ModulesActions } from 'src/app/modules/+state/modules.actions';
 import { selectModuleList } from 'src/app/modules/+state/modules.selectors';
 
@@ -63,10 +66,15 @@ export class ScenarioListComponent implements OnInit {
   // scenario content - but POST /scenarios requires one, so the trainer
   // picks it up front via isSelectModuleModalOpen, and it's carried in
   // pendingAiModuleId until the generated content comes back and the two
-  // are merged (see subscribeToAIScenarioCreateSuccess).
+  // are merged (see subscribeToAIScenarioCreateSuccess). pendingAiAnswerMode
+  // is carried the same way, since the raw AI response doesn't say which
+  // shape it is: GET /detailed-scenario returns the cue phrases under
+  // `redFlags`, not `correctCues` (confirmed live), so the merge step has to
+  // know the chosen mode to rename that field correctly.
   modules: { moduleId: number; moduleName: string }[] = [];
   isSelectModuleModalOpen = false;
   pendingAiModuleId: number | null = null;
+  pendingAiAnswerMode: ScenarioAnswerMode = 'simple';
 
   constructor(
     private store: Store,
@@ -127,12 +135,19 @@ export class ScenarioListComponent implements OnInit {
   subscribeToAIScenarioCreateSuccess(): void {
     this.actions$
       .pipe(ofType(ScenarioActions.createAIScenarioSuccess))
-      .subscribe((scenario: any) => {
-        this.store.dispatch(
-          ScenarioActions.createScenario({
-            scenario: { ...scenario['scenario'], moduleId: this.pendingAiModuleId },
-          }),
-        );
+      .subscribe((action: any) => {
+        const aiScenario = action['scenario'];
+        // GET /detailed-scenario returns the cue phrases under `redFlags`,
+        // not `correctCues` (confirmed live) - rename it here so
+        // toScenarioPayload sends correctCues, not neither field, which is
+        // what the backend's "provide one, not both/neither" validation was
+        // actually rejecting.
+        const scenario =
+          this.pendingAiAnswerMode === 'detailed'
+            ? { ...aiScenario, correctCues: aiScenario?.redFlags, moduleId: this.pendingAiModuleId }
+            : { ...aiScenario, moduleId: this.pendingAiModuleId };
+
+        this.store.dispatch(ScenarioActions.createScenario({ scenario }));
       });
   }
 
@@ -247,34 +262,49 @@ export class ScenarioListComponent implements OnInit {
    * they're only shown in the edit form. Columns are a fixed set matching
    * the Scenario resource rather than derived from whatever keys happen to
    * be on the first row, so the table doesn't shift shape (or grow a
-   * `correctCues` array column) if the API response changes.
+   * `correctCues` array column) if the API response changes. The Module
+   * column's valueFormatter closes over `this` (not a static array) so it
+   * always resolves against the latest module catalog - GET /scenarios only
+   * returns moduleId, not the module's name, so this joins it against the
+   * list already fetched for the "Create with AI" module picker.
    */
-  private static readonly COLUMNS: ListColumn[] = [
-    { key: 'title', label: 'Title' },
-    {
-      key: 'category',
-      label: 'Category',
-      valueFormatter: (value) => getScenarioOptionLabel(value),
-    },
-    {
-      key: 'difficulty',
-      label: 'Difficulty',
-      valueFormatter: (value) => getScenarioOptionLabel(value),
-    },
-    {
-      key: 'interactionType',
-      label: 'Interaction Type',
-      valueFormatter: (value) => getScenarioOptionLabel(value),
-    },
-    { key: 'moduleId', label: 'Module' },
-  ];
-
   private buildColumns(rows: Record<string, unknown>[]): ListColumn[] {
     if (!rows.length) {
       return [];
     }
 
-    return ScenarioListComponent.COLUMNS;
+    return [
+      { key: 'title', label: 'Title' },
+      {
+        key: 'category',
+        label: 'Category',
+        valueFormatter: (value) => getScenarioOptionLabel(value),
+      },
+      {
+        key: 'difficulty',
+        label: 'Difficulty',
+        valueFormatter: (value) => getScenarioOptionLabel(value),
+      },
+      {
+        key: 'interactionType',
+        label: 'Interaction Type',
+        valueFormatter: (value) => getScenarioOptionLabel(value),
+      },
+      {
+        key: 'moduleId',
+        label: 'Module',
+        valueFormatter: (value) => this.getModuleName(value),
+      },
+    ];
+  }
+
+  private getModuleName(moduleId: unknown): string {
+    if (moduleId == null) {
+      return 'Unassigned';
+    }
+
+    const match = this.modules.find((module) => module.moduleId === Number(moduleId));
+    return match ? match.moduleName : String(moduleId);
   }
 
   private handleEdit(row: Record<string, unknown>): void {
@@ -325,11 +355,12 @@ export class ScenarioListComponent implements OnInit {
     this.isSelectModuleModalOpen = true;
   }
 
-  confirmSelectModule(moduleId: number): void {
+  confirmSelectModule(selection: SelectModuleConfirmation): void {
     this.isSelectModuleModalOpen = false;
-    this.pendingAiModuleId = moduleId;
+    this.pendingAiModuleId = selection.moduleId;
+    this.pendingAiAnswerMode = selection.answerMode;
     this.isCreatingWithAi = true;
-    this.store.dispatch(ScenarioActions.createAIScenario());
+    this.store.dispatch(ScenarioActions.createAIScenario({ answerMode: selection.answerMode }));
   }
 
   cancelSelectModule(): void {

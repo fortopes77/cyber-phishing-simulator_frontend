@@ -1,0 +1,67 @@
+.dashboard-error {
+  background: #fdecec;
+  border: 1px solid #f3c6c6;
+  color: #b3261e;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+}
+
+.empty-state {
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.reports-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}
+
+.export-button {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 0.4rem;
+  padding: 0.6rem 1.2rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover {
+    background: #1d4ed8;
+  }
+}
+
+.dashboard-statistics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.report-section {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+
+  > * {
+    flex: 1;
+  }
+}
+
+@media print {
+  // The export button and any load-error banner are page chrome, not part
+  // of the report itself.
+  .reports-toolbar,
+  .dashboard-error {
+    display: none !important;
+  }
+
+  // Let a two-column section split across a page break, but keep it from
+  // splitting mid-column (see dashboard-card.component.scss for the
+  // per-card break-inside rule).
+  .report-section {
+    display: block;
+  }
+}

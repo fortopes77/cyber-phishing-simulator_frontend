@@ -12,8 +12,10 @@ import { ScenarioActions } from 'src/app/scenario/+state/scenario.actions';
 import { selectScenarioList } from 'src/app/scenario/+state/scenario.selectors';
 import { ResultsActions } from 'src/app/results/+state/results.actions';
 import { selectMyResults } from 'src/app/results/+state/results.selectors';
-import { LearnerResults } from 'src/app/results/+state/results.model';
-import { buildModuleResultsOverview } from 'src/app/module-results/+state/module-result.model';
+import {
+  buildModuleResultsOverview,
+  ModuleResultOverviewRow,
+} from 'src/app/module-results/+state/module-result.model';
 
 interface AssignedModule {
   id: number;
@@ -93,12 +95,15 @@ export class UserDashboardComponent implements OnInit {
         (results?.scenarioResults ?? []).map((result) => result.scenarioId),
       );
 
-      // Per-module pass/fail, keyed by moduleId - buildModuleResultsOverview
-      // already collapses a module's retries down to its most recent
-      // COMPLETED attempt (see the module-results page), so it's reused here
-      // instead of duplicating that dedup logic.
+      // Per-module pass/fail and score, keyed by moduleId -
+      // buildModuleResultsOverview already collapses a module's retries down
+      // to its most recent COMPLETED attempt and uses the backend's own
+      // percentageScore (see the module-results page), so it's reused here
+      // instead of duplicating that dedup logic or recomputing from
+      // individual scenarios.
+      const completedModuleResults = buildModuleResultsOverview(results);
       const moduleResultByModuleId = new Map(
-        buildModuleResultsOverview(results).map((row) => [row.moduleId, row]),
+        completedModuleResults.map((row) => [row.moduleId, row]),
       );
 
       this.assignedModules = (moduleList ?? [])
@@ -176,26 +181,29 @@ export class UserDashboardComponent implements OnInit {
         totalModules: this.assignedModules.length,
         scenariosCompleted,
         totalScenarios,
-        averageScore: this.deriveAverageScore(results),
+        averageScore: this.deriveAverageScore(completedModuleResults),
       };
     });
   }
 
-  // The backend's own averageScore (when it sends one) beats a client-side
-  // recomputation from the individual scenario results.
-  private deriveAverageScore(results: LearnerResults | null): number {
-    if (results?.averageScore != null) {
-      return results.averageScore;
-    }
-
-    if (!results?.scenarioResults.length) {
+  // Averages each completed module's own backend-computed percentageScore
+  // (the same score its Passed/Not Passed status is based on) rather than
+  // recounting "correct scenarios / total scenarios" - that naive count
+  // ignores per-scenario deductions (missed cues, partial credit) the
+  // backend's score already accounts for, so it can overstate the average
+  // relative to what the module pages themselves show. GET /results/me
+  // (LearnerResultsSummaryDto) has no overall averageScore field of its own
+  // to defer to instead (confirmed via the live API schema).
+  private deriveAverageScore(completedModuleResults: ModuleResultOverviewRow[]): number {
+    if (!completedModuleResults.length) {
       return 0;
     }
 
-    const correctCount = results.scenarioResults.filter(
-      (result) => result.correct,
-    ).length;
-    return Math.round((correctCount / results.scenarioResults.length) * 100);
+    const totalPercentage = completedModuleResults.reduce(
+      (sum, module) => sum + module.percentageScore,
+      0,
+    );
+    return Math.round(totalPercentage / completedModuleResults.length);
   }
 
   private deriveLevel(

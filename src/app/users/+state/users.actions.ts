@@ -9,6 +9,13 @@ export const UsersActions = createActionGroup({
     fetchList: props<{ organisationId: number }>(),
     fetchListSuccess: props<{ users: UserAccount[] }>(),
     fetchListFailure: props<{ error: string }>(),
+    // Trainer-management screen's list of this org's trainers - kept in a
+    // separate state slice from fetchList's learner list (see
+    // UsersState.trainerList) so visiting either the Learners or Trainers
+    // screen doesn't clobber the other's already-loaded data.
+    fetchTrainerList: props<{ organisationId: number }>(),
+    fetchTrainerListSuccess: props<{ users: UserAccount[] }>(),
+    fetchTrainerListFailure: props<{ error: string }>(),
     fetchUserDetails: props<{ userId: string }>(),
     fetchUserDetailsSuccess: props<{ user: UserAccount }>(),
     fetchUserDetailsFailure: props<{ error: string }>(),
@@ -21,16 +28,13 @@ export const UsersActions = createActionGroup({
     deleteUser: props<{ userId: string }>(),
     deleteUserSuccess: props<{ userId: string }>(),
     deleteUserFailure: props<{ error: string }>(),
-    // Trainer-initiated reset of another user's password (LearnerListComponent's
-    // "Reset Password" row action) and the "send reminder email" action on
-    // UserEditComponent. Neither mutates anything in UsersState - both are
-    // tracked locally (loading/error) in the component that dispatched them
-    // via an Actions$ subscription, so users.reducer has no cases for these.
+    // Trainer-initiated reset of another user's password
+    // (LearnerListComponent's "Reset Password" row action). Doesn't mutate
+    // anything in UsersState - loading/error is tracked locally in the
+    // component that dispatched it via an Actions$ subscription, so
+    // users.reducer has no cases for this.
     resetUserPassword: props<{ userId: string; newPassword: string }>(),
     resetUserPasswordSuccess: props<{ userId: string }>(),
     resetUserPasswordFailure: props<{ error: string }>(),
-    sendReminderEmail: props<{ userId: string }>(),
-    sendReminderEmailSuccess: props<{ userId: string }>(),
-    sendReminderEmailFailure: props<{ error: string }>(),
   },
 });

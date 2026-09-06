@@ -20,6 +20,12 @@
             >Learners</a
           >
         </li>
+        <li>
+          <fa-icon [icon]="fontAwesomeIcons.userGroupIcon"></fa-icon>
+          <a routerLink="/trainer/trainers" routerLinkActive="active"
+            >Trainers</a
+          >
+        </li>
         <!-- TODO PHISH-133: Implement Cohorts feature -->
         <!-- <li>
           <fa-icon [icon]="fontAwesomeIcons.userGroupIcon"></fa-icon>
@@ -39,12 +45,6 @@
           <fa-icon [icon]="fontAwesomeIcons.chartColumnIcon"></fa-icon>
           <a routerLink="/trainer/analytics" routerLinkActive="active"
             >Reports & Analytics</a
-          >
-        </li>
-        <li>
-          <fa-icon [icon]="fontAwesomeIcons.cogIcon"></fa-icon>
-          <a routerLink="/trainer/analytics" routerLinkActive="active"
-            >System Settings</a
           >
         </li>
       </ul>

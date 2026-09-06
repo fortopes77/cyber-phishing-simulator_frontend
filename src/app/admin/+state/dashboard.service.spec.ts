@@ -34,7 +34,13 @@ describe('DashboardService', () => {
       `${environment.apiUrl}organisations/1/trainer-dashboard`,
     );
     expect(req.request.method).toBe('GET');
-    req.flush({ totalLearners: 52 });
+    req.flush({
+      totalLearners: 52,
+      activeModules: 8,
+      overallCompletionRate: 78,
+      averageScore: 81,
+      moduleCompletion: [],
+    });
   });
 
   it('should GET the trainer-dashboard activity endpoint for the given organisation', () => {
@@ -44,6 +50,6 @@ describe('DashboardService', () => {
       `${environment.apiUrl}organisations/1/trainer-dashboard/activity`,
     );
     expect(req.request.method).toBe('GET');
-    req.flush([]);
+    req.flush({ activity: [] });
   });
 });

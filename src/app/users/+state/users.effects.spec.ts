@@ -38,12 +38,12 @@ describe('UsersEffects', () => {
   beforeEach(() => {
     const spy = jasmine.createSpyObj('UsersService', [
       'getUsers',
+      'getTrainers',
       'getUserDetails',
       'createUser',
       'updateUser',
       'deleteUser',
       'resetPassword',
-      'sendReminderEmail',
     ]);
 
     TestBed.configureTestingModule({
@@ -92,6 +92,49 @@ describe('UsersEffects', () => {
     effects.fetchUsers$.subscribe((action) => {
       expect(action).toEqual(
         UsersActions.fetchListFailure({ error: 'Network error' }),
+      );
+      done();
+    });
+  });
+
+  it('should fetch trainers with the organisationId and dispatch fetchTrainerListSuccess with normalized users', (done) => {
+    const rawTrainer = { ...rawUser, role: 'TRAINER' };
+    const normalizedTrainer: UserAccount = { ...normalizedUser, role: 'trainer' };
+    usersService.getTrainers.and.returnValue(of([rawTrainer]));
+    actions$ = of(UsersActions.fetchTrainerList({ organisationId: 1 }));
+
+    effects.fetchTrainers$.subscribe((action) => {
+      expect(usersService.getTrainers).toHaveBeenCalledWith(1);
+      expect(action).toEqual(
+        UsersActions.fetchTrainerListSuccess({ users: [normalizedTrainer] }),
+      );
+      done();
+    });
+  });
+
+  it('should dispatch fetchTrainerListSuccess with a wrapped response', (done) => {
+    const rawTrainer = { ...rawUser, role: 'TRAINER' };
+    const normalizedTrainer: UserAccount = { ...normalizedUser, role: 'trainer' };
+    usersService.getTrainers.and.returnValue(of({ users: [rawTrainer] }));
+    actions$ = of(UsersActions.fetchTrainerList({ organisationId: 1 }));
+
+    effects.fetchTrainers$.subscribe((action) => {
+      expect(action).toEqual(
+        UsersActions.fetchTrainerListSuccess({ users: [normalizedTrainer] }),
+      );
+      done();
+    });
+  });
+
+  it('should dispatch fetchTrainerListFailure on error', (done) => {
+    usersService.getTrainers.and.returnValue(
+      throwError(() => new Error('Network error')),
+    );
+    actions$ = of(UsersActions.fetchTrainerList({ organisationId: 1 }));
+
+    effects.fetchTrainers$.subscribe((action) => {
+      expect(action).toEqual(
+        UsersActions.fetchTrainerListFailure({ error: 'Network error' }),
       );
       done();
     });
@@ -255,28 +298,4 @@ describe('UsersEffects', () => {
     });
   });
 
-  it('should dispatch sendReminderEmailSuccess on send', (done) => {
-    usersService.sendReminderEmail.and.returnValue(of(undefined));
-    actions$ = of(UsersActions.sendReminderEmail({ userId: '1' }));
-
-    effects.sendReminderEmail$.subscribe((action) => {
-      expect(usersService.sendReminderEmail).toHaveBeenCalledWith('1');
-      expect(action).toEqual(UsersActions.sendReminderEmailSuccess({ userId: '1' }));
-      done();
-    });
-  });
-
-  it('should dispatch sendReminderEmailFailure on error', (done) => {
-    usersService.sendReminderEmail.and.returnValue(
-      throwError(() => new Error('Failed to send reminder email')),
-    );
-    actions$ = of(UsersActions.sendReminderEmail({ userId: '1' }));
-
-    effects.sendReminderEmail$.subscribe((action) => {
-      expect(action).toEqual(
-        UsersActions.sendReminderEmailFailure({ error: 'Failed to send reminder email' }),
-      );
-      done();
-    });
-  });
 });

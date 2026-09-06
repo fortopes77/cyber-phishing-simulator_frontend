@@ -23,10 +23,18 @@ export class UsersService {
 
   // GET /users - list all users - doesn't exist on this backend; only
   // GET /users/learners (trainer-only, scoped to one organisation) is
-  // exposed, per the Swagger contract.
+  // exposed, per the Swagger contract. Its LearnerResponseDto also carries
+  // progressPercentage/averageScore/lastActiveAt/weaknesses per learner.
   getUsers(organisationId: number) {
     return this.http.get<RawUserAccount[] | { users: RawUserAccount[] }>(
       `${this.apiEndpoint}users/learners`,
+      { params: { organisationId } },
+    );
+  }
+
+  getTrainers(organisationId: number) {
+    return this.http.get<RawUserAccount[] | { users: RawUserAccount[] }>(
+      `${this.apiEndpoint}users/trainers`,
       { params: { organisationId } },
     );
   }
@@ -68,15 +76,4 @@ export class UsersService {
     });
   }
 
-  // ASSUMPTION: no "send reminder email" route exists anywhere in the
-  // Swagger contract - there's no backend equivalent to wire this up to yet.
-  // Left as a stub pointing at a plausible sub-resource path so the UI
-  // action fails loudly (a 404) rather than silently, until a real contract
-  // is available.
-  sendReminderEmail(userId: string) {
-    return this.http.post<void>(
-      `${this.apiEndpoint}users/${userId}/send-reminder`,
-      {},
-    );
-  }
 }

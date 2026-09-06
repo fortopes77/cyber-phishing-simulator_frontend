@@ -1,4 +1,5 @@
 import { createActionGroup, emptyProps, props } from '@ngrx/store';
+import { ScenarioAnswerMode } from '../models/scenario.model';
 
 export const ScenarioActions = createActionGroup({
   source: 'Scenario',
@@ -12,7 +13,7 @@ export const ScenarioActions = createActionGroup({
     fetchScenarioDetails: props<{ scenarioId: string }>(),
     fetchScenarioDetailsSuccess: props<{ scenario: any }>(),
     fetchScenarioDetailsFailure: props<{ error: string }>(),
-    createAIScenario: emptyProps(),
+    createAIScenario: props<{ answerMode: ScenarioAnswerMode }>(),
     createAIScenarioSuccess: props<{ scenario: any }>(),
     createAIScenarioFailure: props<{ error: string }>(),
     createScenario: props<{ scenario: any }>(),

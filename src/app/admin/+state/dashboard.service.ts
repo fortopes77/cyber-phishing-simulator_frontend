@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { environment } from 'src/environments/environment';
+import { RawDashboardActivity, RawDashboardOverview } from './dashboard.model';
 
 @Injectable({
   providedIn: 'root',
@@ -16,7 +17,7 @@ export class DashboardService {
    * by authInterceptor from the store.
    */
   getOverview(organisationId: number) {
-    return this.http.get<any>(
+    return this.http.get<RawDashboardOverview>(
       `${this.apiEndpoint}organisations/${organisationId}/trainer-dashboard`,
     );
   }
@@ -26,7 +27,7 @@ export class DashboardService {
    * recent learner activity items (trainer only)".
    */
   getActivity(organisationId: number) {
-    return this.http.get<any>(
+    return this.http.get<RawDashboardActivity>(
       `${this.apiEndpoint}organisations/${organisationId}/trainer-dashboard/activity`,
     );
   }

@@ -19,12 +19,34 @@ describe('LearnerListComponent', () => {
   let router: Router;
   let actions$: Observable<any>;
 
-  // 10 fixture learners, ids 1-10 - buildLearnerRows derives each row's
-  // mock progress/score/last-active/weaknesses deterministically from the
-  // numeric id, so this spread gives every threshold-based test (weakness
-  // overflow, last-active filtering, score variants) something to assert on.
+  // 10 fixture learners, ids 1-10, with progressPercentage/averageScore/
+  // lastActiveAt/weaknesses populated the way GET /users/learners
+  // (LearnerResponseDto) really returns them, using the same per-id spread
+  // buildLearnerRows used to derive as mock data - so every threshold-based
+  // test (weakness overflow, last-active filtering, score variants) still
+  // has something to assert on.
+  const WEAKNESS_CODES = [
+    'PHISHING', 'SMISHING', 'VISHING', 'SOCIAL_ENGINEERING', 'MALWARE',
+    'RANSOMWARE', 'BUSINESS_EMAIL_COMPROMISE', 'SPEAR_PHISHING', 'WHALING',
+  ];
+  const LAST_ACTIVE_DAYS_AGO_POOL = [0, 0, 1, 2, 3, 7];
+
   const mockUsers: UserAccount[] = Array.from({ length: 10 }, (_, i) => {
-    const id = String(i + 1);
+    const numericId = i + 1;
+    const id = String(numericId);
+
+    const weaknessCount = 1 + (numericId % 3);
+    const weaknesses = Array.from(
+      { length: weaknessCount },
+      (_, w) => WEAKNESS_CODES[(numericId + w) % WEAKNESS_CODES.length],
+    );
+
+    const lastActiveDate = new Date();
+    lastActiveDate.setDate(
+      lastActiveDate.getDate() -
+        LAST_ACTIVE_DAYS_AGO_POOL[numericId % LAST_ACTIVE_DAYS_AGO_POOL.length],
+    );
+
     return {
       id,
       username: `learner${id}`,
@@ -34,6 +56,10 @@ describe('LearnerListComponent', () => {
       email: `learner${id}@example.com`,
       role: 'user',
       organisationId: 1,
+      progressPercentage: (numericId * 7) % 101,
+      averageScore: 40 + ((numericId * 11) % 61),
+      lastActiveAt: lastActiveDate.toISOString(),
+      weaknesses,
     };
   });
 
