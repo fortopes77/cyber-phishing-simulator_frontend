@@ -39,4 +39,16 @@ describe('resultsReducer', () => {
     expect(state.error).toBe('Failed');
     expect(state.loading).toBeFalse();
   });
+
+  it("should keep a module's result apart from the learner's full results", () => {
+    const moduleResults = { scenarioResults: [], moduleResults: [], averageScore: null };
+    const state = resultsReducer(
+      { ...initialResultsState, loading: true },
+      ResultsActions.fetchModuleResultSuccess({ moduleId: 7, results: moduleResults }),
+    );
+
+    expect(state.moduleResult).toEqual({ moduleId: 7, results: moduleResults });
+    expect(state.results).toBeNull();
+    expect(state.loading).toBeFalse();
+  });
 });

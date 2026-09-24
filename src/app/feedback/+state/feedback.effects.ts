@@ -3,6 +3,7 @@ import { catchError, map, mergeMap, of } from 'rxjs';
 import { Injectable } from '@angular/core';
 import { FeedbackActions } from './feedback.actions';
 import { FeedbackService } from './feedback.service';
+import { normalizeFeedback } from './feedback.model';
 
 @Injectable()
 export class FeedbackEffects {
@@ -18,7 +19,7 @@ export class FeedbackEffects {
         this.feedbackService.getFeedback(action.request).pipe(
           map((response) =>
             FeedbackActions.requestFeedbackSuccess({
-              feedback: response.feedback,
+              feedback: normalizeFeedback(response),
             }),
           ),
           catchError((error) =>

@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
-import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, RouterModule } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { combineLatest } from 'rxjs';
 import { ScenarioActions } from '../../+state/scenario.actions';
@@ -9,6 +9,14 @@ import {
   selectScenarioList,
 } from '../../+state/scenario.selectors';
 import { normalizeAnswerMode, ScenarioAnswerMode } from '../../models/scenario.model';
+import { ScenarioChoiceComponent } from '../scenario-choice/scenario-choice.component';
+import { getInteractionKey } from '../interactions/scenario-interaction.model';
+import { EmailInteractionComponent } from '../interactions/email-interaction.component';
+import { PhoneCallInteractionComponent } from '../interactions/phone-call-interaction.component';
+import { TextMessageInteractionComponent } from '../interactions/text-message-interaction.component';
+import { SocialMediaInteractionComponent } from '../interactions/social-media-interaction.component';
+import { InvoiceInteractionComponent } from '../interactions/invoice-interaction.component';
+import { GenericInteractionComponent } from '../interactions/generic-interaction.component';
 
 interface Scenario {
   id: number | string;
@@ -27,20 +35,28 @@ interface Scenario {
   subject?: string;
 }
 
-interface MessageEntry {
-  speaker: string;
-  text: string;
-}
-
-interface InvoiceField {
-  label: string;
-  value: string;
-}
-
+/**
+ * The scenario screen container for the learner flow. It steps through
+ * 'viewing' (the message, rendered by the interaction sub-component for the
+ * scenario's interactionType - see interactions/ - plus cue selection for
+ * detailed scenarios) and 'deciding' (ScenarioChoiceComponent - the
+ * binary Safe/Suspicious decision for simple scenarios, or cue submission
+ * for detailed ones, then the graded result) on the same route.
+ */
 @Component({
   selector: 'app-scenario-page',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [
+    CommonModule,
+    RouterModule,
+    ScenarioChoiceComponent,
+    EmailInteractionComponent,
+    PhoneCallInteractionComponent,
+    TextMessageInteractionComponent,
+    SocialMediaInteractionComponent,
+    InvoiceInteractionComponent,
+    GenericInteractionComponent,
+  ],
   templateUrl: './scenario-page.component.html',
   styleUrls: ['./scenario-page.component.scss'],
 })
@@ -64,6 +80,10 @@ export class ScenarioPageComponent implements OnInit, OnChanges {
     answerMode: 'simple',
   };
   selectedCues: string[] = [];
+  step: 'viewing' | 'deciding' = 'viewing';
+  // When the learner opened this scenario - handed to the decision step so
+  // the recorded time covers reading the message too.
+  openedAt = new Date();
 
   // Tracks the moduleId we last asked the store for, so we only dispatch
   // fetchScenariosByModule once per module rather than on every store
@@ -72,7 +92,6 @@ export class ScenarioPageComponent implements OnInit, OnChanges {
 
   constructor(
     private route: ActivatedRoute,
-    private router: Router,
     private store: Store,
   ) {}
 
@@ -89,6 +108,10 @@ export class ScenarioPageComponent implements OnInit, OnChanges {
       const idValue = /^\d+$/.test(idParam) ? Number(idParam) : idParam;
       this.scenarioId = idValue;
       this.selectedCues = [];
+      // Moving to another scenario (e.g. "Next Scenario" from the decision
+      // step's result) starts back on its message.
+      this.step = 'viewing';
+      this.openedAt = new Date();
       this.store.dispatch(
         ScenarioActions.fetchScenarioDetails({ scenarioId: String(idValue) }),
       );
@@ -165,95 +188,9 @@ export class ScenarioPageComponent implements OnInit, OnChanges {
     return this.scenario.answerMode === 'detailed';
   }
 
-  /**
-   * Maps the `interactionType` enum (EMAIL/TEXT_MESSAGE/PHONE_CALL/
-   * SOCIAL_MEDIA - see scenario.model.ts) onto the message-shell keys the
-   * template switches on. Falls back to a lowercase pass-through so
-   * older/free-text values ("Phone", "Text") still resolve to something
-   * sensible.
-   */
+  /** Which interaction sub-component renders this scenario. */
   getScenarioTypeKey(): string {
-    const type = (this.scenario?.type ?? '').toUpperCase();
-    const typeMap: Record<string, string> = {
-      EMAIL: 'email',
-      SMS: 'text',
-      TEXT: 'text',
-      TEXT_MESSAGE: 'text',
-      CALL: 'phone',
-      PHONE: 'phone',
-      PHONE_CALL: 'phone',
-      VOICE: 'phone',
-      SOCIAL_MEDIA: 'social',
-      SOCIAL: 'social',
-    };
-
-    return typeMap[type] ?? this.scenario?.type?.toLowerCase() ?? 'generic';
-  }
-
-  getTranscriptEntries(): MessageEntry[] {
-    const lines = (this.scenario.body ?? '')
-      .split(/\n+/)
-      .map((line) => line.trim())
-      .filter(Boolean);
-
-    return lines.map((line) => {
-      const separatorIndex = line.indexOf(':');
-      if (separatorIndex > 0) {
-        return {
-          speaker: line.slice(0, separatorIndex).trim(),
-          text: line.slice(separatorIndex + 1).trim(),
-        };
-      }
-
-      return {
-        speaker: 'Caller',
-        text: line,
-      };
-    });
-  }
-
-  getTextMessages(): MessageEntry[] {
-    return this.getTranscriptEntries();
-  }
-
-  getSocialMessages(): MessageEntry[] {
-    return this.getTranscriptEntries();
-  }
-
-  getInvoiceFields(): InvoiceField[] {
-    const lines = (this.scenario.body ?? '')
-      .split(/\n+/)
-      .map((line) => line.trim())
-      .filter(Boolean);
-
-    const fields = lines.flatMap((line) => {
-      const separatorIndex = line.indexOf(':');
-      if (separatorIndex > 0) {
-        return [
-          {
-            label: line.slice(0, separatorIndex).trim(),
-            value: line.slice(separatorIndex + 1).trim(),
-          },
-        ];
-      }
-
-      return [];
-    });
-
-    if (fields.length > 0) {
-      return fields;
-    }
-
-    return [
-      { label: 'Invoice', value: this.scenario.subject ?? '' },
-      { label: 'Amount', value: '$149.99' },
-      { label: 'Due', value: '2026-08-15' },
-    ];
-  }
-
-  getInvoiceAmount(): string {
-    const amountMatch = this.scenario.body.match(/\$(\d+(?:\.\d{2})?)/);
-    return amountMatch ? amountMatch[0] : '$149.99';
+    return getInteractionKey(this.scenario?.type);
   }
 
   removeSelectedCue(cue: string): void {
@@ -289,12 +226,12 @@ export class ScenarioPageComponent implements OnInit, OnChanges {
   }
 
   makeDecision(): void {
-    // Pass the learner's selected cues to the decision/feedback screen via
-    // router navigation state rather than a new store slice - it's only
-    // needed for the single upcoming navigation and is read from
-    // history.state in ScenarioChoiceComponent.
-    this.router.navigate(['/learner/scenarios', this.scenarioId, 'feedback'], {
-      state: { selectedCues: this.selectedCues },
-    });
+    this.step = 'deciding';
+  }
+
+  // Back from the decision step to the message - selected cues are kept so
+  // the learner can carry on flagging from where they left off.
+  backToScenario(): void {
+    this.step = 'viewing';
   }
 }

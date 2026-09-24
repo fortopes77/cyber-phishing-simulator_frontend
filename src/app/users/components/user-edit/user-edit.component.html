@@ -88,6 +88,22 @@
         ></app-form-field-error>
       </label>
 
+      @if (isCreateMode && isGlobalAdmin) {
+        <label class="field">
+          <span>Organisation</span>
+          <select formControlName="organisationId">
+            <option [ngValue]="null" disabled>Select an organisation</option>
+            @for (organisation of organisations; track organisation.id) {
+              <option [ngValue]="organisation.id">{{ organisation.name }}</option>
+            }
+          </select>
+          <app-form-field-error
+            [control]="userForm.get('organisationId')"
+            label="Organisation"
+          ></app-form-field-error>
+        </label>
+      }
+
       <label class="field">
         <span>Role</span>
         <select formControlName="role">

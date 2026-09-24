@@ -1,0 +1,19 @@
+<div class="message-shell message-shell--email">
+  @if (message.from) {
+    <div class="message-shell__meta">
+      <span class="message-shell__label">From</span>
+      <span>{{ message.from }}</span>
+    </div>
+  }
+  @if (message.recipient) {
+    <div class="message-shell__meta">
+      <span class="message-shell__label">To</span>
+      <span>{{ message.recipient }}</span>
+    </div>
+  }
+  <div class="message-shell__meta">
+    <span class="message-shell__label">Subject</span>
+    <span>{{ message.subject }}</span>
+  </div>
+  <div class="message-shell__content">{{ message.body }}</div>
+</div>

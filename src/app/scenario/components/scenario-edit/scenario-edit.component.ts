@@ -151,11 +151,17 @@ export class ScenarioEditComponent implements OnInit {
     }
   }
 
+  // A global admin gets every organisation's modules back (only admins see
+  // organisationId on them), so label each with its organisation to tell
+  // same-named modules apart.
   subscribeToModuleList(): void {
     this.store.select(selectModuleList).subscribe((moduleList) => {
       this.modules = (moduleList ?? []).map((module) => ({
         moduleId: module.moduleId,
-        moduleName: module.moduleName,
+        moduleName:
+          module.organisationId != null && module.organisationName
+            ? `${module.moduleName} (${module.organisationName})`
+            : module.moduleName,
       }));
     });
   }

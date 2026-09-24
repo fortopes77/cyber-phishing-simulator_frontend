@@ -1,9 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { Actions, ofType } from '@ngrx/effects';
-import { filter, map, take } from 'rxjs';
+import { combineLatest } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import {
   HeaderComponent,
@@ -19,7 +20,12 @@ import {
   ListComponent,
 } from 'src/app/shared/components/list/list.component';
 import { iconLibrary } from 'src/app/shared/constants/font-awesome-icons.const';
-import { selectAuthState } from 'src/app/auth/+state/auth.selectors';
+import { OrganisationFilterComponent } from 'src/app/organisations/components/organisation-filter/organisation-filter.component';
+import { organisationScopeChanges } from 'src/app/organisations/+state/organisation-scope';
+import {
+  selectIsGlobalAdmin,
+  selectOrganisationNames,
+} from 'src/app/organisations/+state/organisations.selectors';
 import { AuthActions } from 'src/app/auth/+state/auth.actions';
 import { UsersActions } from 'src/app/users/+state/users.actions';
 import { selectTrainerList } from 'src/app/users/+state/users.selectors';
@@ -29,6 +35,8 @@ interface TrainerRow extends Record<string, unknown> {
   id: number;
   fullName: string;
   email: string;
+  // Only shown to global admins, who can see trainers from every organisation.
+  organisationName: string | null;
 }
 
 // Trainers can only be created or deleted from here - not edited. A trainer
@@ -50,12 +58,16 @@ interface TrainerRow extends Record<string, unknown> {
     ListCellTemplateDirective,
     DeleteConfirmationModalComponent,
     ForgotPasswordModalComponent,
+    OrganisationFilterComponent,
   ],
   templateUrl: './trainer-list.component.html',
   styleUrl: './trainer-list.component.scss',
 })
 export class TrainerListComponent implements OnInit {
+  private readonly destroyRef = inject(DestroyRef);
+
   fontAwesomeIcon = iconLibrary;
+  isGlobalAdmin = false;
 
   columns: ListColumn[] = [];
   rows: TrainerRow[] = [];
@@ -107,33 +119,41 @@ export class TrainerListComponent implements OnInit {
     ];
   }
 
-  // GET /users/trainers is scoped to one organisation - read it off the
-  // signed-in trainer's own account rather than hard-coding it (mirrors
-  // LearnerListComponent.fetchLearners).
+  // Scoped like LearnerListComponent.fetchLearners - own organisation for a
+  // trainer, the organisation filter's choice (or all) for a global admin.
   private fetchTrainers(): void {
-    this.store
-      .select(selectAuthState)
-      .pipe(
-        map((auth) => auth.user?.organisationId),
-        filter((organisationId): organisationId is number => organisationId != null),
-        take(1),
-      )
-      .subscribe((organisationId) => {
+    organisationScopeChanges(this.store)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(({ organisationId }) => {
         this.store.dispatch(UsersActions.fetchTrainerList({ organisationId }));
       });
   }
 
   private subscribeToTrainerList(): void {
-    this.store.select(selectTrainerList).subscribe((users) => {
-      this.rows = this.buildTrainerRows(users);
-    });
+    combineLatest([
+      this.store.select(selectTrainerList),
+      this.store.select(selectOrganisationNames),
+      this.store.select(selectIsGlobalAdmin),
+    ])
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(([users, organisationNames, isGlobalAdmin]) => {
+        this.isGlobalAdmin = isGlobalAdmin;
+        this.rows = this.buildTrainerRows(users, organisationNames);
+      });
   }
 
-  private buildTrainerRows(users: UserAccount[]): TrainerRow[] {
+  private buildTrainerRows(
+    users: UserAccount[],
+    organisationNames: Map<number, string>,
+  ): TrainerRow[] {
     return users.map((user) => ({
       id: Number(user.id),
       fullName: user.fullName,
       email: user.email,
+      organisationName:
+        user.organisationId != null
+          ? (organisationNames.get(user.organisationId) ?? null)
+          : null,
     }));
   }
 

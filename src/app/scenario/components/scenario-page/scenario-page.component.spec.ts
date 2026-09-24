@@ -3,6 +3,12 @@ import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { By } from '@angular/platform-browser';
 import { provideMockStore, MockStore } from '@ngrx/store/testing';
+import { provideMockActions } from '@ngrx/effects/testing';
+import { selectCurrentAttempt } from 'src/app/attempts/+state/attempts.selectors';
+import {
+  selectFeedback,
+  selectFeedbackLoading,
+} from 'src/app/feedback/+state/feedback.selectors';
 import { of } from 'rxjs';
 import { ScenarioPageComponent } from './scenario-page.component';
 import { ScenarioActions } from '../../+state/scenario.actions';
@@ -43,8 +49,13 @@ describe('ScenarioPageComponent', () => {
           selectors: [
             { selector: selectScenario, value: scenario },
             { selector: selectScenarioList, value: [{ id: 1 }, scenario] },
+            // Read by the embedded decision step (ScenarioChoiceComponent).
+            { selector: selectFeedback, value: null },
+            { selector: selectFeedbackLoading, value: false },
+            { selector: selectCurrentAttempt, value: null },
           ],
         }),
+        provideMockActions(() => of()),
       ],
     }).compileComponents();
 
@@ -142,6 +153,27 @@ describe('ScenarioPageComponent', () => {
     expect(component.selectedCues).toContain('jane.doe@trulyfake.com');
   });
 
+  it('should render the interaction sub-component for each interactionType', () => {
+    const expected: Record<string, string> = {
+      EMAIL: 'app-email-interaction',
+      TEXT_MESSAGE: 'app-text-message-interaction',
+      PHONE_CALL: 'app-phone-call-interaction',
+      SOCIAL_MEDIA: 'app-social-media-interaction',
+      SOMETHING_NEW: 'app-generic-interaction',
+    };
+
+    for (const [interactionType, selector] of Object.entries(expected)) {
+      store.overrideSelector(selectScenario, { ...scenario, interactionType });
+      store.refreshState();
+      fixture.detectChanges();
+
+      const rendered = Object.values(expected).filter(
+        (candidate) => fixture.nativeElement.querySelector(candidate) !== null,
+      );
+      expect(rendered).withContext(interactionType).toEqual([selector]);
+    }
+  });
+
   it('should render the social media message shell with a DM thread', () => {
     component.scenario = {
       ...component.scenario,
@@ -210,14 +242,43 @@ describe('ScenarioPageComponent', () => {
     expect(nativeElement.textContent).not.toContain('Make Your Decision');
   });
 
-  it('should navigate to the feedback screen with selected cues in router state', () => {
+  it('should render the decision step in place, not on a separate route', () => {
     component.addSelectedCue('Suspicious link');
     component.makeDecision();
+    fixture.detectChanges();
 
-    expect(router.navigate).toHaveBeenCalledWith(
-      ['/learner/scenarios', 2, 'feedback'],
-      { state: { selectedCues: ['Suspicious link'] } },
-    );
+    expect(router.navigate).not.toHaveBeenCalled();
+    expect(component.step).toBe('deciding');
+
+    const choice = fixture.debugElement.query(By.css('app-scenario-choice'));
+    expect(choice).not.toBeNull();
+    expect(choice.componentInstance.scenarioId).toBe(2);
+    expect(choice.componentInstance.selectedCues).toEqual(['Suspicious link']);
+    expect(fixture.nativeElement.querySelector('.scenario-card')).toBeNull();
+  });
+
+  it('should show the binary Safe/Suspicious decision for a simple scenario', () => {
+    component.makeDecision();
+    fixture.detectChanges();
+
+    const text = (fixture.nativeElement as HTMLElement).textContent;
+    expect(text).toContain('What do you think?');
+    expect(text).toContain('Safe');
+    expect(text).toContain('Suspicious');
+  });
+
+  it('should return to the message, keeping selected cues, when the decision step goes back', () => {
+    component.addSelectedCue('Suspicious link');
+    component.makeDecision();
+    fixture.detectChanges();
+
+    const choice = fixture.debugElement.query(By.css('app-scenario-choice'));
+    choice.componentInstance.backToScenario();
+    fixture.detectChanges();
+
+    expect(component.step).toBe('viewing');
+    expect(component.selectedCues).toEqual(['Suspicious link']);
+    expect(fixture.nativeElement.querySelector('.scenario-card')).not.toBeNull();
   });
 
   describe('preview mode', () => {

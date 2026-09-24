@@ -63,7 +63,7 @@ describe('AttemptsService', () => {
     service.finalizeAttempt(1).subscribe();
 
     const req = httpMock.expectOne(
-      `${environment.apiUrl}results/attempts/1/finalize`,
+      `${environment.apiUrl}results/attempts/1/finalise`,
     );
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual({});

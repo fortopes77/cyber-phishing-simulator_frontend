@@ -1,0 +1,19 @@
+<div class="message-shell message-shell--phone">
+  <div class="message-shell__header">
+    <div class="message-shell__pill">Phone Transcript</div>
+    @if (message.from) {
+      <div class="message-shell__subtle">{{ message.from }}</div>
+    }
+  </div>
+  <div class="message-shell__transcript">
+    @for (entry of entries; track $index) {
+      <div
+        class="transcript-line"
+        [ngClass]="entry.speaker === 'You' ? 'transcript-line--user' : 'transcript-line--caller'"
+      >
+        <div class="transcript-line__speaker">{{ entry.speaker }}</div>
+        <div class="transcript-line__text">{{ entry.text }}</div>
+      </div>
+    }
+  </div>
+</div>

@@ -1,4 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { Actions, ofType } from '@ngrx/effects';
@@ -17,6 +18,23 @@ import { ModulesActions } from 'src/app/modules/+state/modules.actions';
 import { selectModuleList } from 'src/app/modules/+state/modules.selectors';
 import { ScenarioActions } from 'src/app/scenario/+state/scenario.actions';
 import { selectScenarioList } from 'src/app/scenario/+state/scenario.selectors';
+import { OrganisationFilterComponent } from 'src/app/organisations/components/organisation-filter/organisation-filter.component';
+import { selectOrganisationScope } from 'src/app/organisations/+state/organisations.selectors';
+import { OrganisationScope } from 'src/app/organisations/+state/organisation.model';
+
+const BASE_COLUMNS: ListColumn[] = [
+  { key: 'moduleName', label: 'Module Name' },
+  { key: 'description', label: 'Description' },
+  { key: 'scenarioCount', label: 'Scenarios' },
+];
+
+// A global admin sees modules across every organisation, so they get an
+// extra column saying which one each module belongs to.
+const ADMIN_COLUMNS: ListColumn[] = [
+  ...BASE_COLUMNS.slice(0, 1),
+  { key: 'organisationName', label: 'Organisation' },
+  ...BASE_COLUMNS.slice(1),
+];
 
 @Component({
   selector: 'app-trainer-modules-list',
@@ -27,16 +45,15 @@ import { selectScenarioList } from 'src/app/scenario/+state/scenario.selectors';
     ListComponent,
     SearchFilterBarComponent,
     DeleteConfirmationModalComponent,
+    OrganisationFilterComponent,
   ],
   templateUrl: './trainer-modules-list.component.html',
   styleUrl: './trainer-modules-list.component.scss',
 })
 export class TrainerModulesListComponent implements OnInit {
-  columns: ListColumn[] = [
-    { key: 'moduleName', label: 'Module Name' },
-    { key: 'description', label: 'Description' },
-    { key: 'scenarioCount', label: 'Scenarios' },
-  ];
+  private readonly destroyRef = inject(DestroyRef);
+
+  columns: ListColumn[] = BASE_COLUMNS;
   allRows: Record<string, unknown>[] = [];
   rows: Record<string, unknown>[] = [];
   actions: ListAction[] = [];
@@ -90,31 +107,46 @@ export class TrainerModulesListComponent implements OnInit {
 
   private fetchModules(): void {
     // No userId - a trainer manages the org's full module catalog, not a
-    // single learner's assignments.
+    // single learner's assignments. A global admin gets every
+    // organisation's modules back, narrowed client-side by the organisation
+    // filter (see subscribeToModuleList), so the scenario counts are loaded
+    // unfiltered to match.
     this.store.dispatch(ModulesActions.fetchList({}));
-    this.store.dispatch(ScenarioActions.fetchList());
+    this.store.dispatch(ScenarioActions.fetchList({}));
   }
 
   private subscribeToModuleList(): void {
     combineLatest([
       this.store.select(selectModuleList),
       this.store.select(selectScenarioList),
-    ]).subscribe(([moduleList, scenarioList]) => {
-      this.allRows = (moduleList ?? []).map((module: any) => {
-        const scenarioCount = (scenarioList ?? []).filter(
-          (scenario: any) => scenario.moduleId === module.moduleId,
-        ).length;
+      this.store.select(selectOrganisationScope),
+    ])
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(([moduleList, scenarioList, scope]) => {
+        this.columns = scope.isGlobalAdmin ? ADMIN_COLUMNS : BASE_COLUMNS;
+        this.allRows = this.inScope(moduleList ?? [], scope).map((module: any) => {
+          const scenarioCount = (scenarioList ?? []).filter(
+            (scenario: any) => scenario.moduleId === module.moduleId,
+          ).length;
 
-        return {
-          moduleId: module.moduleId,
-          moduleName: module.moduleName,
-          description: module.description,
-          scenarioCount,
-        };
+          return {
+            moduleId: module.moduleId,
+            moduleName: module.moduleName,
+            organisationName: module.organisationName ?? '',
+            description: module.description,
+            scenarioCount,
+          };
+        });
+
+        this.applyFilters();
       });
+  }
 
-      this.applyFilters();
-    });
+  private inScope(modules: any[], scope: OrganisationScope): any[] {
+    if (!scope.isGlobalAdmin || scope.organisationId == null) {
+      return modules;
+    }
+    return modules.filter((module) => module.organisationId === scope.organisationId);
   }
 
   private subscribeToDeleteModuleSuccess(): void {

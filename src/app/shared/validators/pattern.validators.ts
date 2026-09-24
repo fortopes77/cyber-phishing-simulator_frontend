@@ -17,6 +17,9 @@ export const TEXT_PATTERN = /^[\w\s.,'"!?()&/@:;-]*$/;
 // RegisterUserDto/CreateUserDto/UpdateUserDto's password field): at least
 // one digit and one of !@#$%*? - checked here too so a bad password is
 // rejected client-side instead of round-tripping to a 400.
+// Mirrors the backend's IsOrganisationName validator: must start with a
+// letter or number, then only letters, numbers, spaces and . , & ( ) -
+export const ORGANISATION_NAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9 .,&()-]*$/;
 export const PASSWORD_COMPLEXITY_PATTERN = /^(?=.*\d)(?=.*[!@#$%*?]).+$/;
 
 function patternValidator(pattern: RegExp, errorKey: string): ValidatorFn {
@@ -44,4 +47,8 @@ export function textValidator(): ValidatorFn {
 
 export function passwordComplexityValidator(): ValidatorFn {
   return patternValidator(PASSWORD_COMPLEXITY_PATTERN, 'passwordComplexity');
+}
+
+export function organisationNameValidator(): ValidatorFn {
+  return patternValidator(ORGANISATION_NAME_PATTERN, 'organisationName');
 }

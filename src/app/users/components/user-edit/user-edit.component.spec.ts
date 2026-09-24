@@ -185,6 +185,7 @@ describe('UserEditComponent', () => {
       email: 'ava.morales@example.com',
       password: 'Password1!',
       role: 'user',
+      organisationId: null,
     });
 
     component.onSubmit();

@@ -10,6 +10,8 @@ export interface ScenarioResult {
   score?: number;
   missedCues?: string[];
   moduleResultId?: number | null;
+  /** When the learner submitted this answer (ISO timestamp). */
+  completedAt?: string;
 }
 
 /**
@@ -28,6 +30,8 @@ export interface ModuleResultSummary {
   percentageScore: number;
   passed: boolean;
   completedAt: string | null;
+  /** When the attempt was started - the only date an in-progress attempt has. */
+  startedAt?: string;
 }
 
 /**
@@ -99,7 +103,7 @@ export function normalizeLearnerResults(raw: any): LearnerResults {
 // percentage_score) - normalized here the same way normalizeModule() aliases
 // title -> moduleName elsewhere.
 function normalizeModuleResultSummary(raw: any): ModuleResultSummary {
-  return {
+  const summary: ModuleResultSummary = {
     id: Number(raw?.id ?? 0),
     moduleId: Number(raw?.moduleId ?? 0),
     moduleName: raw?.module?.title ?? raw?.moduleName ?? 'Module',
@@ -110,6 +114,10 @@ function normalizeModuleResultSummary(raw: any): ModuleResultSummary {
     passed: !!raw?.passed,
     completedAt: raw?.completedAt ?? null,
   };
+  if (raw?.startedAt != null) {
+    summary.startedAt = raw.startedAt;
+  }
+  return summary;
 }
 
 function normalizeScenarioResult(
@@ -144,6 +152,9 @@ function normalizeScenarioResult(
   }
   if (raw?.moduleResultId != null) {
     result.moduleResultId = Number(raw.moduleResultId);
+  }
+  if (raw?.completedAt != null) {
+    result.completedAt = raw.completedAt;
   }
 
   return result;

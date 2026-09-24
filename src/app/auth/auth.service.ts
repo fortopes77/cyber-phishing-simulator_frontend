@@ -2,11 +2,15 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { environment } from 'src/environments/environment';
 
+// 'admin' is a global admin: staff access to every organisation, plus the
+// organisation management screens (see app-routing.module.ts's ADMIN_ROLES).
+export type UserRole = 'admin' | 'trainer' | 'user';
+
 export interface User {
   id: string;
   username: string;
   email: string;
-  role: 'trainer' | 'user';
+  role: UserRole;
   firstName?: string;
   lastName?: string;
   organisationId?: number;
@@ -17,13 +21,14 @@ export interface User {
 // ROLE_HOME, route data's `roles`, nav.component) - a plain .toLowerCase()
 // would turn "LEARNER" into "learner", which matches nothing. Map explicitly
 // instead.
-const ROLE_MAP: Record<string, 'trainer' | 'user'> = {
+const ROLE_MAP: Record<string, UserRole> = {
+  GLOBAL_ADMIN: 'admin',
   TRAINER: 'trainer',
   LEARNER: 'user',
 };
 
 /**
- * Normalizes a raw API role/user into the lowercase 'trainer'/'user'
+ * Normalizes a raw API role/user into the lowercase 'admin'/'trainer'/'user'
  * literal used throughout the app for role checks (AuthGuard, nav.component,
  * login redirect).
  */
@@ -31,8 +36,13 @@ export function normalizeUser(raw: any): User {
   const rawRole = (raw?.role ?? '').toString().toUpperCase();
   return {
     ...raw,
-    role: ROLE_MAP[rawRole] ?? rawRole.toLowerCase(),
+    role: ROLE_MAP[rawRole] ?? (rawRole.toLowerCase() as UserRole),
   };
+}
+
+/** Global admins and trainers share the staff (trainer) area of the app. */
+export function isStaffRole(role: string | undefined | null): boolean {
+  return role === 'admin' || role === 'trainer';
 }
 
 @Injectable({
@@ -68,10 +78,6 @@ export class AuthService {
       `${this.apiEndpoint}auth/refresh`,
       { refreshToken: refreshToken ?? null },
     );
-  }
-
-  getFeedback(payload: any) {
-    return this.http.post(`${this.apiEndpoint}feedback`, payload);
   }
 
   /**

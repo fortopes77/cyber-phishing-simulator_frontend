@@ -1,0 +1,19 @@
+<div class="message-shell message-shell--social">
+  <div class="message-shell__header">
+    <div class="message-shell__pill message-shell__pill--social">Social Media DM</div>
+    @if (message.from) {
+      <div class="message-shell__subtle">{{ message.from }}</div>
+    }
+  </div>
+  <div class="message-shell__chat">
+    @for (entry of messages; track $index) {
+      <div
+        class="social-bubble"
+        [ngClass]="entry.speaker === 'You' ? 'social-bubble--user' : 'social-bubble--caller'"
+      >
+        <div class="social-bubble__sender">{{ entry.speaker }}</div>
+        <div class="social-bubble__text">{{ entry.text }}</div>
+      </div>
+    }
+  </div>
+</div>

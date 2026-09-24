@@ -1,0 +1,167 @@
+<app-header
+  title="My Progress"
+  subtitle="How you're doing across your training, and where to focus next."
+></app-header>
+
+@if (error) {
+  <p class="progress-error">Couldn't load your latest results - {{ error }}</p>
+}
+
+@if (loading && !hasActivity) {
+  <p class="empty-state">Loading your progress…</p>
+} @else if (progress) {
+  <div class="progress-statistics">
+    <app-data-card
+      label="Average Score"
+      [statistic]="{ percentage: progress.averageScore ?? 0 }"
+      [icon]="fontAwesomeIcons.awardIcon"
+      dataType="average"
+    ></app-data-card>
+    <app-data-card
+      label="Modules Completed"
+      [statistic]="{ topValue: progress.modulesCompleted, bottomValue: progress.modulesAssigned }"
+      [icon]="fontAwesomeIcons.openBookIcon"
+      dataType="module"
+    ></app-data-card>
+    <app-data-card
+      label="Total Attempts"
+      [statistic]="{ singleValue: progress.totalAttempts }"
+      [icon]="fontAwesomeIcons.progressBarsIcon"
+      dataType="total"
+    ></app-data-card>
+    <app-data-card
+      label="Answers Correct"
+      [statistic]="{ topValue: progress.correctAnswers, bottomValue: progress.scenarioAnswers }"
+      [icon]="fontAwesomeIcons.targetIcon"
+      dataType="scenario"
+    ></app-data-card>
+  </div>
+
+  @if (!hasActivity) {
+    <app-dashboard-card>
+      <p class="empty-state">
+        You haven't attempted any modules yet. Start one from
+        <a routerLink="/learner/modules">My Modules</a> and your progress will
+        show up here.
+      </p>
+    </app-dashboard-card>
+  } @else {
+    <div class="progress-section">
+      <app-dashboard-card
+        title="Scores"
+        description="Your latest mark on each completed module"
+      >
+        <div class="progress-summary">
+          <app-progress-row
+            [label]="'Average score · ' + (progress.averageScore ?? 0) + '%'"
+            [value]="progress.averageScore ?? 0"
+            [color]="scoreColor(progress.averageScore ?? 0)"
+          ></app-progress-row>
+          <app-progress-row
+            [label]="
+              'Modules completed · ' +
+              progress.modulesCompleted +
+              ' of ' +
+              progress.modulesAssigned
+            "
+            [value]="progress.modulesCompleted"
+            [max]="progress.modulesAssigned || 1"
+            color="#2563eb"
+          ></app-progress-row>
+          <app-progress-row
+            [label]="'Answers correct · ' + accuracy + '%'"
+            [value]="accuracy"
+            [color]="scoreColor(accuracy)"
+          ></app-progress-row>
+        </div>
+
+        @for (module of progress.moduleScores; track module.moduleId) {
+          <app-progress-row
+            [label]="module.moduleName + ' · ' + module.percentageScore + '%'"
+            [value]="module.percentageScore"
+            [color]="scoreColor(module.percentageScore)"
+          ></app-progress-row>
+        } @empty {
+          <p class="empty-state">Finish a module to see its score here.</p>
+        }
+      </app-dashboard-card>
+
+      <app-dashboard-card
+        title="Areas for Improvement"
+        description="Based on your most recent answer to each scenario"
+      >
+        @if (!hasAreasForImprovement) {
+          <p class="empty-state">
+            Nothing to flag - every scenario you've answered most recently was
+            correct.
+          </p>
+        } @else {
+          @if (progress.areasForImprovement.messageTypes.length) {
+            <h3 class="area-title">Message types to practise</h3>
+            @for (type of progress.areasForImprovement.messageTypes; track type.interactionType) {
+              <app-progress-row
+                [label]="type.label + ' · ' + type.correct + ' of ' + type.total + ' correct'"
+                [value]="type.accuracy"
+                [color]="scoreColor(type.accuracy)"
+              ></app-progress-row>
+            }
+          }
+
+          @if (progress.areasForImprovement.missedCues.length) {
+            <h3 class="area-title">Red flags you missed</h3>
+            <div class="cue-list">
+              @for (cue of progress.areasForImprovement.missedCues; track cue.cue) {
+                <span class="cue-chip">
+                  {{ cue.cue }}
+                  @if (cue.count > 1) {
+                    <span class="cue-chip__count">×{{ cue.count }}</span>
+                  }
+                </span>
+              }
+            </div>
+          }
+
+          @if (progress.areasForImprovement.scenariosToRevisit.length) {
+            <h3 class="area-title">Scenarios to revisit</h3>
+            <ul class="revisit-list">
+              @for (scenario of progress.areasForImprovement.scenariosToRevisit; track scenario.scenarioId) {
+                <li>
+                  <button
+                    type="button"
+                    class="revisit-link"
+                    (click)="revisitScenario(scenario.scenarioId)"
+                  >
+                    {{ scenario.title }}
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+        }
+      </app-dashboard-card>
+    </div>
+
+    <app-dashboard-card
+      title="Attempt History"
+      description="Every module attempt, including retries and ones still in progress"
+    >
+      <app-list
+        [columns]="historyColumns"
+        [rows]="historyRows"
+        [actions]="historyActions"
+        [pageSize]="10"
+        emptyMessage="No attempts yet."
+      >
+        <ng-template appListCell="status" let-row>
+          <app-status-badge
+            [status]="row.status"
+            [variant]="statusVariant(row)"
+          ></app-status-badge>
+        </ng-template>
+        <ng-template appListCell="date" let-row>
+          {{ row.date ? (row.date | date: 'd MMM y, h:mm a') : '-' }}
+        </ng-template>
+      </app-list>
+    </app-dashboard-card>
+  }
+}

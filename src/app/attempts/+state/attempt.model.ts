@@ -3,7 +3,7 @@ export type ModuleAttemptStatus = 'IN_PROGRESS' | 'COMPLETED';
 /**
  * A learner's attempt session at a module's scenarios - confirmed live
  * against POST /attempts, GET /attempts/{id} and POST /results/attempts/
- * {attemptId}/finalize, which all return this same shape (snake_case score
+ * {attemptId}/finalise, which all return this same shape (snake_case score
  * fields and all). One of these covers every scenario the learner answers
  * in that session; grading updates live as each scenario-attempt is
  * submitted, and finalize just locks it in as COMPLETED.

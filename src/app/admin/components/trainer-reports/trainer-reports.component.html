@@ -1,113 +1,243 @@
 <app-header
   title="Reports & Analytics"
-  subtitle="Organisation-wide training performance, at a glance."
+  subtitle="Organisation-wide training performance, filtered by date."
 ></app-header>
 
-<div class="reports-toolbar">
-  <button type="button" class="export-button" (click)="exportReport()">
-    Export Report (PDF)
-  </button>
-</div>
+<app-organisation-filter [allowAll]="false"></app-organisation-filter>
 
-@if (dashboardError) {
-  <p class="dashboard-error">
-    Couldn't load the latest dashboard data - showing what's available.
-  </p>
+@if (needsOrganisation) {
+  <p class="reports-prompt">Select an organisation above to view its report.</p>
+} @else {
+  <div class="reports-toolbar">
+    <app-date-range-picker
+      label="Activity between"
+      [startDate]="dateRange.start"
+      [endDate]="dateRange.end"
+      (rangeChange)="onDateRangeChange($event)"
+    ></app-date-range-picker>
+
+    <div class="reports-toolbar__exports">
+      <button type="button" class="export-button export-button--secondary" (click)="exportCsv()">
+        Export CSV
+      </button>
+      <button type="button" class="export-button" (click)="exportReport()">
+        Export PDF
+      </button>
+    </div>
+  </div>
+
+  @if (error) {
+    <p class="dashboard-error">Couldn't load part of the report - {{ error }}</p>
+  }
+
+  @if (dateRange.start || dateRange.end) {
+    <p class="report-range">
+      Showing activity
+      @if (dateRange.start) {
+        from {{ dateRange.start.toLocaleDateString() }}
+      }
+      @if (dateRange.end) {
+        to {{ dateRange.end.toLocaleDateString() }}
+      }
+    </p>
+  }
+
+  <div class="dashboard-statistics">
+    <app-data-card
+      label="Total Learners"
+      [statistic]="{ singleValue: overview?.totalUsers ?? 0 }"
+      [icon]="fontAwesomeIcons.userGroupIcon"
+      dataType="total"
+    />
+    <app-data-card
+      label="Modules Assigned"
+      [statistic]="{ singleValue: overview?.modulesAssignedCount ?? 0 }"
+      [icon]="fontAwesomeIcons.openBookIcon"
+      dataType="module"
+    />
+    <app-data-card
+      label="Completion Rate"
+      [statistic]="{ percentage: overview?.completionRate ?? 0 }"
+      [icon]="fontAwesomeIcons.targetIcon"
+      dataType="scenario"
+    />
+    <app-data-card
+      label="Average Score"
+      [statistic]="{ percentage: overview?.averageScore ?? 0 }"
+      [icon]="fontAwesomeIcons.trendUpIcon"
+      dataType="average"
+    />
+  </div>
+
+  <app-dashboard-card
+    title="Modules"
+    description="Completion, average score and pass rate (80%+) for each module"
+  >
+    @if (loading && !moduleRows.length) {
+      <p class="empty-state">Loading…</p>
+    } @else {
+      <app-list
+        [columns]="moduleColumns"
+        [rows]="moduleRows"
+        [actions]="moduleActions"
+        [pageSize]="10"
+        emptyMessage="No modules in this organisation yet."
+      >
+        <ng-template appListCell="completionRate" let-row>{{ row.completionRate }}%</ng-template>
+        <ng-template appListCell="averageScore" let-row>{{ row.averageScore }}%</ng-template>
+        <ng-template appListCell="passRate" let-row>{{ row.passRate }}%</ng-template>
+      </app-list>
+    }
+
+    @if (selectedModuleId !== null) {
+      <div class="report-detail">
+        <div class="report-detail__header">
+          <h3>{{ moduleDetail?.title || selectedModuleTitle }}</h3>
+          <button type="button" class="report-detail__close" (click)="closeDetails()">
+            Close
+          </button>
+        </div>
+
+        @if (!moduleDetail) {
+          <p class="empty-state">Loading breakdown…</p>
+        } @else {
+          <div class="report-section">
+            <div>
+              <h4 class="report-detail__title">Learner status</h4>
+              <app-progress-row
+                [label]="'Completed · ' + moduleDetail.statusBreakdown.completed"
+                [value]="moduleDetail.statusBreakdown.completed"
+                [max]="moduleLearnerTotal || 1"
+                color="#16a34a"
+              ></app-progress-row>
+              <app-progress-row
+                [label]="'In progress · ' + moduleDetail.statusBreakdown.inProgress"
+                [value]="moduleDetail.statusBreakdown.inProgress"
+                [max]="moduleLearnerTotal || 1"
+                color="#2563eb"
+              ></app-progress-row>
+              <app-progress-row
+                [label]="'Not started · ' + moduleDetail.statusBreakdown.notStarted"
+                [value]="moduleDetail.statusBreakdown.notStarted"
+                [max]="moduleLearnerTotal || 1"
+                color="#9ca3af"
+              ></app-progress-row>
+            </div>
+            <div>
+              <h4 class="report-detail__title">Score distribution</h4>
+              @for (bucket of moduleDetail.scoreDistribution; track bucket.range) {
+                <app-progress-row
+                  [label]="bucket.range + '% · ' + bucket.count + ' learner' + (bucket.count === 1 ? '' : 's')"
+                  [value]="bucket.count"
+                  [max]="scoredLearnerTotal || 1"
+                  color="#7c3aed"
+                ></app-progress-row>
+              }
+              @if (!scoredLearnerTotal) {
+                <p class="empty-state">No completed attempts in this period.</p>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </app-dashboard-card>
+
+  <app-dashboard-card
+    title="Learners"
+    description="At risk: completed at least one module with an average below 70%"
+  >
+    <label class="report-filter">
+      <span>Show</span>
+      <select (change)="onLearnerStatusChange($any($event.target).value)">
+        @for (option of statusOptions; track option.value) {
+          <option [value]="option.value" [selected]="(learnerStatus ?? '') === option.value">
+            {{ option.label }}
+          </option>
+        }
+      </select>
+    </label>
+
+    @if (learnersLoading && !learnerRows.length) {
+      <p class="empty-state">Loading…</p>
+    } @else {
+      <app-list
+        [columns]="learnerColumns"
+        [rows]="learnerRows"
+        [actions]="learnerActions"
+        [pageSize]="10"
+        emptyMessage="No learners match this filter."
+      >
+        <ng-template appListCell="completionRate" let-row>{{ row.completionRate }}%</ng-template>
+        <ng-template appListCell="averageScore" let-row>{{ row.averageScore }}%</ng-template>
+        <ng-template appListCell="atRisk" let-row>
+          @if (row.atRisk) {
+            <app-status-badge status="At risk" variant="danger"></app-status-badge>
+          } @else {
+            <app-status-badge status="On track" variant="success"></app-status-badge>
+          }
+        </ng-template>
+      </app-list>
+    }
+
+    @if (selectedLearnerId !== null) {
+      <div class="report-detail">
+        <div class="report-detail__header">
+          <h3>{{ learnerName(selectedLearnerId, learnerDetail?.username) }}</h3>
+          <button type="button" class="report-detail__close" (click)="closeDetails()">
+            Close
+          </button>
+        </div>
+
+        @if (!learnerDetail) {
+          <p class="empty-state">Loading modules…</p>
+        } @else {
+          @for (module of learnerDetail.modules; track module.moduleId) {
+            <div class="learner-module">
+              <div class="learner-module__title">
+                {{ module.title }}
+                <app-status-badge
+                  [status]="statusLabel(module.status)"
+                  [variant]="statusVariant(module.status)"
+                ></app-status-badge>
+              </div>
+              @if (module.status === 'completed') {
+                <app-progress-row
+                  [label]="module.percentageScore + '%'"
+                  [value]="module.percentageScore"
+                  [color]="scoreColor(module.percentageScore)"
+                ></app-progress-row>
+              }
+            </div>
+          } @empty {
+            <p class="empty-state">No modules assigned to this learner.</p>
+          }
+        }
+      </div>
+    }
+  </app-dashboard-card>
+
+  <div class="report-section">
+    <app-dashboard-card
+      title="Weakest Categories (Org-Wide)"
+      description="Share of learners with each category among their weaknesses"
+    >
+      @for (item of categoryBreakdown; track item.category) {
+        <app-progress-row
+          [label]="item.label + ' · ' + item.learnerCount + ' learner' + (item.learnerCount === 1 ? '' : 's')"
+          [value]="item.percentage"
+          color="#dc2626"
+        ></app-progress-row>
+      } @empty {
+        <p class="empty-state">No weaknesses recorded yet.</p>
+      }
+    </app-dashboard-card>
+
+    <app-dashboard-card
+      title="Recent Activity"
+      description="Latest learner actions across the organisation"
+    >
+      <app-activity-list [items]="recentActivity"></app-activity-list>
+    </app-dashboard-card>
+  </div>
 }
-
-<div class="dashboard-statistics">
-  <app-data-card
-    label="Total Learners"
-    [statistic]="{ singleValue: totalLearners }"
-    [icon]="fontAwesomeIcons.userGroupIcon"
-    dataType="total"
-  />
-  <app-data-card
-    label="Active Modules"
-    [statistic]="{ singleValue: activeModules }"
-    [icon]="fontAwesomeIcons.openBookIcon"
-    dataType="module"
-  />
-  <app-data-card
-    label="Completion Rate"
-    [statistic]="{ percentage: completionRate }"
-    [icon]="fontAwesomeIcons.targetIcon"
-    dataType="scenario"
-  />
-  <app-data-card
-    label="Average Score"
-    [statistic]="{ percentage: averageScore }"
-    [icon]="fontAwesomeIcons.trendUpIcon"
-    dataType="average"
-  />
-</div>
-
-<div class="report-section">
-  <app-dashboard-card
-    title="Completion by Module"
-    description="Share of assigned learners who have completed each module"
-  >
-    @for (module of moduleCompletion; track module.moduleName) {
-      <app-progress-row
-        [label]="module.moduleName"
-        [value]="module.completionPercentage"
-      ></app-progress-row>
-    } @empty {
-      <p class="empty-state">No module completion data yet.</p>
-    }
-  </app-dashboard-card>
-
-  <app-dashboard-card
-    title="Weakest Categories (Org-Wide)"
-    description="Share of your learners who are weakest in each threat category"
-  >
-    @for (category of categoryBreakdown; track category.category) {
-      <app-progress-row
-        [label]="category.label + ' (' + category.learnerCount + ')'"
-        [value]="category.percentage"
-        color="#dc2626"
-      ></app-progress-row>
-    } @empty {
-      <p class="empty-state">No weakness data yet.</p>
-    }
-  </app-dashboard-card>
-</div>
-
-<div class="report-section">
-  <app-dashboard-card
-    title="Top Performers"
-    description="Highest average score across finalized module attempts"
-  >
-    @for (learner of topPerformers; track learner.id) {
-      <app-progress-row
-        [label]="learner.fullName"
-        [value]="learner.averageScore ?? 0"
-        color="#16a34a"
-      ></app-progress-row>
-    } @empty {
-      <p class="empty-state">No scored learners yet.</p>
-    }
-  </app-dashboard-card>
-
-  <app-dashboard-card
-    title="Learners Needing Attention"
-    description="Average score below 60%"
-  >
-    @for (learner of needsAttention; track learner.id) {
-      <app-progress-row
-        [label]="learner.fullName"
-        [value]="learner.averageScore ?? 0"
-        color="#dc2626"
-      ></app-progress-row>
-    } @empty {
-      <p class="empty-state">No learners currently need attention.</p>
-    }
-  </app-dashboard-card>
-</div>
-
-<app-dashboard-card
-  title="Recent Activity"
-  description="Latest learner actions across the organisation"
->
-  <app-activity-list [items]="recentActivity"></app-activity-list>
-</app-dashboard-card>

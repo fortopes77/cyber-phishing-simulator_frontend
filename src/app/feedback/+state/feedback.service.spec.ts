@@ -13,13 +13,10 @@ describe('FeedbackService', () => {
   let httpMock: HttpTestingController;
 
   const request: FeedbackRequest = {
+    scenarioId: 7,
     scenarioContent: 'Fake Microsoft password reset email',
     decision: 'Safe',
     correct: false,
-    correctAnswer: 'Suspicious',
-    selectedCues: ['Urgent language'],
-    missedCues: ['Mismatched sender domain'],
-    attemptId: 'a_123',
   };
 
   beforeEach(() => {
@@ -38,20 +35,24 @@ describe('FeedbackService', () => {
     expect(service).toBeTruthy();
   });
 
-  it('should POST the request payload to the feedback endpoint', () => {
+  it('should POST the AI-shaped request to the AI API feedback endpoint', () => {
     service.getFeedback(request).subscribe();
 
-    const req = httpMock.expectOne(`${environment.apiUrl}feedback`);
+    const req = httpMock.expectOne(`${environment.aiApiUrl}feedback`);
     expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual(request);
+    expect(req.request.body).toEqual({
+      scenario_content: 'Fake Microsoft password reset email',
+      scenarioChoices: [
+        { id: 1, text: 'Suspicious', isCorrect: true, scenarioId: 7 },
+        { id: 2, text: 'Safe', isCorrect: false, scenarioId: 7 },
+      ],
+      selectedChoiceId: 2,
+    });
     req.flush({
-      success: true,
-      feedback: {
-        id: 'f_001',
-        attemptId: 'a_123',
-        generatedBy: 'AI',
-        content: 'Great job spotting the phishing attempt.',
-      },
+      score: 0,
+      explanation: 'This was a phishing attempt.',
+      tips: [],
+      redFlagsMissed: [],
     });
   });
 });

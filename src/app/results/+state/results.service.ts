@@ -20,4 +20,15 @@ export class ResultsService {
   getMyResults() {
     return this.http.get<any>(`${this.apiEndpoint}results/me`);
   }
+
+  /**
+   * GET /results/me?moduleId=X - the same self-scoped results, narrowed by
+   * the backend to one module. The learner-facing module result detail:
+   * GET /results/module/:id is trainer/admin only (403 for a learner).
+   */
+  getMyModuleResult(moduleId: number) {
+    return this.http.get<any>(`${this.apiEndpoint}results/me`, {
+      params: { moduleId },
+    });
+  }
 }

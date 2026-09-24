@@ -13,6 +13,10 @@ const ROLE_TO_API: Record<UserAccount['role'], string> = {
   user: 'LEARNER',
 };
 
+function organisationParams(organisationId: number | null) {
+  return organisationId != null ? { params: { organisationId } } : {};
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -22,20 +26,22 @@ export class UsersService {
   constructor(private http: HttpClient) {}
 
   // GET /users - list all users - doesn't exist on this backend; only
-  // GET /users/learners (trainer-only, scoped to one organisation) is
-  // exposed, per the Swagger contract. Its LearnerResponseDto also carries
-  // progressPercentage/averageScore/lastActiveAt/weaknesses per learner.
-  getUsers(organisationId: number) {
+  // GET /users/learners (staff only) is exposed, per the Swagger contract.
+  // Its LearnerResponseDto also carries progressPercentage/averageScore/
+  // lastActiveAt/weaknesses per learner. A trainer is always scoped to their
+  // own organisation; a global admin sees every organisation unless
+  // organisationId narrows it, so a null organisationId omits the param.
+  getUsers(organisationId: number | null) {
     return this.http.get<RawUserAccount[] | { users: RawUserAccount[] }>(
       `${this.apiEndpoint}users/learners`,
-      { params: { organisationId } },
+      organisationParams(organisationId),
     );
   }
 
-  getTrainers(organisationId: number) {
+  getTrainers(organisationId: number | null) {
     return this.http.get<RawUserAccount[] | { users: RawUserAccount[] }>(
       `${this.apiEndpoint}users/trainers`,
-      { params: { organisationId } },
+      organisationParams(organisationId),
     );
   }
 
@@ -43,10 +49,9 @@ export class UsersService {
     return this.http.get<RawUserAccount>(`${this.apiEndpoint}users/${userId}`);
   }
 
-  // POST /users (CreateUserDto) - trainer-only. organisationId is
-  // intentionally omitted: per the Swagger contract a trainer's own
-  // organisation is inferred server-side and only a global admin needs to
-  // supply it.
+  // POST /users (CreateUserDto) - staff only. A trainer's own organisation
+  // is inferred server-side, so organisationId is only set (and required by
+  // the backend) when a global admin creates the account.
   createUser(user: CreateUserPayload) {
     return this.http.post<RawUserAccount>(`${this.apiEndpoint}users`, {
       ...user,

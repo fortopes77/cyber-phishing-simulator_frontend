@@ -18,7 +18,7 @@ export const AttemptsActions = createActionGroup({
     }>(),
     submitScenarioAttemptSuccess: props<{ result: ScenarioAttemptResult }>(),
     submitScenarioAttemptFailure: props<{ error: string }>(),
-    // POST /results/attempts/{attemptId}/finalize - closes out a module
+    // POST /results/attempts/{attemptId}/finalise - closes out a module
     // attempt once the learner has answered every scenario they're doing in
     // this session (or is leaving early with partial progress).
     finalizeAttempt: props<{ attemptId: number }>(),

@@ -43,6 +43,22 @@
           <p class="card-subtitle">Basic details about this training module</p>
 
           <div class="form-grid">
+            @if (isCreateMode && isGlobalAdmin) {
+              <label class="field field-full">
+                <span>Organisation</span>
+                <select formControlName="organisationId">
+                  <option [ngValue]="null" disabled>Select an organisation</option>
+                  @for (organisation of organisations; track organisation.id) {
+                    <option [ngValue]="organisation.id">{{ organisation.name }}</option>
+                  }
+                </select>
+                <app-form-field-error
+                  [control]="moduleForm.get('organisationId')"
+                  label="Organisation"
+                ></app-form-field-error>
+              </label>
+            }
+
             <label class="field field-full">
               <span>Module name</span>
               <input

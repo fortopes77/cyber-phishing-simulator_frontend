@@ -4,7 +4,7 @@ import {
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { AuthService, normalizeUser } from './auth.service';
+import { AuthService, isStaffRole, normalizeUser } from './auth.service';
 import { environment } from 'src/environments/environment';
 
 describe('AuthService', () => {
@@ -150,7 +150,20 @@ describe('normalizeUser', () => {
     expect(normalizeUser({ role: 'Learner' }).role).toBe('user');
   });
 
+  it('should map GLOBAL_ADMIN onto the admin role', () => {
+    expect(normalizeUser({ role: 'GLOBAL_ADMIN' }).role).toBe('admin');
+  });
+
   it('should not blow up when role is missing', () => {
     expect(normalizeUser({ id: '1' }).role).toBe('');
+  });
+});
+
+describe('isStaffRole', () => {
+  it('should treat global admins and trainers as staff, not learners', () => {
+    expect(isStaffRole('admin')).toBeTrue();
+    expect(isStaffRole('trainer')).toBeTrue();
+    expect(isStaffRole('user')).toBeFalse();
+    expect(isStaffRole(undefined)).toBeFalse();
   });
 });

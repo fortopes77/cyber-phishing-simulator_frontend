@@ -1,5 +1,5 @@
 // Default lifetime to assume when a token's expiry can't be determined
-// (e.g. the mock token format, or a real JWT with no `exp` claim).
+// (e.g. a JWT with no `exp` claim).
 const DEFAULT_TOKEN_TTL_MS = 15 * 60 * 1000; // 15 minutes
 
 /**
@@ -7,8 +7,6 @@ const DEFAULT_TOKEN_TTL_MS = 15 * 60 * 1000; // 15 minutes
  *
  * - Real JWTs (`header.payload.signature`) are decoded and their `exp`
  *   claim (seconds since epoch) is used.
- * - AuthService's mock tokens (`mock_token_{base64}_{timestamp}`) use the
- *   embedded issue timestamp plus DEFAULT_TOKEN_TTL_MS.
  * - Anything else falls back to "now + DEFAULT_TOKEN_TTL_MS" so the app
  *   still has a sane refresh point rather than never expiring.
  *
@@ -23,11 +21,6 @@ export function decodeTokenExpiry(token: string | undefined | null): number {
   const jwtExpiry = decodeJwtExpiry(token);
   if (jwtExpiry != null) {
     return jwtExpiry;
-  }
-
-  const mockTokenExpiry = decodeMockTokenExpiry(token);
-  if (mockTokenExpiry != null) {
-    return mockTokenExpiry;
   }
 
   return Date.now() + DEFAULT_TOKEN_TTL_MS;
@@ -59,18 +52,4 @@ function decodeJwtExpiry(token: string): number | null {
   }
 
   return null;
-}
-
-function decodeMockTokenExpiry(token: string): number | null {
-  const match = /^mock_token_.+_(\d+)$/.exec(token);
-  if (!match) {
-    return null;
-  }
-
-  const issuedAt = Number(match[1]);
-  if (Number.isNaN(issuedAt)) {
-    return null;
-  }
-
-  return issuedAt + DEFAULT_TOKEN_TTL_MS;
 }

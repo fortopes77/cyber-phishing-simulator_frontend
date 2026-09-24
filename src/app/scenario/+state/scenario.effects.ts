@@ -15,8 +15,8 @@ export class ScenarioEffects {
   fetchScenarios$ = createEffect(() =>
     this.actions$.pipe(
       ofType(ScenarioActions.fetchList),
-      mergeMap(() =>
-        this.scenarioService.getScenarios().pipe(
+      mergeMap(({ organisationId }) =>
+        this.scenarioService.getScenarios(organisationId).pipe(
           map((list: any) =>
             ScenarioActions.fetchListSuccess({
               scenarios: (Array.isArray(list) ? list : (list?.scenarios ?? [])).map(

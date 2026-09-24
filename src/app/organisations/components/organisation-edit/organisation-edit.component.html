@@ -1,0 +1,41 @@
+<app-header
+  [title]="isCreateMode ? 'Add Organisation' : 'Edit Organisation'"
+  [subtitle]="
+    isCreateMode
+      ? 'Create a new organisation. Add its trainers and learners afterwards.'
+      : 'Rename this organisation.'
+  "
+></app-header>
+
+<app-dashboard-card>
+  @if (error) {
+    <p class="organisation-edit-error">Couldn't save this organisation - {{ error }}</p>
+  }
+
+  <form class="organisation-form" [formGroup]="organisationForm" (ngSubmit)="onSubmit()">
+    <label class="field">
+      <span>Name</span>
+      <input type="text" formControlName="name" placeholder="e.g. Acme Corp" />
+      <app-form-field-error
+        [control]="organisationForm.get('name')"
+        label="Name"
+      ></app-form-field-error>
+    </label>
+
+    @if (organisation) {
+      <p class="organisation-counts">
+        {{ organisation.trainerCount }} trainer{{ organisation.trainerCount === 1 ? '' : 's' }}
+        · {{ organisation.learnerCount }} learner{{ organisation.learnerCount === 1 ? '' : 's' }}
+      </p>
+    }
+
+    <div class="actions">
+      <button type="button" class="btn btn-secondary" (click)="onCancel()">
+        Cancel
+      </button>
+      <button type="submit" class="btn btn-primary" [disabled]="loading">
+        Save
+      </button>
+    </div>
+  </form>
+</app-dashboard-card>

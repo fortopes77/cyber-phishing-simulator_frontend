@@ -8,6 +8,10 @@ export const selectMyResults = createSelector(
   selectResultsState,
   (state) => state.results,
 );
+export const selectModuleResult = createSelector(
+  selectResultsState,
+  (state) => state.moduleResult,
+);
 export const selectResultsLoading = createSelector(
   selectResultsState,
   (state) => state.loading,

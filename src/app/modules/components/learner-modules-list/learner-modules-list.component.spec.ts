@@ -20,8 +20,23 @@ describe('LearnerModulesListComponent', () => {
     { id: 1, moduleId: 1, difficulty: 'easy' },
     { id: 2, moduleId: 1, difficulty: 'easy' },
   ];
+  // Scenario 1 answered in an unfinished attempt at module 1 - progress
+  // comes from the answers tied to that attempt (see buildModuleProgress).
   const results = {
-    scenarioResults: [{ scenarioId: '1', moduleId: 1, correct: true }],
+    moduleResults: [
+      {
+        id: 1,
+        moduleId: 1,
+        moduleName: 'Module',
+        status: 'IN_PROGRESS',
+        totalScore: 0,
+        maxScore: 0,
+        percentageScore: 0,
+        passed: false,
+        completedAt: null,
+      },
+    ],
+    scenarioResults: [{ scenarioId: '1', moduleId: 1, correct: true, moduleResultId: 1 }],
     averageScore: null,
   };
 

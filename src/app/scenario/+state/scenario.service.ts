@@ -12,12 +12,14 @@ export class ScenarioService {
 
   constructor(private http: HttpClient) {}
 
-  getScenarios() {
-    // If your mock folder is served from the web root as /mock/... use an absolute path
-    // that starts with a leading slash so it resolves from the server root.
-    // return this.http.get('/mock/scenarios/get/scenario-list.mock.json');
-    // Authorization header is attached by authInterceptor from the store.
-    return this.http.get(`${this.apiEndpoint}scenarios`);
+  // organisationId is only honoured for a global admin (see
+  // ScenarioActions.fetchList). Authorization header is attached by
+  // authInterceptor from the store.
+  getScenarios(organisationId?: number | null) {
+    return this.http.get(
+      `${this.apiEndpoint}scenarios`,
+      organisationId != null ? { params: { organisationId } } : {},
+    );
   }
 
   getScenariosByModule(moduleId: number) {
@@ -32,9 +34,6 @@ export class ScenarioService {
   }
 
   getScenarioDetails(scenarioId: string) {
-    // If your mock folder is served from the web root as /mock/... use an absolute path
-    // that starts with a leading slash so it resolves from the server root.
-    // return this.http.get(`/mock/scenarios/get/scenario-details-${scenarioId}.mock.json`);
     return this.http.get(`${this.apiEndpoint}scenarios/${scenarioId}`);
   }
 

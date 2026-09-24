@@ -4,7 +4,6 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { provideMockStore, MockStore } from '@ngrx/store/testing';
 import { provideMockActions } from '@ngrx/effects/testing';
 import { Observable, of } from 'rxjs';
-import { AuthService } from '../../../auth/auth.service';
 import { AuthActions } from '../../../auth/+state/auth.actions';
 import { selectAuthState } from '../../../auth/+state/auth.selectors';
 
@@ -17,13 +16,11 @@ describe('NavComponent', () => {
   let actions$: Observable<any>;
 
   beforeEach(async () => {
-    const authServiceSpy = jasmine.createSpyObj('AuthService', ['getFeedback']);
     actions$ = of();
 
     await TestBed.configureTestingModule({
       imports: [NavComponent, RouterTestingModule],
       providers: [
-        { provide: AuthService, useValue: authServiceSpy },
         provideMockStore({
           selectors: [
             {

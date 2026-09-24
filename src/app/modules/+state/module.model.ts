@@ -12,6 +12,11 @@ export interface LearnerModule {
   // "no learners assigned yet" apart from "this response didn't include
   // assignment data at all".
   assignedUserIds?: number[];
+  // GET /training-modules only exposes organisationId to a global admin
+  // (organisationName comes back for everyone). Also sent on create when a
+  // global admin makes a module - see ModulesService.createModule.
+  organisationId?: number;
+  organisationName?: string | null;
 }
 
 /**

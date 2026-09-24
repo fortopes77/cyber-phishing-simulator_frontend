@@ -5,6 +5,7 @@ import { Store } from '@ngrx/store';
 import { combineLatest } from 'rxjs';
 import { ResultsActions } from 'src/app/results/+state/results.actions';
 import {
+  selectModuleResult,
   selectMyResults,
   selectResultsError,
   selectResultsLoading,
@@ -38,36 +39,51 @@ export class ModuleResultsComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    // GET /results/module/:id is trainer/admin-only (confirmed 403 for a
-    // learner token) and there's no learner-facing per-module-result
-    // endpoint, so this reuses GET /results/me - already the source for the
-    // dashboard/module-page completion tracking - and builds both views
-    // client-side from its moduleResults/scenarioResults.
-    this.store.dispatch(ResultsActions.fetchMyResults());
-
     // This component backs two routes: 'learner/results' (the nav sidebar's
     // "Results" link, no moduleId - shows the all-modules overview) and
-    // 'learner/modules/:moduleId/results' (a single module's breakdown,
+    // 'learner/modules/:moduleId/results' (a single module's result screen,
     // reached from continueToNext() in ScenarioChoiceComponent once the
     // learner finishes every scenario in the module, or by clicking a row
     // in the overview). Navigating between two modules' results pages
     // reuses this component rather than recreating it, so moduleId is read
     // from the live paramMap observable rather than a snapshot to pick that
     // up.
-    combineLatest([this.route.paramMap, this.store.select(selectMyResults)]).subscribe(
-      ([params, results]) => {
-        const moduleIdParam = params.get('moduleId');
-        this.moduleId = moduleIdParam ? Number(moduleIdParam) : null;
+    //
+    // A module's screen fetches its own result via GET
+    // /results/me?moduleId=X (GET /results/module/:id is trainer/admin
+    // only - confirmed 403 for a learner token); the overview uses the
+    // learner's full GET /results/me.
+    this.route.paramMap.subscribe((params) => {
+      const moduleIdParam = params.get('moduleId');
+      this.moduleId = moduleIdParam ? Number(moduleIdParam) : null;
 
-        if (this.moduleId != null) {
-          this.result = buildModuleResult(results, this.moduleId);
-          this.overview = [];
-        } else {
-          this.overview = buildModuleResultsOverview(results);
-          this.result = null;
-        }
-      },
-    );
+      if (this.moduleId != null) {
+        this.store.dispatch(ResultsActions.fetchModuleResult({ moduleId: this.moduleId }));
+      } else {
+        this.store.dispatch(ResultsActions.fetchMyResults());
+      }
+    });
+
+    combineLatest([
+      this.route.paramMap,
+      this.store.select(selectMyResults),
+      this.store.select(selectModuleResult),
+    ]).subscribe(([params, results, moduleResult]) => {
+      const moduleIdParam = params.get('moduleId');
+      const moduleId = moduleIdParam ? Number(moduleIdParam) : null;
+
+      if (moduleId != null) {
+        // Ignore a result still in the store from a different module.
+        this.result =
+          moduleResult?.moduleId === moduleId
+            ? buildModuleResult(moduleResult.results, moduleId)
+            : null;
+        this.overview = [];
+      } else {
+        this.overview = buildModuleResultsOverview(results);
+        this.result = null;
+      }
+    });
 
     this.store.select(selectResultsLoading).subscribe((loading) => {
       this.loading = loading;

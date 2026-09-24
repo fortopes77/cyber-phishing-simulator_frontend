@@ -1,23 +1,27 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { environment } from 'src/environments/environment';
-import { Feedback, FeedbackRequest } from './feedback.model';
+import {
+  FeedbackRequest,
+  RawFeedbackResponse,
+  toAiFeedbackRequest,
+} from './feedback.model';
 
 @Injectable({
   providedIn: 'root',
 })
 export class FeedbackService {
-  private apiEndpoint = environment.apiUrl || 'http://localhost:3000/';
+  private aiApiEndpoint = environment.aiApiUrl || 'http://localhost:8000/';
 
   constructor(private http: HttpClient) {}
 
-  // Follows the same service/effect/reducer/selector pattern as
-  // scenario.service.ts and attempts.service.ts.
+  // POST /feedback lives on the AI API, not the NestJS backend (which has no
+  // feedback route) - see toAiFeedbackRequest for how a Safe/Suspicious
+  // decision maps onto its multiple-choice request body.
   getFeedback(payload: FeedbackRequest) {
-    // Authorization header is attached by authInterceptor from the store.
-    return this.http.post<{ success: boolean; feedback: Feedback }>(
-      `${this.apiEndpoint}feedback`,
-      payload,
+    return this.http.post<RawFeedbackResponse>(
+      `${this.aiApiEndpoint}feedback`,
+      toAiFeedbackRequest(payload),
     );
   }
 }

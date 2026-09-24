@@ -1,3 +1,11 @@
+@if (step === "deciding") {
+  <app-scenario-choice
+    [scenarioId]="scenarioId"
+    [selectedCues]="selectedCues"
+    [openedAt]="openedAt"
+    (backToScenarioRequested)="backToScenario()"
+  ></app-scenario-choice>
+} @else {
 <div class="scenario-page">
   <div class="scenario-page__header">
     <div class="scenario-page__info">
@@ -41,139 +49,25 @@
       class="scenario-card__body"
       (mouseup)="onContentMouseUp()"
     >
+      <!-- One interaction sub-component per interactionType. -->
       @switch (getScenarioTypeKey()) {
         @case ('email') {
-          <div class="message-shell message-shell--email">
-            @if (scenario.from) {
-              <div class="message-shell__meta">
-                <span class="message-shell__label">From</span>
-                <span>{{ scenario.from }}</span>
-              </div>
-            }
-            @if (scenario.recipient) {
-              <div class="message-shell__meta">
-                <span class="message-shell__label">To</span>
-                <span>{{ scenario.recipient }}</span>
-              </div>
-            }
-            <div class="message-shell__meta">
-              <span class="message-shell__label">Subject</span>
-              <span>{{ scenario.subject }}</span>
-            </div>
-            <div class="message-shell__content">{{ scenario.body }}</div>
-          </div>
+          <app-email-interaction [message]="scenario"></app-email-interaction>
         }
-
         @case ('phone') {
-          <div class="message-shell message-shell--phone">
-            <div class="message-shell__header">
-              <div class="message-shell__pill">Phone Transcript</div>
-              @if (scenario.from) {
-                <div class="message-shell__subtle">
-                  {{ scenario.from }}
-                </div>
-              }
-            </div>
-            <div class="message-shell__transcript">
-              @for (entry of getTranscriptEntries(); track $index) {
-                <div
-                  class="transcript-line"
-                  [ngClass]="
-                    entry.speaker === 'You'
-                      ? 'transcript-line--user'
-                      : 'transcript-line--caller'
-                  "
-                >
-                  <div class="transcript-line__speaker">{{ entry.speaker }}</div>
-                  <div class="transcript-line__text">{{ entry.text }}</div>
-                </div>
-              }
-            </div>
-          </div>
+          <app-phone-call-interaction [message]="scenario"></app-phone-call-interaction>
         }
-
         @case ('text') {
-          <div class="message-shell message-shell--text">
-            <div class="message-shell__header">
-              <div class="message-shell__pill">Text Thread</div>
-              @if (scenario.from) {
-                <div class="message-shell__subtle">
-                  {{ scenario.from }}
-                </div>
-              }
-            </div>
-            <div class="message-shell__chat">
-              @for (message of getTextMessages(); track $index) {
-                <div
-                  class="chat-bubble"
-                  [ngClass]="
-                    message.speaker === 'You'
-                      ? 'chat-bubble--user'
-                      : 'chat-bubble--caller'
-                  "
-                >
-                  <div class="chat-bubble__sender">{{ message.speaker }}</div>
-                  <div class="chat-bubble__text">{{ message.text }}</div>
-                </div>
-              }
-            </div>
-          </div>
+          <app-text-message-interaction [message]="scenario"></app-text-message-interaction>
         }
-
         @case ('social') {
-          <div class="message-shell message-shell--social">
-            <div class="message-shell__header">
-              <div class="message-shell__pill message-shell__pill--social">
-                Social Media DM
-              </div>
-              @if (scenario.from) {
-                <div class="message-shell__subtle">
-                  {{ scenario.from }}
-                </div>
-              }
-            </div>
-            <div class="message-shell__chat">
-              @for (message of getSocialMessages(); track $index) {
-                <div
-                  class="social-bubble"
-                  [ngClass]="
-                    message.speaker === 'You'
-                      ? 'social-bubble--user'
-                      : 'social-bubble--caller'
-                  "
-                >
-                  <div class="social-bubble__sender">{{ message.speaker }}</div>
-                  <div class="social-bubble__text">{{ message.text }}</div>
-                </div>
-              }
-            </div>
-          </div>
+          <app-social-media-interaction [message]="scenario"></app-social-media-interaction>
         }
-
         @case ('invoice') {
-          <div class="message-shell message-shell--invoice">
-            <div class="invoice__header">
-              <div>
-                <div class="message-shell__pill">Invoice</div>
-                <div class="message-shell__subtle">{{ scenario.subject }}</div>
-              </div>
-              <div class="invoice__amount">{{ getInvoiceAmount() }}</div>
-            </div>
-            <div class="invoice__grid">
-              @for (field of getInvoiceFields(); track $index) {
-                <div class="invoice__field">
-                  <span class="invoice__label">{{ field.label }}</span>
-                  <span class="invoice__value">{{ field.value }}</span>
-                </div>
-              }
-            </div>
-          </div>
+          <app-invoice-interaction [message]="scenario"></app-invoice-interaction>
         }
-
         @default {
-          <div class="message-shell">
-            <div class="message-shell__content">{{ scenario.body }}</div>
-          </div>
+          <app-generic-interaction [message]="scenario"></app-generic-interaction>
         }
       }
     </div>
@@ -212,3 +106,4 @@
     </div>
   }
 </div>
+}

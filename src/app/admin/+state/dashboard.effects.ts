@@ -5,7 +5,7 @@ import { Injectable } from '@angular/core';
 import { DashboardActions } from './dashboard.actions';
 import { DashboardService } from './dashboard.service';
 import { normalizeTrainerDashboardStats } from './dashboard.model';
-import { selectAuthState } from 'src/app/auth/+state/auth.selectors';
+import { selectOrganisationScope } from 'src/app/organisations/+state/organisations.selectors';
 
 @Injectable()
 export class DashboardEffects {
@@ -18,15 +18,17 @@ export class DashboardEffects {
   fetchTrainerDashboard$ = createEffect(() =>
     this.actions$.pipe(
       ofType(DashboardActions.fetchTrainerDashboard),
-      withLatestFrom(this.store.select(selectAuthState)),
-      mergeMap(([, auth]) => {
-        // Both dashboard endpoints are scoped to an organisation - read it
-        // off the signed-in trainer's own account.
-        const organisationId = auth.user?.organisationId;
+      withLatestFrom(this.store.select(selectOrganisationScope)),
+      mergeMap(([, { isGlobalAdmin, organisationId }]) => {
+        // Both dashboard endpoints are scoped to a single organisation - the
+        // trainer's own, or whichever one a global admin has picked in the
+        // organisation filter.
         if (organisationId == null) {
           return of(
             DashboardActions.fetchTrainerDashboardFailure({
-              error: 'No organisation on the signed-in account',
+              error: isGlobalAdmin
+                ? 'Select an organisation to view its dashboard'
+                : 'No organisation on the signed-in account',
             }),
           );
         }

@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Router, RouterModule } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { Actions, ofType } from '@ngrx/effects';
 import { Subject, combineLatest, take, takeUntil } from 'rxjs';
@@ -55,6 +55,13 @@ const DECISION_META: Record<string, { icon: IconDefinition; description: string 
   },
 };
 
+/**
+ * The decision step of a scenario - rendered inside ScenarioPageComponent
+ * (the scenario screen container) once the learner has reviewed the
+ * message, not a route of its own. Which variant it shows is picked by the
+ * scenario's answerMode: 'simple' is the binary Safe/Suspicious decision,
+ * 'detailed' submits the cues flagged on the message.
+ */
 @Component({
   selector: 'app-scenario-choice',
   standalone: true,
@@ -63,7 +70,12 @@ const DECISION_META: Record<string, { icon: IconDefinition; description: string 
   styleUrls: ['./scenario-choice.component.scss'],
 })
 export class ScenarioChoiceComponent implements OnInit, OnDestroy {
-  scenarioId: number | string = '';
+  @Input() scenarioId: number | string = '';
+  // When the learner opened the scenario (on the container's message step),
+  // so timeTakenSeconds covers reading the message, not just this step.
+  @Input() openedAt: Date | null = null;
+  // The learner wants to go back to the message (e.g. to flag more cues).
+  @Output() backToScenarioRequested = new EventEmitter<void>();
   scenarioNumber = 1;
   totalScenarios = 1;
   scenario: Scenario = {
@@ -75,9 +87,9 @@ export class ScenarioChoiceComponent implements OnInit, OnDestroy {
   readonly decisionOptions = DECISION_OPTIONS;
   readonly fontAwesomeIcons = iconLibrary;
 
-  // The learner's suspicious-text selections carried over from the
-  // scenario page via router navigation state.
-  selectedCues: string[] = [];
+  // The learner's suspicious-text selections from the container's message
+  // step.
+  @Input() selectedCues: string[] = [];
 
   // 'deciding' -> choosing an option, 'result' -> showing correct/incorrect
   // and the AI-generated feedback for that decision.
@@ -86,6 +98,8 @@ export class ScenarioChoiceComponent implements OnInit, OnDestroy {
   scenarioResult: ScenarioAttemptResult | null = null;
   submitting = false;
   feedbackContent: string | null = null;
+  feedbackTips: string[] = [];
+  feedbackRedFlags: string[] = [];
   feedbackLoading = false;
 
   // The module attempt session backing this walkthrough - started on the
@@ -93,12 +107,12 @@ export class ScenarioChoiceComponent implements OnInit, OnDestroy {
   // (see selectDecision), finalized once the learner finishes or leaves.
   // Mirrored from the attempts store's currentAttempt (see the
   // selectCurrentAttempt subscription in ngOnInit) rather than only ever set
-  // locally: continuing to the next scenario navigates through
-  // ScenarioPageComponent in between (scenarios/:id -> scenarios/:id/feedback
-  // is a different route each time), which destroys and recreates this
-  // component - a purely local field would forget the in-progress attempt
-  // after scenario 1, causing every scenario after the first to silently
-  // start its own separate (single-scenario) attempt instead of extending it.
+  // locally: continuing to the next scenario returns the container to its
+  // message step, which destroys this component, and recreates it for the
+  // next decision - a purely local field would forget the in-progress
+  // attempt after scenario 1, causing every scenario after the first to
+  // silently start its own separate (single-scenario) attempt instead of
+  // extending it.
   private currentAttemptId: number | null = null;
   private currentAttemptModuleId: number | null = null;
   private pendingDecision: string | null = null;
@@ -115,37 +129,22 @@ export class ScenarioChoiceComponent implements OnInit, OnDestroy {
   private lastFetchedModuleId: number | null = null;
 
   constructor(
-    private route: ActivatedRoute,
     private router: Router,
     private store: Store,
     private actions$: Actions,
   ) {}
 
   ngOnInit(): void {
-    // Selected cues are only relevant for the single navigation from the
-    // scenario page - Angular's router writes navigation `extras.state`
-    // into `history.state`, so it's readable here even though
-    // getCurrentNavigation() is only available during the navigation
-    // itself. Falls back to an empty array on a direct link/refresh.
-    const navigationState = history.state as
-      | { selectedCues?: string[] }
-      | undefined;
-    this.selectedCues = navigationState?.selectedCues ?? [];
-
-    this.route.paramMap.pipe(takeUntil(this.destroy$)).subscribe((params) => {
-      const idParam = params.get('id') || '';
-      const idValue = /^\d+$/.test(idParam) ? Number(idParam) : idParam;
-      this.scenarioId = idValue;
-      this.phase = 'deciding';
-      this.selectedDecision = null;
-      this.scenarioResult = null;
-      this.feedbackContent = null;
-      this.scenarioOpenedAt = new Date();
-
-      this.store.dispatch(
-        ScenarioActions.fetchScenarioDetails({ scenarioId: String(idValue) }),
-      );
-    });
+    // The container has already fetched this scenario into the store (and
+    // recreates this step for each scenario), so there's nothing to fetch
+    // here - just start from a clean decision.
+    this.phase = 'deciding';
+    this.selectedDecision = null;
+    this.scenarioResult = null;
+    this.feedbackContent = null;
+    this.feedbackTips = [];
+    this.feedbackRedFlags = [];
+    this.scenarioOpenedAt = this.openedAt ?? new Date();
 
     combineLatest([
       this.store.select(selectScenario),
@@ -260,7 +259,9 @@ export class ScenarioChoiceComponent implements OnInit, OnDestroy {
       .select(selectFeedback)
       .pipe(takeUntil(this.destroy$))
       .subscribe((feedback) => {
-        this.feedbackContent = feedback?.content ?? null;
+        this.feedbackContent = feedback?.content || null;
+        this.feedbackTips = feedback?.tips ?? [];
+        this.feedbackRedFlags = feedback?.redFlagsMissed ?? [];
       });
 
     this.store
@@ -377,12 +378,12 @@ export class ScenarioChoiceComponent implements OnInit, OnDestroy {
     this.store.dispatch(
       FeedbackActions.requestFeedback({
         request: {
+          scenarioId: Number(this.scenarioId),
           scenarioContent: this.scenario.content,
           decision: this.selectedDecision ?? '',
           correct: result.correct,
           selectedCues: this.selectedCues.length ? this.selectedCues : undefined,
           missedCues: result.missedCues.length ? result.missedCues : undefined,
-          attemptId: String(result.attemptId),
         },
       }),
     );
@@ -453,7 +454,7 @@ export class ScenarioChoiceComponent implements OnInit, OnDestroy {
   }
 
   backToScenario(): void {
-    this.router.navigate(['/learner/scenarios', this.scenarioId]);
+    this.backToScenarioRequested.emit();
   }
 
   closeSession(): void {

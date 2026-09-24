@@ -8,10 +8,10 @@
         @if (isModuleComplete) {
           <div class="tag tag--green">Completed</div>
         }
-        @if (!isModuleComplete && completedCount > 0) {
+        @if (moduleStatus === "In progress") {
           <div class="tag tag--green">In Progress</div>
         }
-        @if (!isModuleComplete && completedCount === 0) {
+        @if (moduleStatus === "Assigned") {
           <div class="tag tag--green">Not Started</div>
         }
       </div>
@@ -21,7 +21,7 @@
 
     <div class="module-header__right">
       <button class="primary-button" (click)="continueModule()">
-        Continue Module
+        {{ moduleActionLabel }}
       </button>
     </div>
   </div>

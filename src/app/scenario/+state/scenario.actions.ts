@@ -1,10 +1,13 @@
-import { createActionGroup, emptyProps, props } from '@ngrx/store';
+import { createActionGroup, props } from '@ngrx/store';
 import { ScenarioAnswerMode } from '../models/scenario.model';
 
 export const ScenarioActions = createActionGroup({
   source: 'Scenario',
   events: {
-    fetchList: emptyProps(),
+    // organisationId narrows a global admin's list to one organisation (null
+    // or omitted = every organisation). Everyone else is scoped server-side
+    // to their own organisation / assigned modules, so they omit it.
+    fetchList: props<{ organisationId?: number | null }>(),
     fetchListSuccess: props<{ scenarios: any[] }>(),
     fetchListFailure: props<{ error: string }>(),
     fetchScenariosByModule: props<{ moduleId: number }>(),

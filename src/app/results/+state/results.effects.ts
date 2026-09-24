@@ -33,4 +33,27 @@ export class ResultsEffects {
       ),
     ),
   );
+
+  fetchModuleResult$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(ResultsActions.fetchModuleResult),
+      mergeMap(({ moduleId }) =>
+        this.resultsService.getMyModuleResult(moduleId).pipe(
+          map((raw) =>
+            ResultsActions.fetchModuleResultSuccess({
+              moduleId,
+              results: normalizeLearnerResults(raw),
+            }),
+          ),
+          catchError((error) =>
+            of(
+              ResultsActions.fetchModuleResultFailure({
+                error: error.message || 'Failed to fetch module result',
+              }),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
 }

@@ -13,6 +13,7 @@ import { selectScenarioList } from 'src/app/scenario/+state/scenario.selectors';
 import { ResultsActions } from 'src/app/results/+state/results.actions';
 import { selectMyResults } from 'src/app/results/+state/results.selectors';
 import {
+  buildModuleProgress,
   buildModuleResultsOverview,
   ModuleResultOverviewRow,
 } from 'src/app/module-results/+state/module-result.model';
@@ -79,7 +80,7 @@ export class UserDashboardComponent implements OnInit {
     // /api-json and a real learner token), so this can dispatch immediately
     // rather than waiting on the auth subscription to resolve a userId.
     this.store.dispatch(ModulesActions.fetchList({ assignedToMe: true }));
-    this.store.dispatch(ScenarioActions.fetchList());
+    this.store.dispatch(ScenarioActions.fetchList({}));
     this.store.dispatch(ResultsActions.fetchMyResults());
 
     combineLatest([
@@ -95,42 +96,28 @@ export class UserDashboardComponent implements OnInit {
         (results?.scenarioResults ?? []).map((result) => result.scenarioId),
       );
 
-      // Per-module pass/fail and score, keyed by moduleId -
-      // buildModuleResultsOverview already collapses a module's retries down
-      // to its most recent COMPLETED attempt and uses the backend's own
-      // percentageScore (see the module-results page), so it's reused here
-      // instead of duplicating that dedup logic or recomputing from
-      // individual scenarios.
+      // Each module's latest COMPLETED attempt and its backend-computed
+      // percentageScore (see the module-results page) - averaged for the
+      // Average Score card below.
       const completedModuleResults = buildModuleResultsOverview(results);
-      const moduleResultByModuleId = new Map(
-        completedModuleResults.map((row) => [row.moduleId, row]),
-      );
+
+      // Each module's status/progress comes from the learner's own attempts
+      // at that module (see buildModuleProgress) - not from whether its
+      // current scenarios were ever answered somewhere, which goes wrong
+      // once a trainer moves scenarios between modules.
+      const answeredByModuleId = new Map<number, Set<string>>();
 
       this.assignedModules = (moduleList ?? [])
         .map((module: any) => {
           const moduleScenarios = (scenarioList ?? []).filter(
             (scenario: any) => scenario.moduleId === module.moduleId,
           );
-          const completedCount = moduleScenarios.filter((scenario: any) =>
-            completedScenarioIds.has(String(scenario.id)),
-          ).length;
-          const progress = moduleScenarios.length
-            ? completedCount / moduleScenarios.length
-            : 0;
-
-          let status: string;
-          if (progress >= 1) {
-            // Falls back to "Not Passed" rather than "Passed" if there's no
-            // COMPLETED moduleResult yet (e.g. finalize is still in flight) -
-            // safer to under-claim a pass than over-claim one.
-            status = moduleResultByModuleId.get(module.moduleId)?.passed
-              ? 'Passed'
-              : 'Not Passed';
-          } else if (progress > 0) {
-            status = 'In progress';
-          } else {
-            status = 'Assigned';
-          }
+          const { status, progress, answeredScenarioIds } = buildModuleProgress(
+            results,
+            module.moduleId,
+            moduleScenarios.map((scenario: any) => scenario.id),
+          );
+          answeredByModuleId.set(module.moduleId, answeredScenarioIds);
 
           return {
             id: module.moduleId,
@@ -151,8 +138,26 @@ export class UserDashboardComponent implements OnInit {
       // hidden entirely (not a fallback to a not-yet-started module) when
       // the learner has nothing partway done.
       const inProgress = this.assignedModules.find(
-        (m) => m.progressPercentage > 0 && m.progressPercentage < 100,
+        (m) =>
+          m.status === 'In progress' &&
+          m.progressPercentage > 0 &&
+          m.progressPercentage < 100,
       );
+
+      // Continue Learning drops the learner straight back into the scenario
+      // they're up to - the first one in the module not yet answered in the
+      // current attempt, matching ModulePageComponent.continueModule -
+      // rather than the module page.
+      const answeredInProgress = inProgress
+        ? (answeredByModuleId.get(inProgress.id) ?? new Set<string>())
+        : new Set<string>();
+      const nextScenario = inProgress
+        ? (scenarioList ?? []).find(
+            (scenario: any) =>
+              scenario.moduleId === inProgress.id &&
+              !answeredInProgress.has(String(scenario.id)),
+          )
+        : undefined;
 
       this.continueLearning = inProgress
         ? {
@@ -165,7 +170,9 @@ export class UserDashboardComponent implements OnInit {
             totalScenarios: inProgress.scenarios,
             progressPercentage: inProgress.progressPercentage,
             icon: 'schedule',
-            route: inProgress.route,
+            route: nextScenario
+              ? `/learner/scenarios/${nextScenario.id}`
+              : inProgress.route,
           }
         : null;
 
@@ -234,7 +241,7 @@ export class UserDashboardComponent implements OnInit {
   }
 
   onAssignedModuleSelected(module: AssignedModule): void {
-    console.log('Assigned module selected:', module.title);
+    this.router.navigate([module.route]);
   }
 
   viewAllModules(): void {

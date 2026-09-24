@@ -57,6 +57,14 @@ describe('UsersService', () => {
     req.flush([{ ...rawUser, role: 'TRAINER' }]);
   });
 
+  it("should omit organisationId for a global admin's all-organisations list", () => {
+    service.getUsers(null).subscribe();
+
+    const req = httpMock.expectOne(`${environment.apiUrl}users/learners`);
+    expect(req.request.params.has('organisationId')).toBeFalse();
+    req.flush([rawUser]);
+  });
+
   it('should GET a single user by id', () => {
     service.getUserDetails('1').subscribe();
 

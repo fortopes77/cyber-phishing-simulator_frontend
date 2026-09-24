@@ -7,7 +7,7 @@ import { Actions, ofType } from '@ngrx/effects';
 import { Subscription } from 'rxjs';
 import { AuthActions } from '../../../auth/+state/auth.actions';
 import { selectAuthState } from '../../../auth/+state/auth.selectors';
-import { AuthService, User } from '../../../auth/auth.service';
+import { isStaffRole, User } from '../../../auth/auth.service';
 import { iconLibrary } from '../../constants/font-awesome-icons.const';
 import { SignOutConfirmationModalComponent } from '../sign-out-confirmation-modal/sign-out-confirmation-modal.component';
 import { ProfileModalComponent } from '../profile-modal/profile-modal.component';
@@ -43,7 +43,6 @@ export class NavComponent implements OnInit, OnDestroy {
   passwordSaved = false;
 
   constructor(
-    private authService: AuthService,
     private router: Router,
     private store: Store,
     private actions$: Actions,
@@ -63,41 +62,15 @@ export class NavComponent implements OnInit, OnDestroy {
     });
   }
 
+  get isStaff(): boolean {
+    return isStaffRole(this.currentUser?.role);
+  }
+
   get fullName(): string | undefined {
     const name = [this.currentUser?.firstName, this.currentUser?.lastName]
       .filter(Boolean)
       .join(' ');
     return name || this.currentUser?.username;
-  }
-
-  triggerFeedback() {
-    this.authService
-      .getFeedback({
-        scenario_content: 'Fake Microsoft password reset email',
-        scenarioChoices: [
-          {
-            id: 1,
-            text: 'Clicked the link',
-            isCorrect: false,
-            scenarioId: 1,
-          },
-          {
-            id: 2,
-            text: 'Reported the email',
-            isCorrect: true,
-            scenarioId: 1,
-          },
-        ],
-        selectedChoiceId: 1,
-      })
-      .subscribe({
-        next: (res) => {
-          console.log(res);
-        },
-        error: (err) => {
-          console.error(err);
-        },
-      });
   }
 
   ngOnDestroy() {}

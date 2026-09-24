@@ -11,7 +11,7 @@ describe('ResultsEffects', () => {
   let resultsService: jasmine.SpyObj<ResultsService>;
 
   beforeEach(() => {
-    const spy = jasmine.createSpyObj('ResultsService', ['getMyResults']);
+    const spy = jasmine.createSpyObj('ResultsService', ['getMyResults', 'getMyModuleResult']);
 
     TestBed.configureTestingModule({
       providers: [
@@ -59,6 +59,24 @@ describe('ResultsEffects', () => {
     effects.fetchMyResults$.subscribe((action) => {
       expect(action).toEqual(
         ResultsActions.fetchMyResultsFailure({ error: 'Network error' }),
+      );
+      done();
+    });
+  });
+
+  it('should fetch one module and tag the result with its moduleId', (done) => {
+    resultsService.getMyModuleResult.and.returnValue(
+      of({ moduleResults: [], scenarioResults: [] }),
+    );
+    actions$ = of(ResultsActions.fetchModuleResult({ moduleId: 7 }));
+
+    effects.fetchModuleResult$.subscribe((action) => {
+      expect(resultsService.getMyModuleResult).toHaveBeenCalledWith(7);
+      expect(action).toEqual(
+        ResultsActions.fetchModuleResultSuccess({
+          moduleId: 7,
+          results: { scenarioResults: [], moduleResults: [], averageScore: null },
+        }),
       );
       done();
     });

@@ -31,13 +31,6 @@ describe('token.utils', () => {
       expect(expiry).toBeGreaterThan(before);
     });
 
-    it('should derive expiry from the mock token format', () => {
-      const issuedAt = Date.now();
-      const token = `mock_token_dXNlcjp0cmFpbmVy_${issuedAt}`;
-
-      expect(decodeTokenExpiry(token)).toBe(issuedAt + 15 * 60 * 1000);
-    });
-
     it('should fall back to a default TTL for an unrecognised token format', () => {
       const before = Date.now();
       const expiry = decodeTokenExpiry('not-a-real-token');

@@ -5,6 +5,8 @@
   [createActions]="createActions"
 ></app-header>
 
+<app-organisation-filter></app-organisation-filter>
+
 <div class="role-tabs">
   <a routerLink="/trainer/learners" routerLinkActive="active" class="role-tab">Learners</a>
   <a routerLink="/trainer/trainers" routerLinkActive="active" class="role-tab">Trainers</a>
@@ -59,6 +61,9 @@
         <div class="learner-details">
           <div class="learner-name">{{ row.fullName }}</div>
           <div class="learner-email">{{ row.email }}</div>
+          @if (isGlobalAdmin && row.organisationName) {
+            <div class="learner-organisation">{{ row.organisationName }}</div>
+          }
         </div>
       </div>
     </ng-template>

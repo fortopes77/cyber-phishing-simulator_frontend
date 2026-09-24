@@ -36,6 +36,8 @@ export interface CreateUserPayload {
   firstName: string;
   lastName: string;
   role: UserAccountRole;
+  // Global admins only - see UsersService.createUser.
+  organisationId?: number;
 }
 
 /**

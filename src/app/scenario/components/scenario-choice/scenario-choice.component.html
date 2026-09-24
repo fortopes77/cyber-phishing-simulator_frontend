@@ -97,6 +97,17 @@
           Submitting your decision…
         </p>
       }
+
+      <div class="result-actions">
+        <button
+          class="secondary-button"
+          type="button"
+          [disabled]="submitting"
+          (click)="backToScenario()"
+        >
+          Back to Scenario
+        </button>
+      </div>
     </div>
   }
 
@@ -211,6 +222,22 @@
           <p class="feedback-panel__content">
             {{ feedbackContent }}
           </p>
+          @if (feedbackRedFlags.length) {
+            <div class="feedback-panel__subtitle">Red flags to look for</div>
+            <ul class="feedback-panel__list">
+              @for (flag of feedbackRedFlags; track flag) {
+                <li>{{ flag }}</li>
+              }
+            </ul>
+          }
+          @if (feedbackTips.length) {
+            <div class="feedback-panel__subtitle">Tips</div>
+            <ul class="feedback-panel__list">
+              @for (tip of feedbackTips; track tip) {
+                <li>{{ tip }}</li>
+              }
+            </ul>
+          }
         }
         @if (!feedbackLoading && !feedbackContent) {
           <p class="feedback-panel__content">

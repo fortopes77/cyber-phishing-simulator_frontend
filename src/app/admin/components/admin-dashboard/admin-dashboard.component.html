@@ -4,6 +4,14 @@
     subtitle="Monitor learner progress and manage training modules"
   ></app-header>
 
+  <app-organisation-filter [allowAll]="false"></app-organisation-filter>
+
+  @if (needsOrganisation) {
+    <p class="dashboard-prompt">
+      Select an organisation above to view its dashboard.
+    </p>
+  } @else {
+
   @if (dashboardError) {
     <p class="dashboard-error">
       Couldn't load the latest dashboard data - showing what's available.
@@ -81,4 +89,5 @@
           (click)="viewReports()"
         ></app-action-card>
       </div>
-    </div>
+      }
+</div>

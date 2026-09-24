@@ -1,9 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { provideMockStore, MockStore } from '@ngrx/store/testing';
 import { Actions } from '@ngrx/effects';
-import { Subject, of } from 'rxjs';
+import { Subject } from 'rxjs';
 import { ScenarioChoiceComponent } from './scenario-choice.component';
 import { ScenarioActions } from '../../+state/scenario.actions';
 import {
@@ -59,12 +59,6 @@ describe('ScenarioChoiceComponent', () => {
     await TestBed.configureTestingModule({
       imports: [ScenarioChoiceComponent, RouterTestingModule],
       providers: [
-        {
-          provide: ActivatedRoute,
-          useValue: {
-            paramMap: of(convertToParamMap({ id: '2' })),
-          },
-        },
         { provide: Actions, useValue: actionsSubject },
         provideMockStore({
           selectors: [
@@ -101,8 +95,11 @@ describe('ScenarioChoiceComponent', () => {
       }
     });
 
+    // Rendered as the decision step inside ScenarioPageComponent, which
+    // passes the scenario in via inputs rather than a route of its own.
     fixture = TestBed.createComponent(ScenarioChoiceComponent);
     component = fixture.componentInstance;
+    component.scenarioId = 2;
     fixture.detectChanges();
   });
 
@@ -110,7 +107,7 @@ describe('ScenarioChoiceComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it("should adopt an in-progress attempt already in the store instead of starting a new one - covers this component being recreated between scenarios (scenarios/:id/feedback is a different route each time)", () => {
+  it("should adopt an in-progress attempt already in the store instead of starting a new one - covers this step being recreated for each scenario by its container", () => {
     store.overrideSelector(selectCurrentAttempt, startedAttempt);
     store.refreshState();
 
@@ -317,12 +314,12 @@ describe('ScenarioChoiceComponent', () => {
     expect(store.dispatch).toHaveBeenCalledWith(
       FeedbackActions.requestFeedback({
         request: {
+          scenarioId: 2,
           scenarioContent: 'Please install the attached update immediately.',
           decision: 'Suspicious',
           correct: true,
           selectedCues: ['Urgent language', 'Suspicious link'],
           missedCues: undefined,
-          attemptId: '5',
         },
       }),
     );
@@ -502,10 +499,42 @@ describe('ScenarioChoiceComponent', () => {
     );
   });
 
-  it('should navigate back to the scenario page', () => {
+  it('should ask its container to go back to the scenario message', () => {
+    const back = jasmine.createSpy('backToScenarioRequested');
+    component.backToScenarioRequested.subscribe(back);
+
     component.backToScenario();
 
-    expect(router.navigate).toHaveBeenCalledWith(['/learner/scenarios', 2]);
+    expect(back).toHaveBeenCalled();
+    expect(router.navigate).not.toHaveBeenCalled();
+  });
+
+  it('should time the attempt from when the container opened the scenario', () => {
+    const openedAt = new Date(Date.now() - 30_000);
+    fixture = TestBed.createComponent(ScenarioChoiceComponent);
+    component = fixture.componentInstance;
+    component.scenarioId = 2;
+    component.openedAt = openedAt;
+    fixture.detectChanges();
+    store.overrideSelector(selectCurrentAttempt, startedAttempt);
+    store.refreshState();
+
+    component.selectDecision('Suspicious');
+
+    const submit = (store.dispatch as jasmine.Spy).calls
+      .allArgs()
+      .map(([action]) => action)
+      .find((action: any) => action.type === AttemptsActions.submitScenarioAttempt.type);
+    expect(submit.scenarioAttempt.startedAt).toBe(openedAt.toISOString());
+    expect(submit.scenarioAttempt.timeTakenSeconds).toBeGreaterThanOrEqual(30);
+  });
+
+  it('should offer a way back to the message from the Safe/Suspicious decision', () => {
+    const buttons = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('button'),
+    ).map((button) => button.textContent?.trim());
+
+    expect(buttons).toContain('Back to Scenario');
   });
 
   it('should report pager state and navigate to the previous/next scenario', () => {

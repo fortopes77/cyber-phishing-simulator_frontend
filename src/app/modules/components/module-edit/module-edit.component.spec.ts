@@ -146,6 +146,7 @@ describe('ModuleEditComponent', () => {
     expect(component.moduleForm.value).toEqual({
       moduleName: 'Phishing Awareness',
       description: 'Learn to spot phishing',
+      organisationId: null,
     });
   });
 
@@ -180,6 +181,7 @@ describe('ModuleEditComponent', () => {
     component.moduleForm.setValue({
       moduleName: 'New Module',
       description: 'A brand new module',
+      organisationId: null,
     });
 
     component.onSubmit();
@@ -200,6 +202,7 @@ describe('ModuleEditComponent', () => {
     component.moduleForm.setValue({
       moduleName: 'Updated Module',
       description: 'Updated description',
+      organisationId: null,
     });
 
     component.onSubmit();
@@ -250,6 +253,7 @@ describe('ModuleEditComponent', () => {
     component.moduleForm.setValue({
       moduleName: '',
       description: '',
+      organisationId: null,
     });
 
     component.onSubmit();
@@ -270,7 +274,7 @@ describe('ModuleEditComponent', () => {
   it("should fetch the full scenario catalog and the org's learners once a module id is available", () => {
     createComponentForModule('42');
 
-    expect(store.dispatch).toHaveBeenCalledWith(ScenarioActions.fetchList());
+    expect(store.dispatch).toHaveBeenCalledWith(ScenarioActions.fetchList({ organisationId: null }));
     expect(store.dispatch).toHaveBeenCalledWith(
       UsersActions.fetchList({ organisationId: 1 }),
     );
@@ -420,7 +424,7 @@ describe('ModuleEditComponent', () => {
 
     createComponentForModule('42');
 
-    expect(store.dispatch).toHaveBeenCalledWith(ScenarioActions.fetchList());
+    expect(store.dispatch).toHaveBeenCalledWith(ScenarioActions.fetchList({ organisationId: null }));
   });
 
   it('should dispatch updateScenario with a null moduleId to unassign a scenario already in this module', () => {

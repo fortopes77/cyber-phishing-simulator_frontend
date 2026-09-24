@@ -4,16 +4,17 @@ import { CreateUserPayload, UpdateUserPayload, UserAccount } from './user-accoun
 export const UsersActions = createActionGroup({
   source: 'Users',
   events: {
-    // organisationId is required - GET /users/learners is scoped to one
-    // organisation and has no "list everyone" mode.
-    fetchList: props<{ organisationId: number }>(),
+    // GET /users/learners is scoped to the trainer's own organisation; for a
+    // global admin organisationId filters to one organisation, and null
+    // lists learners across every organisation (see selectOrganisationScope).
+    fetchList: props<{ organisationId: number | null }>(),
     fetchListSuccess: props<{ users: UserAccount[] }>(),
     fetchListFailure: props<{ error: string }>(),
     // Trainer-management screen's list of this org's trainers - kept in a
     // separate state slice from fetchList's learner list (see
     // UsersState.trainerList) so visiting either the Learners or Trainers
     // screen doesn't clobber the other's already-loaded data.
-    fetchTrainerList: props<{ organisationId: number }>(),
+    fetchTrainerList: props<{ organisationId: number | null }>(),
     fetchTrainerListSuccess: props<{ users: UserAccount[] }>(),
     fetchTrainerListFailure: props<{ error: string }>(),
     fetchUserDetails: props<{ userId: string }>(),

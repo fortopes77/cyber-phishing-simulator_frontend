@@ -311,6 +311,19 @@
   margin: 0;
 }
 
+.feedback-panel__subtitle {
+  font-weight: 600;
+  margin: 16px 0 6px;
+  color: #1f3d64;
+}
+
+.feedback-panel__list {
+  color: #45536a;
+  line-height: 1.5;
+  margin: 0;
+  padding-left: 20px;
+}
+
 .result-actions {
   display: flex;
   justify-content: flex-end;

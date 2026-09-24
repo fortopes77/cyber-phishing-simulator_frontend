@@ -1,9 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { Actions, ofType } from '@ngrx/effects';
-import { filter, map, take } from 'rxjs';
+import { combineLatest } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import {
   HeaderComponent,
@@ -26,7 +27,12 @@ import {
   ListComponent,
 } from 'src/app/shared/components/list/list.component';
 import { iconLibrary } from 'src/app/shared/constants/font-awesome-icons.const';
-import { selectAuthState } from 'src/app/auth/+state/auth.selectors';
+import { OrganisationFilterComponent } from 'src/app/organisations/components/organisation-filter/organisation-filter.component';
+import { organisationScopeChanges } from 'src/app/organisations/+state/organisation-scope';
+import {
+  selectIsGlobalAdmin,
+  selectOrganisationNames,
+} from 'src/app/organisations/+state/organisations.selectors';
 import { UsersActions } from 'src/app/users/+state/users.actions';
 import { selectUserList } from 'src/app/users/+state/users.selectors';
 import { getWeaknessLabel, UserAccount } from 'src/app/users/+state/user-account.model';
@@ -40,6 +46,8 @@ interface LearnerRow extends Record<string, unknown> {
   lastActive: string;
   lastActiveDate: Date;
   weaknesses: string[];
+  // Only shown to global admins, who can see learners from every organisation.
+  organisationName: string | null;
 }
 
 // Mirrors the "Just now / X hours ago / Yesterday / X days ago" style the
@@ -92,12 +100,16 @@ function formatLastActive(iso: string | null | undefined): string {
     DeleteConfirmationModalComponent,
     ResetPasswordModalComponent,
     DateRangePickerComponent,
+    OrganisationFilterComponent,
   ],
   templateUrl: './learner-list.component.html',
   styleUrl: './learner-list.component.scss',
 })
 export class LearnerListComponent implements OnInit {
+  private readonly destroyRef = inject(DestroyRef);
+
   fontAwesomeIcon = iconLibrary;
+  isGlobalAdmin = false;
 
   columns: ListColumn[] = [];
   rows: LearnerRow[] = [];
@@ -169,17 +181,13 @@ export class LearnerListComponent implements OnInit {
     ];
   }
 
-  // GET /users/learners is scoped to one organisation - read it off the
-  // signed-in trainer's own account rather than hard-coding it.
+  // A trainer only ever sees their own organisation's learners; a global
+  // admin sees whichever organisation the organisation filter is set to (or
+  // all of them) - reloaded whenever that filter changes.
   private fetchLearners(): void {
-    this.store
-      .select(selectAuthState)
-      .pipe(
-        map((auth) => auth.user?.organisationId),
-        filter((organisationId): organisationId is number => organisationId != null),
-        take(1),
-      )
-      .subscribe((organisationId) => {
+    organisationScopeChanges(this.store)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(({ organisationId }) => {
         this.store.dispatch(UsersActions.fetchList({ organisationId }));
       });
   }
@@ -188,10 +196,17 @@ export class LearnerListComponent implements OnInit {
   // so a delete/create/edit is reflected here as soon as the reducer
   // applies it - no manual splicing needed (see confirmDelete).
   private subscribeToLearnerList(): void {
-    this.store.select(selectUserList).subscribe((users) => {
-      this.rows = this.buildLearnerRows(users);
-      this.applyLastActiveFilter();
-    });
+    combineLatest([
+      this.store.select(selectUserList),
+      this.store.select(selectOrganisationNames),
+      this.store.select(selectIsGlobalAdmin),
+    ])
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(([users, organisationNames, isGlobalAdmin]) => {
+        this.isGlobalAdmin = isGlobalAdmin;
+        this.rows = this.buildLearnerRows(users, organisationNames);
+        this.applyLastActiveFilter();
+      });
   }
 
   private handleCreate(): void {
@@ -320,7 +335,10 @@ export class LearnerListComponent implements OnInit {
   // All fields, including progress/score/last-active/weaknesses, now come
   // straight from GET /users/learners (LearnerResponseDto) - nothing here
   // is mocked.
-  private buildLearnerRows(users: UserAccount[]): LearnerRow[] {
+  private buildLearnerRows(
+    users: UserAccount[],
+    organisationNames: Map<number, string>,
+  ): LearnerRow[] {
     return users.map((user) => {
       const lastActiveAt = user.lastActiveAt ?? null;
 
@@ -333,6 +351,10 @@ export class LearnerListComponent implements OnInit {
         lastActive: formatLastActive(lastActiveAt),
         lastActiveDate: lastActiveAt ? new Date(lastActiveAt) : new Date(0),
         weaknesses: (user.weaknesses ?? []).map(getWeaknessLabel),
+        organisationName:
+          user.organisationId != null
+            ? (organisationNames.get(user.organisationId) ?? null)
+            : null,
       };
     });
   }

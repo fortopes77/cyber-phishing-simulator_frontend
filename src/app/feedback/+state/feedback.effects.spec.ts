@@ -12,6 +12,7 @@ describe('FeedbackEffects', () => {
   let feedbackService: jasmine.SpyObj<FeedbackService>;
 
   const request: FeedbackRequest = {
+    scenarioId: 1,
     scenarioContent: 'content',
     decision: 'Safe',
     correct: false,
@@ -35,20 +36,26 @@ describe('FeedbackEffects', () => {
   });
 
   it('should dispatch requestFeedbackSuccess on successful fetch', (done) => {
-    const feedback = {
-      id: 'f_001',
-      attemptId: 'a_123',
-      generatedBy: 'AI',
-      content: 'Nice work.',
-    };
     feedbackService.getFeedback.and.returnValue(
-      of({ success: true, feedback }),
+      of({
+        score: 80,
+        explanation: 'Nice work.',
+        tips: ['Check the sender'],
+        redFlagsMissed: [],
+      }),
     );
     actions$ = of(FeedbackActions.requestFeedback({ request }));
 
     effects.requestFeedback$.subscribe((action) => {
       expect(action).toEqual(
-        FeedbackActions.requestFeedbackSuccess({ feedback }),
+        FeedbackActions.requestFeedbackSuccess({
+          feedback: {
+            score: 80,
+            content: 'Nice work.',
+            tips: ['Check the sender'],
+            redFlagsMissed: [],
+          },
+        }),
       );
       done();
     });

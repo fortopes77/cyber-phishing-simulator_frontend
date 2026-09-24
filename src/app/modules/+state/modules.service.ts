@@ -35,12 +35,17 @@ export class ModulesService {
 
   // Confirmed live via GET /api-json: POST /training-modules
   // (CreateTrainingModuleDto: title + description, no moduleName/version) -
-  // "Create a new training module (trainer & admin only)".
+  // "Create a new training module (trainer & admin only)". A global admin
+  // must also say which organisation it belongs to; a trainer's is inferred
+  // server-side. Only create takes organisationId - UpdateTrainingModuleDto
+  // omits it, so updateModule keeps sending the bare toModulePayload.
   createModule(module: Partial<LearnerModule>) {
-    return this.http.post<LearnerModule>(
-      `${this.apiEndpoint}training-modules`,
-      toModulePayload(module),
-    );
+    return this.http.post<LearnerModule>(`${this.apiEndpoint}training-modules`, {
+      ...toModulePayload(module),
+      ...(module.organisationId != null
+        ? { organisationId: Number(module.organisationId) }
+        : {}),
+    });
   }
 
   // Confirmed live via GET /api-json: PATCH /training-modules/{id}

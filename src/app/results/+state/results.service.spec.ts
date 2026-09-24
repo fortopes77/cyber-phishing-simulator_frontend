@@ -34,4 +34,12 @@ describe('ResultsService', () => {
     expect(req.request.method).toBe('GET');
     req.flush([]);
   });
+
+  it("should GET one module's results via the moduleId filter", () => {
+    service.getMyModuleResult(7).subscribe();
+
+    const req = httpMock.expectOne(`${environment.apiUrl}results/me?moduleId=7`);
+    expect(req.request.method).toBe('GET');
+    req.flush({ moduleResults: [], scenarioResults: [] });
+  });
 });

@@ -9,6 +9,10 @@ import { ResultsActions } from 'src/app/results/+state/results.actions';
 import { selectMyResults } from 'src/app/results/+state/results.selectors';
 import { ModulesActions } from 'src/app/modules/+state/modules.actions';
 import { selectModuleList } from 'src/app/modules/+state/modules.selectors';
+import {
+  buildModuleProgress,
+  ModuleProgressStatus,
+} from 'src/app/module-results/+state/module-result.model';
 
 interface ModuleScenario {
   id: string | number;
@@ -34,6 +38,9 @@ export class ModulePageComponent implements OnInit {
 
   scenarios: ModuleScenario[] = [];
   completedCount = 0;
+  // Where the learner is up to in this module - drives the header tag and
+  // the Start/Continue/Restart button.
+  moduleStatus: ModuleProgressStatus = 'Assigned';
 
   constructor(
     private route: ActivatedRoute,
@@ -70,10 +77,6 @@ export class ModulePageComponent implements OnInit {
       );
       this.title = currentModule?.moduleName ?? 'Module';
 
-      const completedScenarioIds = new Set(
-        (results?.scenarioResults ?? []).map((result) => result.scenarioId),
-      );
-
       // scenarioList is scoped to this module via fetchScenariosByModule,
       // but guard against a stale/global list (e.g. loaded by another
       // screen) by filtering on moduleId when it's present on the scenario.
@@ -84,16 +87,26 @@ export class ModulePageComponent implements OnInit {
 
       this.level = this.deriveLevel(moduleScenarios);
 
+      // A scenario is done if it was answered in the learner's current
+      // attempt at this module (see buildModuleProgress) - an answer given
+      // while the scenario sat in a different module doesn't count here.
+      const { answeredScenarioIds, status } = buildModuleProgress(
+        results,
+        this.moduleId,
+        moduleScenarios.map((scenario: any) => scenario.id),
+      );
+
       this.scenarios = moduleScenarios.map((scenario: any) => ({
         id: scenario.id,
         title: scenario.title,
         type: scenario.type ?? scenario.category ?? 'Email',
         difficulty: scenario.difficulty,
-        status: completedScenarioIds.has(String(scenario.id))
+        status: answeredScenarioIds.has(String(scenario.id))
           ? 'Completed'
           : 'Not Started',
       }));
 
+      this.moduleStatus = status;
       this.completedCount = this.scenarios.filter(
         (scenario) => scenario.status === 'Completed',
       ).length;
@@ -126,10 +139,14 @@ export class ModulePageComponent implements OnInit {
   }
 
   get isModuleComplete(): boolean {
-    return (
-      this.scenarios.length > 0 &&
-      this.completedCount === this.scenarios.length
-    );
+    return this.moduleStatus === 'Passed' || this.moduleStatus === 'Not Passed';
+  }
+
+  get moduleActionLabel(): string {
+    if (this.isModuleComplete) {
+      return 'Restart Module';
+    }
+    return this.moduleStatus === 'In progress' ? 'Continue Module' : 'Start Module';
   }
 
   continueModule(): void {
@@ -137,12 +154,14 @@ export class ModulePageComponent implements OnInit {
       return;
     }
 
-    // The scenario the learner is "up to": the first one in the module
-    // that doesn't yet have a completed attempt. If everything is done,
-    // fall back to the first scenario so they can review.
-    const nextScenario =
-      this.scenarios.find((scenario) => scenario.status !== 'Completed') ||
-      this.scenarios[0];
+    // Restarting a completed module starts again from its first scenario
+    // (a fresh attempt - the completed one is finalised). Otherwise go to
+    // the scenario the learner is "up to": the first one not yet answered in
+    // their current attempt.
+    const nextScenario = this.isModuleComplete
+      ? this.scenarios[0]
+      : this.scenarios.find((scenario) => scenario.status !== 'Completed') ||
+        this.scenarios[0];
 
     this.router.navigate(['/learner/scenarios', nextScenario.id]);
   }

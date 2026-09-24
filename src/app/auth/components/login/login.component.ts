@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
-import { AuthService } from '../../auth.service';
+import { AuthService, isStaffRole } from '../../auth.service';
 import { AuthActions } from '../../+state/auth.actions';
 import { Store } from '@ngrx/store';
 import { selectAuthState } from '../../+state/auth.selectors';
@@ -16,12 +16,6 @@ export class LoginComponent {
   password: string = '';
   errorMessage: string = '';
   isLoading: boolean = false;
-
-  // Mock credentials info for users
-  mockCredentials = {
-    admin: { credential: 'admin@example.com or admin', password: 'admin' },
-    user: { credential: 'user@example.com or user', password: 'user' },
-  };
 
   constructor(
     private authService: AuthService,
@@ -49,7 +43,7 @@ export class LoginComponent {
         return;
       }
 
-      if (authState.user?.role === 'trainer') {
+      if (isStaffRole(authState.user?.role)) {
         this.router.navigate(['/trainer/dashboard']);
       } else if (authState.user?.role) {
         this.router.navigate(['/learner/dashboard']);

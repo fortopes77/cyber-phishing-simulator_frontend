@@ -1,4 +1,8 @@
-import { buildModuleResult, buildModuleResultsOverview } from './module-result.model';
+import {
+  buildModuleProgress,
+  buildModuleResult,
+  buildModuleResultsOverview,
+} from './module-result.model';
 import { LearnerResults } from 'src/app/results/+state/results.model';
 
 describe('buildModuleResult', () => {
@@ -59,7 +63,7 @@ describe('buildModuleResult', () => {
       totalScore: 18,
       maxScore: 20,
       percentageScore: 90,
-      passingScore: 70,
+      passingScore: 80,
       passed: true,
       scenarioResults: [
         { scenarioId: 's_1', title: 'Urgent Password Reset', decision: 'Suspicious', correct: true },
@@ -343,5 +347,67 @@ describe('buildModuleResultsOverview', () => {
 
   it('returns an empty list when there is no results data', () => {
     expect(buildModuleResultsOverview(null)).toEqual([]);
+  });
+});
+
+describe('buildModuleProgress', () => {
+  const attempt = (id: number, moduleId: number, status: string, passed = false) => ({
+    id,
+    moduleId,
+    moduleName: 'Module',
+    status,
+    totalScore: 0,
+    maxScore: 0,
+    percentageScore: passed ? 100 : 0,
+    passed,
+    completedAt: status === 'COMPLETED' ? '2026-09-01T00:00:00.000Z' : null,
+  });
+
+  it('should be Assigned with no attempts, even if its scenarios were answered elsewhere', () => {
+    const progress = buildModuleProgress(
+      {
+        moduleResults: [attempt(1, 1, 'COMPLETED', true)],
+        scenarioResults: [{ scenarioId: '7', moduleId: 1, correct: true, moduleResultId: 1 }],
+        averageScore: null,
+      },
+      2,
+      [7],
+    );
+
+    expect(progress.status).toBe('Assigned');
+    expect(progress.progress).toBe(0);
+  });
+
+  it('should count only answers from the current attempt while in progress', () => {
+    const progress = buildModuleProgress(
+      {
+        moduleResults: [attempt(1, 1, 'COMPLETED', true), attempt(2, 1, 'IN_PROGRESS')],
+        scenarioResults: [
+          { scenarioId: '1', moduleId: 1, correct: true, moduleResultId: 1 },
+          { scenarioId: '2', moduleId: 1, correct: true, moduleResultId: 1 },
+          { scenarioId: '1', moduleId: 1, correct: true, moduleResultId: 2 },
+        ],
+        averageScore: null,
+      },
+      1,
+      [1, 2],
+    );
+
+    expect(progress.status).toBe('In progress');
+    expect(progress.progress).toBe(0.5);
+    // The earlier completed attempt still counts as a pass underneath.
+    expect(progress.passed).toBeTrue();
+    expect(Array.from(progress.answeredScenarioIds)).toEqual(['1']);
+  });
+
+  it('should stay completed after its scenarios change', () => {
+    const progress = buildModuleProgress(
+      { moduleResults: [attempt(1, 1, 'COMPLETED', true)], scenarioResults: [], averageScore: null },
+      1,
+      [],
+    );
+
+    expect(progress.status).toBe('Passed');
+    expect(progress.progress).toBe(1);
   });
 });

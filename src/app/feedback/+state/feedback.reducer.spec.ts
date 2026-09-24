@@ -4,10 +4,10 @@ import { Feedback } from './feedback.model';
 
 describe('feedbackReducer', () => {
   const feedback: Feedback = {
-    id: 'f_001',
-    attemptId: 'a_123',
-    generatedBy: 'AI',
+    score: 100,
     content: 'Great job spotting this one.',
+    tips: [],
+    redFlagsMissed: [],
   };
 
   it('should return the initial state', () => {
@@ -19,7 +19,7 @@ describe('feedbackReducer', () => {
     const state = feedbackReducer(
       initialFeedbackState,
       FeedbackActions.requestFeedback({
-        request: { scenarioContent: '', decision: 'Safe', correct: false },
+        request: { scenarioId: 1, scenarioContent: '', decision: 'Safe', correct: false },
       }),
     );
     expect(state.loading).toBeTrue();

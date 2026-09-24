@@ -1,0 +1,19 @@
+<div class="message-shell message-shell--text">
+  <div class="message-shell__header">
+    <div class="message-shell__pill">Text Thread</div>
+    @if (message.from) {
+      <div class="message-shell__subtle">{{ message.from }}</div>
+    }
+  </div>
+  <div class="message-shell__chat">
+    @for (entry of messages; track $index) {
+      <div
+        class="chat-bubble"
+        [ngClass]="entry.speaker === 'You' ? 'chat-bubble--user' : 'chat-bubble--caller'"
+      >
+        <div class="chat-bubble__sender">{{ entry.speaker }}</div>
+        <div class="chat-bubble__text">{{ entry.text }}</div>
+      </div>
+    }
+  </div>
+</div>

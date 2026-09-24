@@ -18,6 +18,7 @@ import { isTokenExpired } from '../auth/token.utils';
  * allowed to see. Keyed by the lowercase role values normalizeUser() produces.
  */
 const ROLE_HOME: Record<string, string> = {
+  admin: '/trainer/dashboard',
   trainer: '/trainer/dashboard',
   user: '/learner/dashboard',
 };

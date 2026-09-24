@@ -15,8 +15,16 @@
 
 .reports-toolbar {
   display: flex;
-  justify-content: flex-end;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 12px;
   margin-bottom: 16px;
+}
+
+.reports-toolbar__exports {
+  display: flex;
+  gap: 8px;
 }
 
 .export-button {
@@ -31,6 +39,91 @@
   &:hover {
     background: #1d4ed8;
   }
+}
+
+.export-button--secondary {
+  background: #e5e7eb;
+  color: #111827;
+
+  &:hover {
+    background: #d1d5db;
+  }
+}
+
+.report-range {
+  margin: -4px 0 16px;
+  color: #45536a;
+  font-size: 0.9rem;
+}
+
+.report-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-weight: 600;
+  color: #243041;
+
+  select {
+    padding: 0.45rem 0.6rem;
+    border: 1px solid #c7cedb;
+    border-radius: 8px;
+    font: inherit;
+    font-weight: 400;
+  }
+}
+
+.report-detail {
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #f9fafb;
+}
+
+.report-detail__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+
+  h3 {
+    margin: 0;
+    font-size: 1rem;
+    color: #1f3d64;
+  }
+}
+
+.report-detail__title {
+  margin: 0 0 8px;
+  font-size: 0.9rem;
+  color: #243041;
+}
+
+.report-detail__close {
+  background: none;
+  border: none;
+  color: #2563eb;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.learner-module {
+  padding: 8px 0;
+  border-bottom: 1px solid #e5e7eb;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.learner-module__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 4px;
 }
 
 .dashboard-statistics {
@@ -51,9 +144,13 @@
 }
 
 @media print {
-  // The export button and any load-error banner are page chrome, not part
-  // of the report itself.
+  // The date range/export toolbar, filters and any load-error banner are
+  // page chrome, not part of the report itself (the active date range is
+  // still printed via .report-range).
   .reports-toolbar,
+  app-organisation-filter,
+  .report-filter,
+  .report-detail__close,
   .dashboard-error {
     display: none !important;
   }
@@ -64,4 +161,13 @@
   .report-section {
     display: block;
   }
+}
+
+.reports-prompt {
+  background: #f3f6fb;
+  border: 1px dashed #c7cedb;
+  color: #45536a;
+  border-radius: 8px;
+  padding: 24px;
+  text-align: center;
 }

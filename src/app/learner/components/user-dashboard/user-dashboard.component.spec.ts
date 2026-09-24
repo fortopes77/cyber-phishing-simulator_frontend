@@ -35,8 +35,22 @@ describe('UserDashboardComponent', () => {
     { id: 1, moduleId: 1, difficulty: 'easy' },
     { id: 2, moduleId: 1, difficulty: 'easy' },
   ];
+  // An unfinished attempt at a module - progress comes from the answers
+  // tied to it via moduleResultId (see buildModuleProgress).
+  const inProgressAttempt = (id: number, moduleId: number) => ({
+    id,
+    moduleId,
+    moduleName: 'Module',
+    status: 'IN_PROGRESS',
+    totalScore: 0,
+    maxScore: 0,
+    percentageScore: 0,
+    passed: false,
+    completedAt: null,
+  });
   const results = {
-    scenarioResults: [{ scenarioId: '1', moduleId: 1, correct: true }],
+    moduleResults: [inProgressAttempt(1, 1)],
+    scenarioResults: [{ scenarioId: '1', moduleId: 1, correct: true, moduleResultId: 1 }],
     averageScore: null,
   };
 
@@ -132,8 +146,8 @@ describe('UserDashboardComponent', () => {
         },
       ],
       scenarioResults: [
-        { scenarioId: '1', moduleId: 1, correct: true },
-        { scenarioId: '2', moduleId: 2, correct: false },
+        { scenarioId: '1', moduleId: 1, correct: true, moduleResultId: 1 },
+        { scenarioId: '2', moduleId: 2, correct: false, moduleResultId: 2 },
       ],
       averageScore: null,
     });
@@ -145,7 +159,7 @@ describe('UserDashboardComponent', () => {
     expect(failedModule?.status).toBe('Not Passed');
   });
 
-  it('should default a completed module to Not Passed when there is no moduleResult yet', () => {
+  it('should default a fully-answered module to Not Passed until its attempt is finalised', () => {
     store.overrideSelector(selectModuleList, [
       { moduleId: 1, moduleName: 'Completed Module', description: '' },
     ]);
@@ -153,8 +167,8 @@ describe('UserDashboardComponent', () => {
       { id: 1, moduleId: 1, difficulty: 'easy' },
     ]);
     store.overrideSelector(selectMyResults, {
-      moduleResults: [],
-      scenarioResults: [{ scenarioId: '1', moduleId: 1, correct: true }],
+      moduleResults: [inProgressAttempt(1, 1)],
+      scenarioResults: [{ scenarioId: '1', moduleId: 1, correct: true, moduleResultId: 1 }],
       averageScore: null,
     });
     store.refreshState();
@@ -200,14 +214,15 @@ describe('UserDashboardComponent', () => {
           passed: false,
           completedAt: '2026-09-01T00:00:00.000Z',
         },
+        inProgressAttempt(3, 3),
       ],
       // Module 1: fully completed and passed. Module 2: nothing done (not
       // started). Module 3: one of two scenarios done (in progress).
       // Module 4: fully completed but failed.
       scenarioResults: [
-        { scenarioId: '1', moduleId: 1, correct: true },
-        { scenarioId: '3', moduleId: 3, correct: true },
-        { scenarioId: '5', moduleId: 4, correct: false },
+        { scenarioId: '1', moduleId: 1, correct: true, moduleResultId: 1 },
+        { scenarioId: '3', moduleId: 3, correct: true, moduleResultId: 3 },
+        { scenarioId: '5', moduleId: 4, correct: false, moduleResultId: 2 },
       ],
       averageScore: null,
     });
@@ -221,9 +236,65 @@ describe('UserDashboardComponent', () => {
     ]);
   });
 
+  it("should not credit a module with answers given while its scenarios sat in another module", () => {
+    // Scenario 7 was answered in module 1's attempt, then a trainer moved it
+    // into module 2; module 3 was passed, then its scenarios were removed.
+    store.overrideSelector(selectModuleList, [
+      { moduleId: 2, moduleName: 'Never Attempted', description: '' },
+      { moduleId: 3, moduleName: 'Passed, Since Emptied', description: '' },
+    ]);
+    store.overrideSelector(selectScenarioList, [{ id: 7, moduleId: 2, difficulty: 'easy' }]);
+    store.overrideSelector(selectMyResults, {
+      moduleResults: [
+        {
+          id: 5,
+          moduleId: 3,
+          moduleName: 'Passed, Since Emptied',
+          status: 'COMPLETED',
+          totalScore: 1,
+          maxScore: 1,
+          percentageScore: 100,
+          passed: true,
+          completedAt: '2026-09-01T00:00:00.000Z',
+        },
+      ],
+      scenarioResults: [{ scenarioId: '7', moduleId: 1, correct: true, moduleResultId: 1 }],
+      averageScore: null,
+    });
+    store.refreshState();
+
+    const neverAttempted = component.assignedModules.find((m) => m.id === 2);
+    const emptied = component.assignedModules.find((m) => m.id === 3);
+    expect(neverAttempted?.status).toBe('Assigned');
+    expect(neverAttempted?.progressPercentage).toBe(0);
+    expect(emptied?.status).toBe('Passed');
+    expect(emptied?.progressPercentage).toBe(100);
+  });
+
   it('should surface the in-progress module as continueLearning', () => {
     expect(component.continueLearning?.id).toBe(1);
     expect(component.continueLearning?.progressPercentage).toBe(50);
+  });
+
+  it("should route Continue Learning straight into the module's next unanswered scenario", () => {
+    // Scenario 1 is answered, so the learner is up to scenario 2.
+    expect(component.continueLearning?.route).toBe('/learner/scenarios/2');
+  });
+
+  it('should show a working View All link on the Continue Learning card', () => {
+    const link = (fixture.nativeElement as HTMLElement).querySelector(
+      '.dashboard-card__action',
+    ) as HTMLButtonElement | null;
+
+    expect(link?.textContent).toContain('View All');
+    link!.click();
+    expect(router.navigate).toHaveBeenCalledWith(['/learner/modules']);
+  });
+
+  it('should open an assigned module when its card is selected', () => {
+    component.onAssignedModuleSelected(component.assignedModules[0]);
+
+    expect(router.navigate).toHaveBeenCalledWith(['/learner/modules/1']);
   });
 
   it('should compute dashboard stats from GET /results/me', () => {

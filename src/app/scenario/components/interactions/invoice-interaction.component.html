@@ -1,0 +1,17 @@
+<div class="message-shell message-shell--invoice">
+  <div class="invoice__header">
+    <div>
+      <div class="message-shell__pill">Invoice</div>
+      <div class="message-shell__subtle">{{ message.subject }}</div>
+    </div>
+    <div class="invoice__amount">{{ amount }}</div>
+  </div>
+  <div class="invoice__grid">
+    @for (field of fields; track $index) {
+      <div class="invoice__field">
+        <span class="invoice__label">{{ field.label }}</span>
+        <span class="invoice__value">{{ field.value }}</span>
+      </div>
+    }
+  </div>
+</div>

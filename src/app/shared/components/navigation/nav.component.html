@@ -6,8 +6,16 @@
   </div>
 
   <nav class="sidebar-nav">
-    @if (currentUser?.role === "trainer") {
+    @if (isStaff) {
       <ul>
+        @if (currentUser?.role === "admin") {
+          <li>
+            <fa-icon [icon]="fontAwesomeIcons.buildingIcon"></fa-icon>
+            <a routerLink="/admin/organisations" routerLinkActive="active"
+              >Organisations</a
+            >
+          </li>
+        }
         <li>
           <fa-icon [icon]="fontAwesomeIcons.progressBarsIcon"></fa-icon>
           <a routerLink="/trainer/dashboard" routerLinkActive="active"
@@ -26,11 +34,6 @@
             >Trainers</a
           >
         </li>
-        <!-- TODO PHISH-133: Implement Cohorts feature -->
-        <!-- <li>
-          <fa-icon [icon]="fontAwesomeIcons.userGroupIcon"></fa-icon>
-          <a routerLink="/trainer/cohorts" routerLinkActive="active">Cohorts</a>
-        </li> -->
         <li>
           <fa-icon [icon]="fontAwesomeIcons.openBookIcon"></fa-icon>
           <a routerLink="/trainer/modules" routerLinkActive="active">Modules</a>
@@ -65,6 +68,12 @@
         <li class="nav-item">
           <fa-icon [icon]="fontAwesomeIcons.awardIcon"></fa-icon>
           <a routerLink="/learner/results" routerLinkActive="active">Results</a>
+        </li>
+        <li class="nav-item">
+          <fa-icon [icon]="fontAwesomeIcons.chartColumnIcon"></fa-icon>
+          <a routerLink="/learner/progress" routerLinkActive="active"
+            >My Progress</a
+          >
         </li>
       </ul>
     }

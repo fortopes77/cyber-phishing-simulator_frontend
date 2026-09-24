@@ -5,32 +5,36 @@ import { AuthGuard } from './guards/auth.guard';
 import { SignOutComponent } from './auth/components/sign-out/sign-out.component';
 import { UserSettingsComponent } from './auth/components/user-settings/user-settings.component';
 import { ModulePageComponent } from './learner/components/module-page/module-page.component';
-import { ScenarioChoiceComponent } from './scenario/components/scenario-choice/scenario-choice.component';
 import { ScenarioPageComponent } from './scenario/components/scenario-page/scenario-page.component';
 import { ModuleResultsComponent } from './learner/components/module-results/module-results.component';
+import { LearnerProgressComponent } from './learner/components/learner-progress/learner-progress.component';
 import { UserDashboardComponent } from './learner/components/user-dashboard/user-dashboard.component';
 import { AdminDashboardComponent } from './admin/components/admin-dashboard/admin-dashboard.component';
 import { ScenarioEditComponent } from './scenario/components/scenario-edit/scenario-edit.component';
 import { ScenarioListComponent } from './scenario/components/scenario-list/scenario-list.component';
 import { LearnerListComponent } from './learner/components/learner-list/learner-list.component';
-import { CohortsListComponent } from './cohorts/components/cohorts-list/cohorts-list.component';
 import { LearnerModulesListComponent } from './modules/components/learner-modules-list/learner-modules-list.component';
 import { TrainerModulesListComponent } from './modules/components/trainer-modules-list/trainer-modules-list.component';
 import { ModuleEditComponent } from './modules/components/module-edit/module-edit.component';
 import { UserEditComponent } from './users/components/user-edit/user-edit.component';
 import { TrainerListComponent } from './users/components/trainer-list/trainer-list.component';
 import { TrainerReportsComponent } from './admin/components/trainer-reports/trainer-reports.component';
+import { OrganisationsListComponent } from './organisations/components/organisations-list/organisations-list.component';
+import { OrganisationEditComponent } from './organisations/components/organisation-edit/organisation-edit.component';
 
 /**
  * Route-level access control. Every protected route declares the roles that
  * may enter it via `data.roles`, and AuthGuard turns away anyone else (sending
- * them to their own landing page). Learner-facing routes accept trainers too so
- * a trainer can walk through the same content their learners see; the trainer
- * section is trainer-only.
+ * them to their own landing page). Learner-facing routes accept staff too so
+ * a trainer or global admin can walk through the same content their learners
+ * see. The trainer section is staff-only - global admins use it too, across
+ * every organisation (see selectOrganisationScope) - and the admin section
+ * (organisation management) is global-admin-only.
  */
-const LEARNER_ROLES = ['user', 'trainer'];
-const TRAINER_ROLES = ['trainer'];
-const ANY_ROLE = ['user', 'trainer'];
+const LEARNER_ROLES = ['user', 'trainer', 'admin'];
+const TRAINER_ROLES = ['trainer', 'admin'];
+const ADMIN_ROLES = ['admin'];
+const ANY_ROLE = ['user', 'trainer', 'admin'];
 
 const routes: Routes = [
   // Public routes
@@ -78,16 +82,16 @@ const routes: Routes = [
         data: { breadcrumb: 'Scenario', roles: LEARNER_ROLES },
       },
       {
-        path: 'scenarios/:id/feedback',
-        component: ScenarioChoiceComponent,
-        canActivate: [AuthGuard],
-        data: { breadcrumb: 'Feedback', roles: LEARNER_ROLES },
-      },
-      {
         path: 'results',
         component: ModuleResultsComponent,
         canActivate: [AuthGuard],
         data: { breadcrumb: 'Results', roles: LEARNER_ROLES },
+      },
+      {
+        path: 'progress',
+        component: LearnerProgressComponent,
+        canActivate: [AuthGuard],
+        data: { breadcrumb: 'My Progress', roles: LEARNER_ROLES },
       },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
@@ -158,12 +162,6 @@ const routes: Routes = [
         data: { breadcrumb: 'Create Module', roles: TRAINER_ROLES },
       },
       {
-        path: 'cohorts',
-        component: CohortsListComponent,
-        canActivate: [AuthGuard],
-        data: { breadcrumb: 'Cohorts', roles: TRAINER_ROLES },
-      },
-      {
         path: 'scenarios',
         component: ScenarioListComponent,
         canActivate: [AuthGuard],
@@ -192,6 +190,33 @@ const routes: Routes = [
   },
 
   {
+    path: 'admin',
+    canActivate: [AuthGuard],
+    data: { breadcrumb: 'Admin', roles: ADMIN_ROLES },
+    children: [
+      {
+        path: 'organisations',
+        component: OrganisationsListComponent,
+        canActivate: [AuthGuard],
+        data: { breadcrumb: 'Organisations', roles: ADMIN_ROLES },
+      },
+      {
+        path: 'organisations/create',
+        component: OrganisationEditComponent,
+        canActivate: [AuthGuard],
+        data: { breadcrumb: 'Add Organisation', roles: ADMIN_ROLES },
+      },
+      {
+        path: 'organisations/:id/edit',
+        component: OrganisationEditComponent,
+        canActivate: [AuthGuard],
+        data: { breadcrumb: 'Edit Organisation', roles: ADMIN_ROLES },
+      },
+      { path: '', redirectTo: 'organisations', pathMatch: 'full' },
+    ],
+  },
+
+  {
     path: 'settings',
     component: UserSettingsComponent,
     canActivate: [AuthGuard],
@@ -207,7 +232,6 @@ const routes: Routes = [
     RouterModule.forRoot(routes),
     ScenarioEditComponent,
     LearnerListComponent,
-    CohortsListComponent,
     TrainerModulesListComponent,
     ModuleEditComponent,
     UserEditComponent,

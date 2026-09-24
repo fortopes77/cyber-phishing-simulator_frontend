@@ -1,0 +1,34 @@
+<app-header
+  title="Organisations"
+  subtitle="Manage every organisation on the platform"
+  [showCreateAction]="true"
+  [createActions]="createActions"
+></app-header>
+
+@if (deleteError) {
+  <p class="organisations-error">Couldn't delete that organisation - {{ deleteError }}</p>
+}
+
+<app-dashboard-card>
+  <app-search-filter-bar
+    searchPlaceholder="Search organisations"
+    [searchValue]="searchValue"
+    (searchChange)="onSearchChange($event)"
+  ></app-search-filter-bar>
+
+  <app-list
+    [columns]="columns"
+    [rows]="rows"
+    [actions]="actions"
+    [pageSize]="12"
+    emptyMessage="No organisations found."
+  ></app-list>
+</app-dashboard-card>
+
+<app-delete-confirmation-modal
+  [isOpen]="isDeleteModalOpen"
+  [title]="selectedOrganisation?.name ?? 'this organisation'"
+  [message]="'Are you sure you wish to delete'"
+  (confirmed)="confirmDelete()"
+  (cancelled)="cancelDelete()"
+></app-delete-confirmation-modal>

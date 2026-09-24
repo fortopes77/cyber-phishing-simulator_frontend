@@ -11,12 +11,19 @@ import {
   selectDashboardStats,
 } from '../../+state/dashboard.selectors';
 import { TrainerDashboardStats } from '../../+state/dashboard.model';
+import { selectOrganisationScope } from 'src/app/organisations/+state/organisations.selectors';
 
 describe('AdminDashboardComponent', () => {
   let component: AdminDashboardComponent;
   let fixture: ComponentFixture<AdminDashboardComponent>;
   let store: MockStore;
   let router: Router;
+
+  // overrideSelector sets a module-level memoized result; clear it so this
+  // spec's mocks don't leak into later specs that use the real selectors.
+  afterEach(() => {
+    store?.resetSelectors();
+  });
 
   const stats: TrainerDashboardStats = {
     totalLearners: 52,
@@ -48,6 +55,10 @@ describe('AdminDashboardComponent', () => {
             { selector: selectDashboardStats, value: stats },
             { selector: selectDashboardLoading, value: false },
             { selector: selectDashboardError, value: null },
+            {
+              selector: selectOrganisationScope,
+              value: { isGlobalAdmin: false, organisationId: 1 },
+            },
           ],
         }),
       ],
@@ -68,6 +79,47 @@ describe('AdminDashboardComponent', () => {
   });
 
   it('should dispatch fetchTrainerDashboard on init', () => {
+    expect(store.dispatch).toHaveBeenCalledWith(
+      DashboardActions.fetchTrainerDashboard(),
+    );
+  });
+
+  it('should prompt a global admin to pick an organisation instead of fetching', () => {
+    (store.dispatch as jasmine.Spy).calls.reset();
+    store.overrideSelector(selectOrganisationScope, {
+      isGlobalAdmin: true,
+      organisationId: null,
+    });
+    store.refreshState();
+
+    fixture = TestBed.createComponent(AdminDashboardComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    expect(component.needsOrganisation).toBeTrue();
+    expect(store.dispatch).not.toHaveBeenCalledWith(
+      DashboardActions.fetchTrainerDashboard(),
+    );
+  });
+
+  it('should refetch when a global admin picks an organisation', () => {
+    store.overrideSelector(selectOrganisationScope, {
+      isGlobalAdmin: true,
+      organisationId: null,
+    });
+    store.refreshState();
+    fixture = TestBed.createComponent(AdminDashboardComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+    (store.dispatch as jasmine.Spy).calls.reset();
+
+    store.overrideSelector(selectOrganisationScope, {
+      isGlobalAdmin: true,
+      organisationId: 3,
+    });
+    store.refreshState();
+
+    expect(component.needsOrganisation).toBeFalse();
     expect(store.dispatch).toHaveBeenCalledWith(
       DashboardActions.fetchTrainerDashboard(),
     );

@@ -19,7 +19,7 @@ import { ScenarioActions } from 'src/app/scenario/+state/scenario.actions';
 import { selectScenarioList } from 'src/app/scenario/+state/scenario.selectors';
 import { ResultsActions } from 'src/app/results/+state/results.actions';
 import { selectMyResults } from 'src/app/results/+state/results.selectors';
-import { buildModuleResultsOverview } from 'src/app/module-results/+state/module-result.model';
+import { buildModuleProgress } from 'src/app/module-results/+state/module-result.model';
 
 interface ModuleCard {
   id: number;
@@ -67,7 +67,7 @@ export class LearnerModulesListComponent implements OnInit {
     // payload), so fetching the full list lets us group by module to work
     // out scenario counts, difficulty, and progress without a dedicated
     // "module scenarios" endpoint.
-    this.store.dispatch(ScenarioActions.fetchList());
+    this.store.dispatch(ScenarioActions.fetchList({}));
     this.store.dispatch(ResultsActions.fetchMyResults());
 
     combineLatest([
@@ -75,28 +75,18 @@ export class LearnerModulesListComponent implements OnInit {
       this.store.select(selectScenarioList),
       this.store.select(selectMyResults),
     ]).subscribe(([moduleList, scenarioList, results]) => {
-      // scenario.id is numeric (normalizeScenario) but a result's
-      // scenarioId is a string (results.model.ts), hence String() below.
-      const completedScenarioIds = new Set(
-        (results?.scenarioResults ?? []).map((result) => result.scenarioId),
-      );
-
-      // Per-module pass/fail, keyed by moduleId - buildModuleResultsOverview
-      // already collapses a module's retries down to its most recent
-      // COMPLETED attempt (see the module-results page), so it's reused here
-      // instead of duplicating that dedup logic.
-      const moduleResultByModuleId = new Map(
-        buildModuleResultsOverview(results).map((row) => [row.moduleId, row]),
-      );
-
       this.modules = (moduleList ?? []).map((module: any) => {
         const moduleScenarios = (scenarioList ?? []).filter(
           (scenario: any) => scenario.moduleId === module.moduleId,
         );
 
-        const completedCount = moduleScenarios.filter((scenario: any) =>
-          completedScenarioIds.has(String(scenario.id)),
-        ).length;
+        // From the learner's own attempts at this module - see
+        // buildModuleProgress.
+        const { progress, passed } = buildModuleProgress(
+          results,
+          module.moduleId,
+          moduleScenarios.map((scenario: any) => scenario.id),
+        );
 
         return {
           id: module.moduleId,
@@ -107,10 +97,8 @@ export class LearnerModulesListComponent implements OnInit {
           // carry a real difficulty value from the backend).
           difficulty: this.deriveDifficulty(moduleScenarios),
           scenarios: moduleScenarios.length,
-          progress: moduleScenarios.length
-            ? completedCount / moduleScenarios.length
-            : 0,
-          passed: moduleResultByModuleId.get(module.moduleId)?.passed ?? false,
+          progress,
+          passed,
         };
       });
 

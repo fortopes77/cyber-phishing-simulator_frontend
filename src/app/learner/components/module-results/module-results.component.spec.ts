@@ -6,6 +6,7 @@ import { of } from 'rxjs';
 import { ModuleResultsComponent } from './module-results.component';
 import { ResultsActions } from 'src/app/results/+state/results.actions';
 import {
+  selectModuleResult,
   selectMyResults,
   selectResultsError,
   selectResultsLoading,
@@ -64,13 +65,24 @@ describe('ModuleResultsComponent', () => {
     averageScore: null,
   };
 
+  afterEach(() => {
+    store?.resetSelectors();
+  });
+
+  // The module screen reads GET /results/me?moduleId=X's result, tagged with
+  // the module it was fetched for; the overview reads the full results.
   async function setup(paramMap: Record<string, string> = { moduleId: '1' }) {
+    const moduleId = paramMap['moduleId'] ? Number(paramMap['moduleId']) : null;
     await TestBed.configureTestingModule({
       imports: [ModuleResultsComponent, RouterTestingModule.withRoutes([])],
       providers: [
         provideMockStore({
           selectors: [
             { selector: selectMyResults, value: results },
+            {
+              selector: selectModuleResult,
+              value: moduleId != null ? { moduleId, results } : null,
+            },
             { selector: selectResultsLoading, value: false },
             { selector: selectResultsError, value: null },
           ],
@@ -97,9 +109,33 @@ describe('ModuleResultsComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should dispatch fetchMyResults on init', async () => {
+  it("should fetch the module's own result for a module's screen", async () => {
     await setup({ moduleId: '42' });
+    expect(store.dispatch).toHaveBeenCalledWith(
+      ResultsActions.fetchModuleResult({ moduleId: 42 }),
+    );
+    expect(store.dispatch).not.toHaveBeenCalledWith(ResultsActions.fetchMyResults());
+  });
+
+  it('should fetch the full results for the overview', async () => {
+    await setup({});
     expect(store.dispatch).toHaveBeenCalledWith(ResultsActions.fetchMyResults());
+  });
+
+  it("should ignore a stored result that belongs to a different module", async () => {
+    await setup({ moduleId: '1' });
+    store.overrideSelector(selectModuleResult, { moduleId: 3, results });
+    store.refreshState();
+
+    expect(component.result).toBeNull();
+  });
+
+  it('should show the backend pass mark alongside the score', async () => {
+    await setup({ moduleId: '1' });
+    fixture.detectChanges();
+
+    expect(component.result?.passingScore).toBe(80);
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('passing score 80%');
   });
 
   it('should leave result null when no moduleId route param is present', async () => {

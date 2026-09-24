@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { Actions, ofType } from '@ngrx/effects';
+import { combineLatest, take } from 'rxjs';
 import { HeaderComponent } from 'src/app/shared/components/header/header.component';
 import { DashboardCardComponent } from 'src/app/shared/components/dashboard-card/dashboard-card.component';
 import { FormFieldErrorComponent } from 'src/app/shared/components/form-field-error/form-field-error.component';
@@ -19,7 +20,18 @@ import {
   selectUsersError,
   selectUsersLoading,
 } from '../../+state/users.selectors';
-import { UpdateUserPayload, UserAccountRole } from '../../+state/user-account.model';
+import {
+  CreateUserPayload,
+  UpdateUserPayload,
+  UserAccountRole,
+} from '../../+state/user-account.model';
+import { OrganisationsActions } from 'src/app/organisations/+state/organisations.actions';
+import {
+  selectIsGlobalAdmin,
+  selectOrganisationFilter,
+  selectOrganisationList,
+} from 'src/app/organisations/+state/organisations.selectors';
+import { Organisation } from 'src/app/organisations/+state/organisation.model';
 
 const NAME_MAX_LENGTH = 150;
 const MIN_PASSWORD_LENGTH = 8;
@@ -74,7 +86,13 @@ export class UserEditComponent implements OnInit {
     email: ['', [Validators.required, emailValidator()]],
     password: [''],
     role: this.fb.nonNullable.control<UserAccountRole>('user', Validators.required),
+    // Only used when a global admin creates an account - a trainer's own
+    // organisation is inferred server-side (see UsersService.createUser).
+    organisationId: this.fb.control<number | null>(null),
   });
+
+  isGlobalAdmin = false;
+  organisations: Organisation[] = [];
 
   userId: string | null = null;
   isCreateMode = false;
@@ -127,6 +145,7 @@ export class UserEditComponent implements OnInit {
       // screen.
       this.userForm.patchValue({ role: this.managingRole });
       this.userForm.get('role')?.disable();
+      this.setUpOrganisationField();
       return;
     }
 
@@ -143,6 +162,31 @@ export class UserEditComponent implements OnInit {
     if (this.userId) {
       this.store.dispatch(UsersActions.fetchUserDetails({ userId: this.userId }));
     }
+  }
+
+  // A global admin has to say which organisation the new account belongs to
+  // - pre-filled from the organisation filter when one is selected.
+  private setUpOrganisationField(): void {
+    combineLatest([
+      this.store.select(selectIsGlobalAdmin),
+      this.store.select(selectOrganisationFilter),
+    ])
+      .pipe(take(1))
+      .subscribe(([isGlobalAdmin, filterOrganisationId]) => {
+        this.isGlobalAdmin = isGlobalAdmin;
+        if (!isGlobalAdmin) {
+          return;
+        }
+
+        const control = this.userForm.get('organisationId');
+        control?.setValidators(Validators.required);
+        control?.setValue(filterOrganisationId);
+        this.store.dispatch(OrganisationsActions.fetchList());
+      });
+
+    this.store
+      .select(selectOrganisationList)
+      .subscribe((organisations) => (this.organisations = organisations));
   }
 
   subscribeToUserDetails(): void {
@@ -191,15 +235,15 @@ export class UserEditComponent implements OnInit {
       return;
     }
 
-    const { username, firstName, lastName, email, password, role } =
+    const { username, firstName, lastName, email, password, role, organisationId } =
       this.userForm.getRawValue();
 
     if (this.isCreateMode) {
-      this.store.dispatch(
-        UsersActions.createUser({
-          user: { username, firstName, lastName, email, password, role },
-        }),
-      );
+      const user: CreateUserPayload = { username, firstName, lastName, email, password, role };
+      if (this.isGlobalAdmin && organisationId != null) {
+        user.organisationId = Number(organisationId);
+      }
+      this.store.dispatch(UsersActions.createUser({ user }));
       return;
     }
 

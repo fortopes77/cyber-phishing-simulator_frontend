@@ -1,0 +1,23 @@
+@if (isGlobalAdmin) {
+  <label class="organisation-filter">
+    <span class="organisation-filter__label">Organisation</span>
+    <select
+      [value]="selectedOrganisationId ?? ''"
+      (change)="onChange($any($event.target).value)"
+    >
+      @if (allowAll) {
+        <option value="">All organisations</option>
+      } @else if (selectedOrganisationId === null) {
+        <option value="" disabled>Select an organisation</option>
+      }
+      @for (organisation of organisations; track organisation.id) {
+        <option
+          [value]="organisation.id"
+          [selected]="organisation.id === selectedOrganisationId"
+        >
+          {{ organisation.name }}
+        </option>
+      }
+    </select>
+  </label>
+}

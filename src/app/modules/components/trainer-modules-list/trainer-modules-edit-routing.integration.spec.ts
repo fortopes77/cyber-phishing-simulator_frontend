@@ -20,6 +20,11 @@ import { ScenarioEffects } from 'src/app/scenario/+state/scenario.effects';
 import { AuthModule } from 'src/app/auth/auth.module';
 import { UsersModule } from 'src/app/users/users.module';
 import { environment } from 'src/environments/environment';
+import { selectModule, selectModuleList } from '../../+state/modules.selectors';
+import { selectScenarioList } from 'src/app/scenario/+state/scenario.selectors';
+import { selectAuthState } from 'src/app/auth/+state/auth.selectors';
+import { selectUserList } from 'src/app/users/+state/users.selectors';
+import { selectOrganisationScope } from 'src/app/organisations/+state/organisations.selectors';
 
 // Full-stack check (real Router + real NgRx Store/Effects + HttpTestingController)
 // for a reported bug: clicking "Edit" on the trainer modules list appeared not
@@ -41,6 +46,22 @@ describe('Trainer modules list -> module edit (integration)', () => {
   let httpMock: HttpTestingController;
 
   beforeEach(async () => {
+    // Component specs mock these via MockStore.overrideSelector, which sets a
+    // module-level result that outlives the spec. This test runs the real
+    // store, so clear any leftover result - otherwise, depending on the
+    // random spec order, the list can render a stale (empty) module list.
+    [
+      selectModuleList,
+      selectModule,
+      selectScenarioList,
+      selectAuthState,
+      selectUserList,
+      selectOrganisationScope,
+    ].forEach((selector: any) => {
+      selector.release();
+      selector.clearResult();
+    });
+
     await TestBed.configureTestingModule({
       imports: [
         RootTestComponent,

@@ -39,6 +39,9 @@ export class FormFieldErrorComponent {
     if (errors['text']) {
       return `${this.label} contains characters that aren't allowed.`;
     }
+    if (errors['organisationName']) {
+      return `${this.label} must start with a letter or number and may only contain letters, numbers, spaces and . , & ( ) -`;
+    }
     if (errors['passwordComplexity']) {
       return `${this.label} must include at least 1 number and 1 special character (!@#$%*?).`;
     }

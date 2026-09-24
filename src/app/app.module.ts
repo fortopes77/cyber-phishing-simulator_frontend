@@ -35,6 +35,8 @@ import { FeedbackModule } from './feedback/feedback.module';
 import { AdminModule } from './admin/admin.module';
 import { UsersModule } from './users/users.module';
 import { ResultsModule } from './results/results.module';
+import { OrganisationsModule } from './organisations/organisations.module';
+import { OrganisationFilterComponent } from './organisations/components/organisation-filter/organisation-filter.component';
 import { authInterceptor } from './auth/auth.interceptor';
 
 @NgModule({
@@ -60,6 +62,7 @@ import { authInterceptor } from './auth/auth.interceptor';
     AdminModule,
     UsersModule,
     ResultsModule,
+    OrganisationsModule,
     StoreModule.forRoot({}),
     EffectsModule.forRoot([]),
     DataCardComponent,
@@ -73,6 +76,7 @@ import { authInterceptor } from './auth/auth.interceptor';
     LearningProgressCardComponent,
     ListComponent,
     BreadcrumbsComponent,
+    OrganisationFilterComponent,
   ],
   providers: [
     AuthGuard,

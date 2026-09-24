@@ -1,4 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { combineLatest } from 'rxjs';
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import {
@@ -24,6 +26,9 @@ import { iconLibrary } from 'src/app/shared/constants/font-awesome-icons.const';
 import { getScenarioOptionLabel, ScenarioAnswerMode } from '../../models/scenario.model';
 import { ModulesActions } from 'src/app/modules/+state/modules.actions';
 import { selectModuleList } from 'src/app/modules/+state/modules.selectors';
+import { OrganisationFilterComponent } from 'src/app/organisations/components/organisation-filter/organisation-filter.component';
+import { organisationScopeChanges } from 'src/app/organisations/+state/organisation-scope';
+import { selectOrganisationScope } from 'src/app/organisations/+state/organisations.selectors';
 
 @Component({
   selector: 'app-scenario-list',
@@ -34,12 +39,19 @@ import { selectModuleList } from 'src/app/modules/+state/modules.selectors';
     DeleteConfirmationModalComponent,
     SearchFilterBarComponent,
     SelectModuleModalComponent,
+    OrganisationFilterComponent,
   ],
   templateUrl: './scenario-list.component.html',
   styleUrl: './scenario-list.component.scss',
 })
 export class ScenarioListComponent implements OnInit {
+  private readonly destroyRef = inject(DestroyRef);
+
   columns: ListColumn[] = [];
+  isGlobalAdmin = false;
+  // Sent with every scenario list request - only set for a global admin,
+  // whose list follows the organisation filter (null = every organisation).
+  private scenarioOrganisationId: number | null = null;
   allRows: Record<string, unknown>[] = [];
   rows: Record<string, unknown>[] = [];
   actions: ListAction[] = [];
@@ -72,6 +84,14 @@ export class ScenarioListComponent implements OnInit {
   // `redFlags`, not `correctCues` (confirmed live), so the merge step has to
   // know the chosen mode to rename that field correctly.
   modules: { moduleId: number; moduleName: string }[] = [];
+  // Every module the API returned - `modules` above is this narrowed to the
+  // organisation filter, while row labels still resolve against all of them.
+  private allModules: {
+    moduleId: number;
+    moduleName: string;
+    organisationId?: number;
+    organisationName?: string | null;
+  }[] = [];
   isSelectModuleModalOpen = false;
   pendingAiModuleId: number | null = null;
   pendingAiAnswerMode: ScenarioAnswerMode = 'simple';
@@ -105,10 +125,22 @@ export class ScenarioListComponent implements OnInit {
     this.subscribeToCreateScenarioSuccess();
     this.subscribeToCreateScenarioFailure();
     this.subscribeToDeleteScenarioSuccess();
-    this.store.dispatch(ScenarioActions.fetchList());
+    // Reload the list whenever a global admin changes the organisation filter.
+    organisationScopeChanges(this.store)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(({ isGlobalAdmin, organisationId }) => {
+        this.scenarioOrganisationId = isGlobalAdmin ? organisationId : null;
+        this.fetchScenarios();
+      });
     // No userId - the trainer needs the org's full module catalog to choose
     // from, not a single learner's assignments.
     this.store.dispatch(ModulesActions.fetchList({}));
+  }
+
+  private fetchScenarios(): void {
+    this.store.dispatch(
+      ScenarioActions.fetchList({ organisationId: this.scenarioOrganisationId }),
+    );
   }
 
   subscribeToScenarioList(): void {
@@ -123,13 +155,33 @@ export class ScenarioListComponent implements OnInit {
     });
   }
 
+  // A global admin gets every organisation's modules back - the "Create
+  // with AI" module picker only offers the ones in the filtered organisation,
+  // and each module's organisation feeds the admin-only Organisation column.
   subscribeToModuleList(): void {
-    this.store.select(selectModuleList).subscribe((moduleList) => {
-      this.modules = (moduleList ?? []).map((module) => ({
-        moduleId: module.moduleId,
-        moduleName: module.moduleName,
-      }));
-    });
+    combineLatest([
+      this.store.select(selectModuleList),
+      this.store.select(selectOrganisationScope),
+    ])
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(([moduleList, scope]) => {
+        this.isGlobalAdmin = scope.isGlobalAdmin;
+        this.allModules = (moduleList ?? []).map((module) => ({
+          moduleId: module.moduleId,
+          moduleName: module.moduleName,
+          organisationId: module.organisationId,
+          organisationName: module.organisationName,
+        }));
+        this.modules = this.allModules
+          .filter(
+            (module) =>
+              !scope.isGlobalAdmin ||
+              scope.organisationId == null ||
+              module.organisationId === scope.organisationId,
+          )
+          .map(({ moduleId, moduleName }) => ({ moduleId, moduleName }));
+        this.columns = this.buildColumns(this.rows);
+      });
   }
 
   subscribeToAIScenarioCreateSuccess(): void {
@@ -164,7 +216,7 @@ export class ScenarioListComponent implements OnInit {
       .pipe(ofType(ScenarioActions.createScenarioSuccess))
       .subscribe(() => {
         this.isCreatingWithAi = false;
-        this.store.dispatch(ScenarioActions.fetchList());
+        this.fetchScenarios();
       });
   }
 
@@ -180,7 +232,7 @@ export class ScenarioListComponent implements OnInit {
     this.actions$
       .pipe(ofType(ScenarioActions.deleteScenarioSuccess))
       .subscribe(() => {
-        this.store.dispatch(ScenarioActions.fetchList());
+        this.fetchScenarios();
       });
   }
 
@@ -273,8 +325,19 @@ export class ScenarioListComponent implements OnInit {
       return [];
     }
 
+    const organisationColumn: ListColumn[] = this.isGlobalAdmin
+      ? [
+          {
+            key: 'organisation',
+            label: 'Organisation',
+            valueFormatter: (_value, row) => this.getOrganisationName(row['moduleId']),
+          },
+        ]
+      : [];
+
     return [
       { key: 'title', label: 'Title' },
+      ...organisationColumn,
       {
         key: 'category',
         label: 'Category',
@@ -303,8 +366,13 @@ export class ScenarioListComponent implements OnInit {
       return 'Unassigned';
     }
 
-    const match = this.modules.find((module) => module.moduleId === Number(moduleId));
+    const match = this.allModules.find((module) => module.moduleId === Number(moduleId));
     return match ? match.moduleName : String(moduleId);
+  }
+
+  private getOrganisationName(moduleId: unknown): string {
+    const match = this.allModules.find((module) => module.moduleId === Number(moduleId));
+    return match?.organisationName ?? '';
   }
 
   private handleEdit(row: Record<string, unknown>): void {

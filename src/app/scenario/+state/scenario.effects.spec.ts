@@ -40,7 +40,7 @@ describe('ScenarioEffects', () => {
       scenarioService.getScenarios.and.returnValue(
         of([{ scenarioId: 1, moduleId: 1, title: 'Fake Invoice', content: '...' }]),
       );
-      actions$ = of(ScenarioActions.fetchList());
+      actions$ = of(ScenarioActions.fetchList({}));
 
       effects.fetchScenarios$.subscribe((action) => {
         expect(action).toEqual(
@@ -65,7 +65,7 @@ describe('ScenarioEffects', () => {
       scenarioService.getScenarios.and.returnValue(
         throwError(() => new Error('Network error')),
       );
-      actions$ = of(ScenarioActions.fetchList());
+      actions$ = of(ScenarioActions.fetchList({}));
 
       effects.fetchScenarios$.subscribe((action) => {
         expect(action).toEqual(

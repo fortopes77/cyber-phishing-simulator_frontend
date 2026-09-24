@@ -1,10 +1,11 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { Actions, ofType } from '@ngrx/effects';
-import { filter, map, take } from 'rxjs';
+import { combineLatest, distinctUntilChanged, filter, map, take } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormFieldErrorComponent } from 'src/app/shared/components/form-field-error/form-field-error.component';
 import { DeleteConfirmationModalComponent } from 'src/app/shared/components/delete-confirmation-modal/delete-confirmation-modal.component';
@@ -24,6 +25,13 @@ import { selectAuthState } from 'src/app/auth/+state/auth.selectors';
 import { UsersActions } from 'src/app/users/+state/users.actions';
 import { selectUserList } from 'src/app/users/+state/users.selectors';
 import { UserAccount } from 'src/app/users/+state/user-account.model';
+import { OrganisationsActions } from 'src/app/organisations/+state/organisations.actions';
+import {
+  selectIsGlobalAdmin,
+  selectOrganisationFilter,
+  selectOrganisationList,
+} from 'src/app/organisations/+state/organisations.selectors';
+import { Organisation } from 'src/app/organisations/+state/organisation.model';
 
 const NAME_MAX_LENGTH = 150;
 const DESCRIPTION_MAX_LENGTH = 1000;
@@ -47,6 +55,7 @@ export class ModuleEditComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly fontAwesomeIcons = iconLibrary;
 
@@ -68,7 +77,18 @@ export class ModuleEditComponent implements OnInit {
         textValidator(),
       ],
     ],
+    // Only used when a global admin creates a module - see setUpOrganisationField.
+    organisationId: this.fb.control<number | null>(null),
   });
+
+  isGlobalAdmin = false;
+  organisations: Organisation[] = [];
+
+  // The organisation whose scenarios the assignment panel lists - the
+  // module's own organisation. Only sent for a global admin (a trainer's
+  // requests are already scoped to their organisation), and kept so
+  // re-fetches after an assignment change stay in that organisation.
+  private scenarioOrganisationId: number | null = null;
 
   moduleId: number | null = null;
   isCreateMode = false;
@@ -149,6 +169,7 @@ export class ModuleEditComponent implements OnInit {
     this.subscribeToDeleteSuccess();
 
     if (this.isCreateMode) {
+      this.setUpOrganisationField();
       return;
     }
 
@@ -168,10 +189,11 @@ export class ModuleEditComponent implements OnInit {
       this.store.dispatch(
         ModulesActions.fetchModuleDetails({ moduleId: this.moduleId }),
       );
-      // Fetches every scenario in the org (not scoped to this module) so the
-      // "assign scenarios" search can find and re-home any of them; scenarios
-      // already in this module are derived client-side via moduleScenarios.
-      this.store.dispatch(ScenarioActions.fetchList());
+      // Every scenario in the module's organisation (not scoped to this
+      // module) is fetched so the "assign scenarios" search can find and
+      // re-home any of them; scenarios already in this module are derived
+      // client-side via moduleScenarios. Dispatched from
+      // loadOrganisationData once the module's organisation is known.
       this.store.select(selectScenarioList).subscribe((scenarios) => {
         this.allScenarios = scenarios ?? [];
       });
@@ -184,26 +206,69 @@ export class ModuleEditComponent implements OnInit {
           this.hydrateAssignedLearners(existing);
         }
       });
-      this.fetchLearners();
+      this.loadOrganisationData();
       this.store.select(selectUserList).subscribe((users) => {
         this.learners = users ?? [];
       });
     }
   }
 
-  // GET /users/learners is scoped to one organisation - read it off the
-  // signed-in trainer's own account rather than hard-coding it.
-  private fetchLearners(): void {
-    this.store
-      .select(selectAuthState)
+  // Scenarios and learners can only be assigned within the module's own
+  // organisation. For a trainer that's always their own; a global admin
+  // could be editing any organisation's module, so wait for the module to
+  // load and use its organisationId (which GET /training-modules only
+  // exposes to global admins).
+  private loadOrganisationData(): void {
+    combineLatest([
+      this.store.select(selectIsGlobalAdmin),
+      this.store.select(selectAuthState),
+      this.store.select(selectModuleList),
+    ])
       .pipe(
-        map((auth) => auth?.user?.organisationId),
-        filter((organisationId): organisationId is number => organisationId != null),
-        take(1),
+        map(([isGlobalAdmin, auth, moduleList]) => {
+          if (!isGlobalAdmin) {
+            return { isGlobalAdmin, organisationId: auth?.user?.organisationId ?? null };
+          }
+          const module = (moduleList ?? []).find((m) => m.moduleId === this.moduleId);
+          return { isGlobalAdmin, organisationId: module?.organisationId ?? null };
+        }),
+        filter(({ organisationId }) => organisationId != null),
+        distinctUntilChanged((a, b) => a.organisationId === b.organisationId),
+        takeUntilDestroyed(this.destroyRef),
       )
-      .subscribe((organisationId) => {
+      .subscribe(({ isGlobalAdmin, organisationId }) => {
+        this.scenarioOrganisationId = isGlobalAdmin ? organisationId : null;
         this.store.dispatch(UsersActions.fetchList({ organisationId }));
+        this.store.dispatch(
+          ScenarioActions.fetchList({ organisationId: this.scenarioOrganisationId }),
+        );
       });
+  }
+
+  // A global admin has to say which organisation a new module belongs to -
+  // pre-filled from the organisation filter when one is selected.
+  private setUpOrganisationField(): void {
+    combineLatest([
+      this.store.select(selectIsGlobalAdmin),
+      this.store.select(selectOrganisationFilter),
+    ])
+      .pipe(take(1))
+      .subscribe(([isGlobalAdmin, filterOrganisationId]) => {
+        this.isGlobalAdmin = isGlobalAdmin;
+        if (!isGlobalAdmin) {
+          return;
+        }
+
+        const control = this.moduleForm.get('organisationId');
+        control?.setValidators(Validators.required);
+        control?.setValue(filterOrganisationId);
+        this.store.dispatch(OrganisationsActions.fetchList());
+      });
+
+    this.store
+      .select(selectOrganisationList)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((organisations) => (this.organisations = organisations));
   }
 
   subscribeToModuleDetails(): void {
@@ -278,7 +343,9 @@ export class ModuleEditComponent implements OnInit {
         // updateScenarioSuccess doesn't patch scenarioList in the reducer
         // (only fetchList/fetchScenariosByModule do), so re-fetch to pick up
         // the scenario's new moduleId and move it in/out of moduleScenarios.
-        this.store.dispatch(ScenarioActions.fetchList());
+        this.store.dispatch(
+          ScenarioActions.fetchList({ organisationId: this.scenarioOrganisationId }),
+        );
       });
 
     this.actions$
@@ -435,10 +502,17 @@ export class ModuleEditComponent implements OnInit {
       return;
     }
 
-    const module = this.moduleForm.value;
+    const { organisationId, ...module } = this.moduleForm.value;
 
     if (this.isCreateMode) {
-      this.store.dispatch(ModulesActions.createModule({ module }));
+      this.store.dispatch(
+        ModulesActions.createModule({
+          module:
+            this.isGlobalAdmin && organisationId != null
+              ? { ...module, organisationId: Number(organisationId) }
+              : module,
+        }),
+      );
     } else if (this.moduleId) {
       this.store.dispatch(
         ModulesActions.updateModule({

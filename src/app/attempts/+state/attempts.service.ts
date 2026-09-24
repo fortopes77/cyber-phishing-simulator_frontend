@@ -32,12 +32,12 @@ export class AttemptsService {
     );
   }
 
-  // Confirmed live: POST /results/attempts/{attemptId}/finalize -
-  // "Finalize an attempt and store the result". Marks the module attempt
+  // Confirmed live: POST /results/attempts/{attemptId}/finalise -
+  // "Finalise an attempt and store the result". Marks the module attempt
   // COMPLETED and locks in whatever scenarios were actually submitted.
   finalizeAttempt(attemptId: number) {
     return this.http.post<any>(
-      `${this.apiEndpoint}results/attempts/${attemptId}/finalize`,
+      `${this.apiEndpoint}results/attempts/${attemptId}/finalise`,
       {},
     );
   }
