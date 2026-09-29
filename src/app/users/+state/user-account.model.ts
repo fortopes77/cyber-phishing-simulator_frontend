@@ -73,10 +73,7 @@ export interface RawUserAccount {
 
 // GET /users/learners (LearnerResponseDto) returns `weaknesses` as the
 // scenario-category enum, weakest first - labels here match that enum's
-// exact spelling (confirmed via the live GET /api-json schema). Kept
-// separate from scenario.model.ts's ScenarioCategory/CATEGORY_OPTIONS since
-// that enum has two confirmed backend typos (RANSONWARE,
-// BUISINESS_EMAIL_COMPROMISE) that this endpoint's enum does not share.
+// exact spelling (confirmed via the live GET /api-json schema).
 // Shared by the learner list and the trainer reports page - anywhere a raw
 // weakness code needs a human-readable label.
 export const LEARNER_WEAKNESS_LABELS: Record<string, string> = {

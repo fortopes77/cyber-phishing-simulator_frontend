@@ -84,11 +84,20 @@ describe('scenario.model', () => {
       expect(normalizeCategory('phishing')).toBe(ScenarioCategory.Phishing);
     });
 
-    it('should map aliases onto the backend enum, typos included', () => {
+    it('should map aliases onto the backend enum spelling', () => {
       expect(normalizeCategory('Business Email Compromise')).toBe(
+        'BUSINESS_EMAIL_COMPROMISE' as ScenarioCategory,
+      );
+      expect(normalizeCategory('ransomware')).toBe(
+        'RANSOMWARE' as ScenarioCategory,
+      );
+    });
+
+    it('should map the old misspelled values onto the corrected enum', () => {
+      expect(normalizeCategory('RANSONWARE')).toBe(ScenarioCategory.Ransomware);
+      expect(normalizeCategory('BUISINESS_EMAIL_COMPROMISE')).toBe(
         ScenarioCategory.BusinessEmailCompromise,
       );
-      expect(normalizeCategory('ransomware')).toBe(ScenarioCategory.Ransomware);
     });
 
     it('should fall back to Phishing for an unrecognised category', () => {

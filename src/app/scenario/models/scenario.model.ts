@@ -11,11 +11,8 @@ export enum ScenarioCategory {
   Vishing = 'VISHING',
   SocialEngineering = 'SOCIAL_ENGINEERING',
   Malware = 'MALWARE',
-  // Kept verbatim - this is the backend's actual enum value (confirmed via a
-  // 400 validation response), typo and all.
-  Ransomware = 'RANSONWARE',
-  // Kept verbatim - same as above, the backend enum really is spelled this way.
-  BusinessEmailCompromise = 'BUISINESS_EMAIL_COMPROMISE',
+  Ransomware = 'RANSOMWARE',
+  BusinessEmailCompromise = 'BUSINESS_EMAIL_COMPROMISE',
   SpearPhishing = 'SPEAR_PHISHING',
   Whaling = 'WHALING',
 }
@@ -80,6 +77,7 @@ const CATEGORY_ALIASES: Record<string, ScenarioCategory> = {
   SOCIAL_ENGINEERING: ScenarioCategory.SocialEngineering,
   MALWARE: ScenarioCategory.Malware,
   RANSOMWARE: ScenarioCategory.Ransomware,
+  // Old misspellings, still accepted in case any cached or AI-generated data uses them
   RANSONWARE: ScenarioCategory.Ransomware,
   BUSINESS_EMAIL_COMPROMISE: ScenarioCategory.BusinessEmailCompromise,
   BUISINESS_EMAIL_COMPROMISE: ScenarioCategory.BusinessEmailCompromise,
@@ -164,8 +162,8 @@ const ALL_OPTIONS: ScenarioOption<string>[] = [
 ];
 
 /**
- * Looks up the human-readable label for an enum value (e.g. "RANSONWARE" ->
- * "Ransomware", correcting the backend's typo for display purposes). Falls
+ * Looks up the human-readable label for an enum value (e.g. "RANSOMWARE" ->
+ * "Ransomware"). Falls
  * back to a title-cased version of the raw value for anything unrecognised.
  */
 export function getScenarioOptionLabel(value: unknown): string {
